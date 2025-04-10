@@ -1,0 +1,68 @@
+[
+  {
+    "name": "Share your first post on X",
+    "description": "Share your first post on X",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    },
+    "points": 20,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Join Discord",
+    "description": "Join our Discord community to connect with other users",
+    "category": 0,
+    "type": 1,
+    "requirements": {
+      "url": "https://discord.gg/your-community"
+    },
+    "points": 20,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Join Telegram",
+    "description": "Join our Telegram group to stay updated",
+    "category": 0,
+    "type": 2,
+    "requirements": {
+      "url": "https://t.me/your-community"
+    },
+    "points": 20,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Follow X",
+    "description": "Follow our official X (Twitter) account",
+    "category": 0,
+    "type": 3,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    },
+    "points": 20,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Daily Login",
+    "description": "Log in daily to earn points",
+    "category": 1,
+    "type": 10,
+    "points": 10,
+    "status": 1,
+    "limit": -1
+  },
+  {
+    "name": "Refer a Friend",
+    "description": "Invite your friends to join the platform",
+    "category": 2,
+    "type": 20,
+    "points": 30,
+    "status": 1,
+    "limit": 5
+  }
+]

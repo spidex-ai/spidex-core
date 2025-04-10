@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Novice",
+    "icon": "/icons/achievements/novice.svg",
+    "points": 100,
+    "status": 1,
+    "description": "Earn your first 100 points"
+  },
+  {
+    "name": "Apprentice",
+    "icon": "/icons/achievements/apprentice.svg",
+    "points": 500,
+    "status": 1,
+    "description": "Reach 500 points"
+  },
+  {
+    "name": "Expert",
+    "icon": "/icons/achievements/expert.svg",
+    "points": 1000,
+    "status": 1,
+    "description": "Reach 1000 points"
+  },
+  {
+    "name": "Master",
+    "icon": "/icons/achievements/master.svg",
+    "points": 5000,
+    "status": 1,
+    "description": "Reach 5000 points"
+  },
+  {
+    "name": "Legend",
+    "icon": "/icons/achievements/legend.svg",
+    "points": 10000,
+    "status": 1,
+    "description": "Reach 10000 points"
+  }
+]

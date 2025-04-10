@@ -1,0 +1,101 @@
+services:
+  api:
+    container_name: spidex-core-${NODE_ENV}-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 
+      sh -c "yarn db:migration:run && yarn dev"
+    restart: always
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - postgres
+      - redis
+      - kafka-0
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    volumes:
+      - ./service-account.json:/app/service-account.json
+    networks:
+      spidex-core-app:
+
+  core-consumer:
+    container_name: spidex-core-${NODE_ENV}-core-consumer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "npm run core:consumer"
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+      - kafka-0
+    networks:
+      spidex-core-app:
+
+  postgres:
+    container_name: spidex-core-${NODE_ENV}-postgres
+    image: postgres:16.1-alpine
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    command: -p ${DB_PORT}
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      spidex-core-app:
+
+  redis: 
+    container_name: spidex-core-${NODE_ENV}-redis
+    image: redis:7-alpine
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    command: redis-server --save 20 1 --loglevel warning --port ${REDIS_PORT}
+    networks:
+      spidex-core-app:
+
+  kafka-0:
+    image: bitnami/kafka:3.4
+    container_name: spidex-core-kafka-0
+    ports:
+      - "39094:39094"
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://0.0.0.0:39094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka-0:9092,EXTERNAL://localhost:39094
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka-0:9093
+      KAFKA_KRAFT_CLUSTER_ID: abcdefghijklmnopqrstuv
+    networks:
+      spidex-core-app:
+
+  kafka-ui:
+    container_name: spidex-core-kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8989:8080
+    depends_on:
+      - kafka-0
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "kafka-0"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-0:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    networks:
+      spidex-core-app:
+
+volumes:
+  db:
+
+networks:
+  spidex-core-app:
+
