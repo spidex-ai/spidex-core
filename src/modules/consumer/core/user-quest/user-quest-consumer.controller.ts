@@ -1,5 +1,5 @@
 import { UserQuestConsumerService } from "@modules/consumer/core/user-quest/user-quest-consumer.service";
-import { IQuestRelatedToChatWithAiEvent } from "@modules/user-quest/interfaces/event-message";
+import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { Controller, Logger } from "@nestjs/common";
 import { Ctx, EventPattern, KafkaContext, Payload } from "@nestjs/microservices";
@@ -14,13 +14,13 @@ export class UserQuestConsumerController {
   ) { }
 
   @EventPattern(USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_CHAT_WITH_AI)
-  async handleQuestRelatedToChatWithAiEvent(@Payload() data: IQuestRelatedToChatWithAiEvent, @Ctx() context: KafkaContext) {
+  async handleQuestRelatedToChatWithAiEvent(@Payload() data: IQuestRelatedToTradeEvent, @Ctx() context: KafkaContext) {
     try {
       await this.userQuestConsumerService.handleQuestRelatedToChatWithAiEvent(context, data)
     } catch (error) {
       this.logger.error(`Error handling quest related to chat with ai event: ${error}`, error)
 
-      const deadLetterMessage: IDeadLetterMessage<IQuestRelatedToChatWithAiEvent> = {
+      const deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent> = {
         key: data.userId.toString(),
         message: data,
         deadLetterReason: (error as Error).message,
@@ -41,7 +41,7 @@ export class UserQuestConsumerController {
 
   @EventPattern(USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_CHAT_WITH_AI)
   async handleQuestRelatedToChatWithAiEventDeadLetter(
-    @Payload() message: IDeadLetterMessage<IQuestRelatedToChatWithAiEvent>,
+    @Payload() message: IDeadLetterMessage<IQuestRelatedToTradeEvent>,
     @Ctx() context: KafkaContext) {
     const { offset } = context.getMessage();
     const partition = context.getPartition();

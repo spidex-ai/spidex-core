@@ -17,8 +17,8 @@ export class DexhunterService {
         return paginatedData;
     }
 
-    async getTokenDetail(token_id: string): Promise<TokenDetail> {
-        const response = await firstValueFrom(this.client.get<TokenDetail>(`swap/token/${token_id}`));
+    async getTokenDetail(tokenId: string): Promise<TokenDetail> {
+        const response = await firstValueFrom(this.client.get<TokenDetail>(`swap/token/${tokenId}`));
         return response.data;
     }
 

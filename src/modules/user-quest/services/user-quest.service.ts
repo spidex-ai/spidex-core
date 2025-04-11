@@ -1,5 +1,5 @@
 import { EError } from "@constants/error.constant";
-import { EQuestCategory, EQuestStatus, EQuestType, IChatWithAIRequirement, QUEST_UNLIMITED, QuestEntity } from "@database/entities/quest.entity";
+import { EQuestCategory, EQuestStatus, EQuestType, QUEST_UNLIMITED, QuestEntity } from "@database/entities/quest.entity";
 import { EUserPointLogType } from "@database/entities/user-point-log.entity";
 import { UserQuestEntity } from "@database/entities/user-quest.entity";
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
@@ -8,7 +8,7 @@ import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-mess
 import { UserPointService } from "@modules/user-point/services/user-point.service";
 import { EUserPointType } from "@modules/user-point/user-point.constant";
 import { EUserQuestStatus, GetCheckInListFilterDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
-import { IQuestRelatedToChatWithAiEvent } from "@modules/user-quest/interfaces/event-message";
+import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
@@ -154,9 +154,7 @@ export class UserQuestService {
 
 
   @Transactional()
-  async completeQuest(userId: number, quest: QuestEntity, options?: {
-    feedbackId?: number
-  }): Promise<void> {
+  async completeQuest(userId: number, quest: QuestEntity): Promise<void> {
     const userQuest = this.userQuestRepository.create({
       userId,
       questId: quest.id,
@@ -165,45 +163,24 @@ export class UserQuestService {
 
     await this.userQuestRepository.save(userQuest);
 
-    const shouldAddPointForReferee = [
-      EQuestType.REFER_CREATE_AI_AGENT,
-    ].includes(quest.type)
-
     const shouldAddToReferralPoint = [
       EQuestType.REFER_FRIEND,
     ].includes(quest.type)
 
-    if (shouldAddPointForReferee) {
-      const referee = await this.userReferralService.getReferralByUserId(userId);
-      if (referee) {
-        const userPointChangeEvent: IUserPointChangeEvent = {
-          userId: referee.referredBy,
-          amount: quest.points.toString(),
-          type: EUserPointType.QUEST,
-          logType: EUserPointLogType.FROM_QUEST,
-          userQuestId: userQuest.id,
-          referralId: referee.id,
-          feedbackId: options?.feedbackId
-        };
-        await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
-      }
-    } else {
-      let referralId = null
-      if (shouldAddToReferralPoint) {
-        const referee = await this.userReferralService.getReferralByReferee(userId);
-        referralId = referee.id
-      }
-      const userPointChangeEvent: IUserPointChangeEvent = {
-        userId,
-        amount: quest.points.toString(),
-        type: EUserPointType.QUEST,
-        logType: EUserPointLogType.FROM_QUEST,
-        userQuestId: userQuest.id,
-        referralId: referralId,
-        feedbackId: options?.feedbackId
-      };
-      await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
+    let referralId = null
+    if (shouldAddToReferralPoint) {
+      const referee = await this.userReferralService.getReferralByReferee(userId);
+      referralId = referee.id
     }
+    const userPointChangeEvent: IUserPointChangeEvent = {
+      userId,
+      amount: quest.points.toString(),
+      type: EUserPointType.QUEST,
+      logType: EUserPointLogType.FROM_QUEST,
+      userQuestId: userQuest.id,
+      referralId: referralId,
+    };
+    await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
   }
 
 
@@ -267,16 +244,7 @@ export class UserQuestService {
   }
 
   async canCompleteQuestByType(userId: number, quest: QuestEntity): Promise<boolean> {
-    switch (quest.type) {
-      case EQuestType.CHAT_WITH_AI_AGENT:
-        const requirement = quest.requirements as IChatWithAIRequirement
-        const totalResponseCount = 10
-        if (totalResponseCount < requirement.count) {
-          return false
-        }
-        break;
-    }
-
+    console.log('canCompleteQuestByType', userId, quest)
     return true
   }
 
@@ -377,9 +345,9 @@ export class UserQuestService {
   }
 
 
-  async handleQuestRelatedToChatWithAiEvent(data: IQuestRelatedToChatWithAiEvent): Promise<void> {
+  async handleQuestRelatedToChatWithAiEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
     const quests = await this.questService.getQuestInType([
-      EQuestType.CHAT_WITH_AI_AGENT,
+      EQuestType.TRADE,
     ])
 
     await Promise.all(quests.map(async (quest) => {

@@ -26,7 +26,7 @@ export class SwapService {
             throw new BadRequestException({
                 message: 'Failed to build swap',
                 data: error.response.data,
-                validator_errors: EError.BUILD_SWAP_FAILED,
+                validator_errors: EError.DEXHUNTER_BUILD_SWAP_FAILED,
             });
         }
     }
@@ -46,7 +46,7 @@ export class SwapService {
             throw new BadRequestException({
                 message: 'Failed to estimate swap',
                 data: error.response.data,
-                validator_errors: EError.ESTIMATE_SWAP_FAILED,
+                validator_errors: EError.DEXHUNTER_ESTIMATE_SWAP_FAILED,
             });
         }
     }
@@ -60,7 +60,7 @@ export class SwapService {
             throw new BadRequestException({
                 message: 'Failed to submit swap',
                 data: error.response.data,
-                validator_errors: EError.SUBMIT_SWAP_FAILED,
+                validator_errors: EError.DEXHUNTER_SUBMIT_SWAP_FAILED,
             });
         }
     }
@@ -74,7 +74,7 @@ export class SwapService {
             throw new BadRequestException({
                 message: 'Failed to get pool stats',
                 data: error.response.data,
-                validator_errors: EError.GET_POOL_STATS_FAILED,
+                validator_errors: EError.DEXHUNTER_GET_POOL_STATS_FAILED,
             });
         }
     }

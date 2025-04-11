@@ -8,5 +8,4 @@ export interface IUserPointChangeEvent {
     logType: EUserPointLogType;
     userQuestId?: number;
     referralId?: number;
-    feedbackId?: number;
 }

@@ -15,17 +15,15 @@ export enum EQuestType {
   JOIN_DISCORD = 1,
   JOIN_TELEGRAM = 2,
   FOLLOW_X = 3,
-  REFER_CREATE_AI_AGENT = 4,
-  CREATE_AI_AGENT = 5,
-  CHAT_WITH_AI_AGENT = 6,
 
   // Daily quest
   DAILY_LOGIN = 10,
 
   // Multi-time quest
   REFER_FRIEND = 20,
-  REFER_FEEDBACK = 21,
 
+  // Trade quest
+  TRADE = 30,
 }
 
 export enum EQuestStatus {
