@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+dist
+.git
+.env
+local
+.dockerignore
+.editorconfig
+.eslintrc.js
+.prettierrc.js
+
+secret-admin.json
+secret-operator.json
