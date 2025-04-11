@@ -19,7 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "module:generate": "nest g resource",
-    "typeorm": "env-cmd ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "db:migration:generate": "npm run typeorm migration:generate -d src/ormconfig.ts",
     "db:migration:create": "cd src/database/migrations && npx typeorm-ts-node-commonjs migration:create",
     "db:migration:run": "yarn typeorm migration:run -d src/ormconfig.ts",

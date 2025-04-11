@@ -9,7 +9,7 @@ run-infra:
 	docker compose -f docker-compose.infra.yml up -d
 
 generate-migration:
-	npx env-cmd ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/ormconfig.ts --pretty src/database/migrations/${name}
+	npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/ormconfig.ts --pretty src/database/migrations/${name}
 
 run-migration:
 	npm run db:migration:run
