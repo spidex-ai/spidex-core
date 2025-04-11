@@ -5,11 +5,13 @@ import { RateLimiterModule } from '@shared/modules/rate-limiter/rate-limiter.mod
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { QuestModule } from '@modules/user-quest/quest.module';
+import { SwapModule } from '@modules/swap/swap.module';
 export const MODULES = [
   UserModule,
   AuthModule,
   RateLimiterModule,
   UserReferralModule,
   UserPointModule,
-  QuestModule
+  QuestModule,
+  SwapModule
 ];
