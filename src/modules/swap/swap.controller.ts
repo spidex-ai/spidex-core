@@ -47,4 +47,14 @@ export class SwapController {
     async getPoolStats(@Param('tokenIn') tokenIn: string, @Param('tokenOut') tokenOut: string) {
         return this.swapService.getPoolStats({ tokenIn, tokenOut });
     }
+
+    @Get('transaction/:txHash')
+    @ApiOperation({ summary: 'Get transaction detail' })
+    @ApiResponse({ status: 200, description: 'Transaction detail fetched successfully' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
+    @ApiResponse({ status: 500, description: 'Internal Server Error' })
+    @GuardPublic()
+    async getTransactionDetail(@Param('txHash') txHash: string) {
+        return this.swapService.getTransactionDetail(txHash);
+    }
 }

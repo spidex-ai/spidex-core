@@ -31,7 +31,8 @@
     "db:seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ormconfig.ts",
     "console:dev": "ts-node -r tsconfig-paths/register src/console.ts",
     "console": "node dist/console.js",
-    "core:consumer": "ts-node -r tsconfig-paths/register src/core-consumer.ts"
+    "core:consumer": "ts-node -r tsconfig-paths/register src/core-consumer.ts",
+    "local": "ts-node -r tsconfig-paths/register src/local.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.670.0",
@@ -62,6 +63,7 @@
     "bull": "4.11.3",
     "cache-manager": "^4.1.0",
     "cache-manager-redis-yet": "^5.1.5",
+    "cbor": "^10.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "crypto-js": "^4.1.1",

@@ -1,6 +1,6 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { BlockfrostAddressDetail } from "external/blockfrost/types";
+import { BlockfrostAddressDetail, BlockfrostTokenDetail, BlockfrostTransactionDetail } from "external/blockfrost/types";
 import { firstValueFrom } from "rxjs";
 
 @Injectable()
@@ -20,6 +20,16 @@ export class BlockfrostService {
                 order
             }
         }));
+        return response.data;
+    }
+
+    async getTokenDetail(tokenId: string) {
+        const response = await firstValueFrom(this.client.get<BlockfrostTokenDetail>(`assets/${tokenId}`));
+        return response.data;
+    }
+
+    async getTransactionDetail(txHash: string) {
+        const response = await firstValueFrom(this.client.get<BlockfrostTransactionDetail>(`txs/${txHash}`));
         return response.data;
     }
 }
