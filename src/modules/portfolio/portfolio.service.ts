@@ -30,42 +30,54 @@ export class PortfolioService {
         ]);
 
         const tokenDetailsMap = keyBy(tokenDetails.subjects, 'subject');
+        const amount = addressDetail.amount.map(amount => {
+            if (amount.unit === 'lovelace') {
+                const totalPrice = new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toNumber();
+                const usdTotalPrice = new Decimal(totalPrice).mul(adaPrice).toNumber();
+                return {
+                    ...amount,
+                    quantity: new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toString(),
+                    price: 1,
+                    ticker: 'ADA',
+                    name: 'Cardano',
+                    totalPrice,
+                    usdPrice: adaPrice,
+                    usdTotalPrice,
+                    logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
+                }
+            }
+            const tokenDetail = tokenDetailsMap[amount.unit];
+            return {
+                unit: amount.unit,
+                quantity: new Decimal(amount.quantity).toString(),
+                price: tokenPrices[amount.unit],
+                ticker: tokenDetail?.ticker?.value,
+                name: tokenDetail?.name?.value,
+                totalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).toNumber(),
+                usdPrice: new Decimal(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
+                usdTotalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
+                logo: tokenDetail?.logo?.value,
+            }
 
+        })
         return {
             address: addressDetail.address,
-            amount: addressDetail.amount.map(amount => {
-                if (amount.unit === 'lovelace') {
-                    const totalPrice = new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toNumber();
-                    const usdTotalPrice = new Decimal(totalPrice).mul(adaPrice).toNumber();
-                    return {
-                        ...amount,
-                        quantity: new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toString(),
-                        price: 1,
-                        ticker: 'ADA',
-                        name: 'Cardano',
-                        totalPrice,
-                        usdPrice: adaPrice,
-                        usdTotalPrice,
-                        logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
-                    }
-                }
-                const tokenDetail = tokenDetailsMap[amount.unit];
-                return {
-                    unit: amount.unit,
-                    quantity: new Decimal(amount.quantity).toString(),
-                    price: tokenPrices[amount.unit],
-                    ticker: tokenDetail?.ticker?.value,
-                    name: tokenDetail?.name?.value,
-                    totalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).toNumber(),
-                    usdPrice: new Decimal(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
-                    usdTotalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
-                    logo: tokenDetail?.logo?.value,
-                }
-
-            }),
+            amount,
             stakeAddress: addressDetail.stake_address,
             type: addressDetail.type,
             script: addressDetail.script,
+            totalPrice: amount.reduce((acc, curr) => {
+                if (curr.unit === 'lovelace') {
+                    return acc.plus(curr.totalPrice);
+                }
+                return acc.plus(curr.totalPrice);
+            }, new Decimal(0)).toNumber(),
+            totalUsdPrice: amount.reduce((acc, curr) => {
+                if (curr.unit === 'lovelace') {
+                    return acc.plus(curr.usdTotalPrice);
+                }
+                return acc.plus(curr.usdTotalPrice);
+            }, new Decimal(0)).toNumber(),
         }
     }
 

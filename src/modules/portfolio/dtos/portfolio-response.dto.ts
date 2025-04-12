@@ -45,6 +45,12 @@ export class PortfolioAddressResponse {
 
     @ApiProperty()
     script: boolean;
+
+    @ApiProperty()
+    totalPrice: number;
+
+    @ApiProperty()
+    totalUsdPrice: number;
 }
 
 export class PortfolioTransactionResponse {
