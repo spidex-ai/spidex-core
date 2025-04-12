@@ -33,7 +33,7 @@ export class TokenService {
             const tokenIds = data.map((token) => token.unit);
 
             const [tokenDetails, tokenPrice] = await Promise.all([
-                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo']),
+                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo', 'name', 'ticker']),
                 this.tokenPriceService.getAdaPriceInUSD()
             ]);
 
@@ -42,7 +42,9 @@ export class TokenService {
             const response = data.map((token) => ({
                 ...token,
                 usdPrice: token.price * tokenPrice,
-                logo: tokenDetailsMap[token.unit]?.logo?.value
+                logo: tokenDetailsMap[token.unit]?.logo?.value,
+                name: tokenDetailsMap[token.unit]?.name?.value,
+                ticker: tokenDetailsMap[token.unit]?.ticker?.value
             }));
 
             await this.cache.set(cacheKey, response, TOP_MCAP_TOKENS_CACHE_TTL);
@@ -68,7 +70,7 @@ export class TokenService {
             const tokenIds = data.map((token) => token.unit);
 
             const [tokenDetails, tokenPrice] = await Promise.all([
-                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo']),
+                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo', 'name', 'ticker']),
                 this.tokenPriceService.getAdaPriceInUSD()
             ]);
 
@@ -77,7 +79,9 @@ export class TokenService {
             const response = data.map((token) => ({
                 ...token,
                 usdPrice: token.price * tokenPrice,
-                logo: tokenDetailsMap[token.unit]?.logo?.value
+                logo: tokenDetailsMap[token.unit]?.logo?.value,
+                name: tokenDetailsMap[token.unit]?.name?.value,
+                ticker: tokenDetailsMap[token.unit]?.ticker?.value
             }));
 
             await this.cache.set(cacheKey, response, TOP_VOLUME_TOKENS_CACHE_TTL);

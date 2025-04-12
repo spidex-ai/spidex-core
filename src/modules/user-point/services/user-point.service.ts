@@ -24,6 +24,7 @@ import { LOCK_KEY_USER_POINT } from "@shared/modules/redis/redis.constant";
 import { plainToInstanceCustom } from "@shared/utils/class-transform";
 import BigNumber from "bignumber.js";
 import { firstValueFrom } from "rxjs";
+import { In } from "typeorm";
 import { Transactional } from "typeorm-transactional";
 
 
@@ -247,5 +248,9 @@ export class UserPointService {
   async getLeadboardStats(): Promise<LeaderboardStatsOutputDto> {
     const result = await this.userPointRepository.getLeaderboardStats();
     return result;
+  }
+
+  async getPointLogsByReferralIds(referralIds: number[], page: number, limit: number): Promise<[UserPointLogEntity[], number]> {
+    return this.userPointLogRepository.findAndCount({ where: { referralId: In(referralIds), }, relations: ['referral', 'user'], skip: (page - 1) * limit, take: limit });
   }
 }

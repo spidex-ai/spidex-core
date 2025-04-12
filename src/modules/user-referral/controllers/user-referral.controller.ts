@@ -1,5 +1,5 @@
 import { ReferralInfoOutput } from "@modules/user-referral/dtos/user-referral-info.dto";
-import { UserReferredInfoOutput } from "@modules/user-referral/dtos/user-referred-info.dto";
+import { ReferralHistoryOutput, UserReferredInfoOutput } from "@modules/user-referral/dtos/user-referred-info.dto";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { Controller, Get, HttpStatus, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiResponse, ApiTags } from "@nestjs/swagger";
@@ -32,6 +32,14 @@ export class UserReferralController {
   async getReferredUsers(@AuthUser() user: IJwtPayload, @Query() pagination: PaginationDto): Promise<PageDto<UserReferredInfoOutput>> {
     return this.userReferralService.getReferredUsers(user.userId, pagination);
   }
-}
 
+  @Get('me/referral-history')
+  @AuthUserGuard()
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  async getReferralHistory(@AuthUser() user: IJwtPayload, @Query() pagination: PaginationDto): Promise<PageDto<ReferralHistoryOutput>> {
+    return this.userReferralService.getReferralHistory(user.userId, pagination);
+  }
+}
 

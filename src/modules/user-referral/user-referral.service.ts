@@ -6,7 +6,7 @@ import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserQuestService } from "@modules/user-quest/services/user-quest.service";
 import { CreateUserReferralInput } from "@modules/user-referral/dtos/create-user-referral.dto";
 import { ReferralInfoOutput } from "@modules/user-referral/dtos/user-referral-info.dto";
-import { UserReferredInfoOutput } from "@modules/user-referral/dtos/user-referred-info.dto";
+import { ReferralHistoryOutput, UserReferredInfoOutput } from "@modules/user-referral/dtos/user-referred-info.dto";
 import { UserService } from "@modules/user/user.service";
 import { Inject, Injectable, forwardRef } from "@nestjs/common";
 import { PageMetaDto, PaginationDto } from "@shared/dtos/page-meta.dto";
@@ -111,5 +111,31 @@ export class UserReferralService {
         const referral = await this.getById(referralId);
         referral.points = new BigNumber(referral.points).plus(amount).toString();
         await this.referralRepository.save(referral);
+    }
+
+    async getReferralHistory(userId: number, pagination: PaginationDto): Promise<PageDto<ReferralHistoryOutput>> {
+        const { page, limit } = pagination;
+        const referralIds = await this.referralRepository.find({ where: { referredBy: userId } });
+        const [userPointLogs, total] = await this.userPointService.getPointLogsByReferralIds(referralIds.map(referral => referral.id), page, limit);
+
+        const data = userPointLogs.map(userPointLog => {
+            const output: ReferralHistoryOutput = {
+                id: userPointLog.referralId,
+                username: userPointLog.referral.user.username,
+                avatar: userPointLog.referral.user.avatar,
+                point: userPointLog.amount,
+                createdAt: userPointLog.createdAt
+            }
+
+            return output;
+        });
+
+        return {
+            data: plainToInstancesCustom(ReferralHistoryOutput, data),
+            meta: new PageMetaDto(total, new PageOptionsDto(
+                page,
+                limit
+            ))
+        };
     }
 } 
