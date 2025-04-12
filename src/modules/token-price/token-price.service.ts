@@ -29,7 +29,7 @@ export class TokenPriceService {
             throw new BadRequestException({
                 data: error.response.data,
                 message: 'Failed to fetch token price in USD',
-                validator_errors: EError.COINGECKO_TOKEN_PRICE_FETCH_ERROR
+                validatorErrors: EError.COINGECKO_TOKEN_PRICE_FETCH_ERROR
             });
         }
     }

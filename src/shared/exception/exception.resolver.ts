@@ -6,11 +6,11 @@ export abstract class BaseException<TData> extends HttpException {
   protected constructor(partial: IResponse<TData>, statusCode: number) {
     const payload = {
       ...defaultResponse,
-      status_code: partial?.status_code ? partial.status_code : statusCode,
+      statusCode: partial?.statusCode ? partial.statusCode : statusCode,
       message: '',
       ...partial,
     };
-    payload.success = payload.status_code < 400;
+    payload.success = payload.statusCode < 400;
     super(payload, statusCode);
   }
 }

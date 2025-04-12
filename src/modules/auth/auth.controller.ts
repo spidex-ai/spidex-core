@@ -1,12 +1,14 @@
 import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
 import { AuthUserGuard, GuardPublic } from '@shared/decorators/auth.decorator';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import { AuthService } from './auth.service';
 import {
+  ConnectGoogleRequestDto,
   ConnectWalletRequestDto,
+  ConnectXRequestDto,
   RefreshTokenRequestDto
 } from './dtos/auth-request.dto';
 import {
@@ -56,5 +58,24 @@ export class AuthController {
   })
   async refreshToken(@Body() refreshTokenInput: RefreshTokenRequestDto): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(refreshTokenInput);
+  }
+
+
+  @Post('/connect/x')
+  @ApiOperation({
+    summary: 'Connect X',
+  })
+  @GuardPublic()
+  async connectX(@Body() body: ConnectXRequestDto): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectX(body);
+  }
+
+  @Post('connect/google')
+  @ApiOperation({
+    summary: 'Connect Google',
+  })
+  @GuardPublic()
+  async connectGoogle(@Body() body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectGoogle(body);
   }
 }

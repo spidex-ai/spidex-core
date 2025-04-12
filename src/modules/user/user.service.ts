@@ -36,7 +36,7 @@ export class UserService {
       },
     });
     if (isNullOrUndefined(user)) {
-      throw new BadRequestException({ validator_errors: EError.USER_NOT_EXIST, message: `UID ${id} is not found` });
+      throw new BadRequestException({ validatorErrors: EError.USER_NOT_EXIST, message: `UID ${id} is not found` });
     }
 
     return user;
@@ -52,7 +52,7 @@ export class UserService {
     if (user) {
       if (user.status != EUserStatus.ACTIVE) {
         throw new BadRequestException({
-          validator_errors: EError.USER_DEACTIVATED,
+          validatorErrors: EError.USER_DEACTIVATED,
         });
       }
       return user;
@@ -83,7 +83,7 @@ export class UserService {
     if (user) {
       if (user.status != EUserStatus.ACTIVE) {
         throw new BadRequestException({
-          validator_errors: EError.USER_DEACTIVATED,
+          validatorErrors: EError.USER_DEACTIVATED,
         });
       }
 
@@ -116,7 +116,7 @@ export class UserService {
     if (user) {
       if (user.status != EUserStatus.ACTIVE) {
         throw new BadRequestException({
-          validator_errors: EError.USER_DEACTIVATED,
+          validatorErrors: EError.USER_DEACTIVATED,
         });
       }
 
@@ -144,7 +144,7 @@ export class UserService {
       const referralUser = await this.userRepository.findOne({ where: { referralCode } });
       if (!referralUser) {
         throw new BadRequestException({
-          validator_errors: EError.REFERRAL_CODE_NOT_FOUND,
+          validatorErrors: EError.REFERRAL_CODE_NOT_FOUND,
         });
       }
 
@@ -165,12 +165,12 @@ export class UserService {
     if (updateProfileDto.username) {
       const usernameRegex = /^[a-zA-Z0-9]{6,20}$/;
       if (!usernameRegex.test(updateProfileDto.username)) {
-        throw new BadRequestException({ validator_errors: EError.INVALID_USERNAME, message: `Username ${updateProfileDto.username} is invalid` });
+        throw new BadRequestException({ validatorErrors: EError.INVALID_USERNAME, message: `Username ${updateProfileDto.username} is invalid` });
       }
 
       const user = await this.userRepository.findOneBy({ username: updateProfileDto.username, id: Not(userId) });
       if (user) {
-        throw new BadRequestException({ validator_errors: EError.USERNAME_ALREADY_EXISTS, message: `Username ${updateProfileDto.username} already exists` });
+        throw new BadRequestException({ validatorErrors: EError.USERNAME_ALREADY_EXISTS, message: `Username ${updateProfileDto.username} already exists` });
       }
     }
 
@@ -178,7 +178,7 @@ export class UserService {
     if (updateProfileDto.avatar) {
       const avatarRegex = /^https?:\/\/[^\s]+$/;
       if (!avatarRegex.test(updateProfileDto.avatar)) {
-        throw new BadRequestException({ validator_errors: EError.INVALID_AVATAR, message: `Avatar ${updateProfileDto.avatar} is invalid` });
+        throw new BadRequestException({ validatorErrors: EError.INVALID_AVATAR, message: `Avatar ${updateProfileDto.avatar} is invalid` });
       }
     }
 
@@ -201,7 +201,7 @@ export class UserService {
     const user = await this.userRepository.findOneBy({ walletAddress });
     if (!user) {
       throw new BadRequestException({
-        validator_errors: EError.USER_NOT_EXIST,
+        validatorErrors: EError.USER_NOT_EXIST,
         message: `User is not found`,
       });
     }

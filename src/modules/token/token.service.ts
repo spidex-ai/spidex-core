@@ -51,7 +51,7 @@ export class TokenService {
             throw new BadRequestException({
                 message: 'Get top mcap tokens failed',
                 data: error.response.data,
-                validator_errors: EError.TAPTOOLS_GET_TOP_MCAP_TOKENS_FAILED,
+                validatorErrors: EError.TAPTOOLS_GET_TOP_MCAP_TOKENS_FAILED,
             });
         }
     }
@@ -86,7 +86,7 @@ export class TokenService {
             throw new BadRequestException({
                 message: 'Get top volume tokens failed',
                 data: error.response.data,
-                validator_errors: EError.TAPTOOLS_GET_TOP_VOLUME_TOKENS_FAILED,
+                validatorErrors: EError.TAPTOOLS_GET_TOP_VOLUME_TOKENS_FAILED,
             });
         }
     }

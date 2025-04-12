@@ -23,12 +23,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       newDataResponse = newDataResponse?.error;
       excResponse = new exc.BadRequestException({
         success: false,
-        status_code: excResponse.status_code ? excResponse.status_code : HttpStatus.BAD_REQUEST,
+        statusCode: excResponse.statusCode ? excResponse.statusCode : HttpStatus.BAD_REQUEST,
         data: newDataResponse,
-        validator_errors: excResponse?.validator_errors,
+        validatorErrors: excResponse?.validatorErrors,
         message: excResponse.message,
       }).getResponse();
     }
-    response.status(excResponse.status_code).json(excResponse);
+    response.status(excResponse.statusCode).json(excResponse);
   }
 }

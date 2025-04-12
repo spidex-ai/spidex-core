@@ -7,6 +7,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '@shared/strategy/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { FirebaseModule } from 'external/firebase/firebase.module';
+import { XApiModule } from 'external/x/x-api.module';
 
 
 @Module({
@@ -24,6 +26,8 @@ import { AuthService } from './auth.service';
       inject: [ConfigService],
     }),
     UserModule,
+    FirebaseModule,
+    XApiModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

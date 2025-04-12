@@ -7,7 +7,7 @@ import axios from 'axios';
 
 @Injectable()
 export class VerifyRecaptchaGuard implements CanActivate {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -24,13 +24,13 @@ export class VerifyRecaptchaGuard implements CanActivate {
         return true;
       } else {
         throw new BadRequestException({
-          validator_errors: EError.VERIFY_RECAPTCHA_FAIL,
+          validatorErrors: EError.VERIFY_RECAPTCHA_FAIL,
         });
       }
     } catch (error) {
       console.error('Error verifying reCAPTCHA:', error.message);
       throw new BadRequestException({
-        validator_errors: EError.VERIFY_RECAPTCHA_FAIL,
+        validatorErrors: EError.VERIFY_RECAPTCHA_FAIL,
       });
     }
   }

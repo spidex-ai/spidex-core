@@ -12,26 +12,26 @@ import { LoggerService } from '@shared/modules/loggers/logger.service';
 
 export const defaultResponse: IResponse<[]> = {
   success: true,
-  status_code: HttpStatus.OK,
+  statusCode: HttpStatus.OK,
   message: '',
   data: null,
-  validator_errors: [],
+  validatorErrors: [],
 };
 
 export interface IResponse<T> {
-  status_code?: HttpStatus;
+  statusCode?: HttpStatus;
   data?: T;
   metadata?: {
     [key: string]: any;
   };
   message?: string | null;
   success?: boolean;
-  validator_errors?: any | any[];
+  validatorErrors?: any | any[];
 }
 export function createResponse<T>(data: any): IResponse<T> {
   delete data?.password;
   return {
-    status_code: data?.status_code ? data.status_code : HttpStatus.OK,
+    statusCode: data?.statusCode ? data.statusCode : HttpStatus.OK,
     data: data?.data || data || [],
     metadata: data?.meta
       ? { ...data.meta, timestamp: new Date() }
@@ -85,7 +85,7 @@ export class ResponseTransformInterceptor<T>
         const ctx = context.switchToHttp();
         const response = ctx.getResponse<Response>();
         const responseData = createResponse(data);
-        response.status(responseData.status_code);
+        response.status(responseData.statusCode);
         return createResponse(data);
       }),
     );

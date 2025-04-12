@@ -17,7 +17,7 @@ export class UserGuard implements CanActivate {
 
     if (!user) {
       throw new Unauthorized({
-        validator_errors: EError.UNAUTHORIZED,
+        validatorErrors: EError.UNAUTHORIZED,
       });
     }
 
@@ -32,11 +32,11 @@ export class UserGuard implements CanActivate {
       select: ['id', 'status'],
     });
 
-    if (!currentUser) throw new NotFound({ validator_errors: EError.USER_NOT_EXIST });
+    if (!currentUser) throw new NotFound({ validatorErrors: EError.USER_NOT_EXIST });
 
     if (currentUser.status === EUserStatus.INACTIVE)
       throw new BadRequestException({
-        validator_errors: EError.USER_DEACTIVATED,
+        validatorErrors: EError.USER_DEACTIVATED,
       });
 
     return true;

@@ -11,7 +11,7 @@ import { LoggerService } from '@shared/modules/loggers/logger.service';
 
 @Catch()
 export class UnknownExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly loggingService: LoggerService) {}
+  constructor(private readonly loggingService: LoggerService) { }
   private logger = this.loggingService.getLogger('unknown-exception');
 
   catch(exception: HttpException, host: ArgumentsHost) {
@@ -20,12 +20,10 @@ export class UnknownExceptionsFilter implements ExceptionFilter {
     this.logger.error(exception);
     const defaultResponse: IResponse<any> = {
       data: null,
-      status_code: HttpStatus.INTERNAL_SERVER_ERROR,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'Internal server error!',
       success: false,
     };
-    response.status(defaultResponse.status_code).json(defaultResponse);
+    response.status(defaultResponse.statusCode).json(defaultResponse);
   }
 }

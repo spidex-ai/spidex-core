@@ -46,14 +46,14 @@ export class UserQuestService {
     const quest = await this.questService.getQuestByType(EQuestType.DAILY_LOGIN)
     if (isNullOrUndefined(quest)) {
       throw new BadRequestException({
-        validator_errors: EError.QUEST_NOT_FOUND,
+        validatorErrors: EError.QUEST_NOT_FOUND,
         message: `UserQuestService::checkIn() | Quest not found`,
       })
     }
     const canCompleteDaily = await this.canCompleteDailyQuest(userId, quest.id)
     if (!canCompleteDaily) {
       throw new BadRequestException({
-        validator_errors: EError.USER_QUEST_CHECK_IN_ALREADY_COMPLETED,
+        validatorErrors: EError.USER_QUEST_CHECK_IN_ALREADY_COMPLETED,
         message: `UserQuestService::checkIn() | User quest check in already completed`,
       })
     }
@@ -79,14 +79,14 @@ export class UserQuestService {
     const quest = await this.questService.getQuestById(questId)
     if (!quest) {
       throw new BadRequestException({
-        validator_errors: EError.QUEST_NOT_FOUND,
+        validatorErrors: EError.QUEST_NOT_FOUND,
         message: `UserQuestService::triggerSocialQuest() | Quest not found`,
       })
     }
 
     if (quest.status !== EQuestStatus.ACTIVE) {
       throw new BadRequestException({
-        validator_errors: EError.QUEST_NOT_ACTIVE,
+        validatorErrors: EError.QUEST_NOT_ACTIVE,
         message: `UserQuestService::triggerSocialQuest() | Quest not active`,
       })
     }
@@ -99,21 +99,21 @@ export class UserQuestService {
     ]
     if (!socialQuestTypes.includes(quest.type)) {
       throw new BadRequestException({
-        validator_errors: EError.NOT_SOCIAL_QUEST,
+        validatorErrors: EError.NOT_SOCIAL_QUEST,
         message: `UserQuestService::triggerSocialQuest() | Social interact quest not found`,
       })
     }
 
     if (quest.startDate && quest.startDate > new Date()) {
       throw new BadRequestException({
-        validator_errors: EError.QUEST_NOT_START,
+        validatorErrors: EError.QUEST_NOT_START,
         message: `UserQuestService::triggerSocialQuest() | Social interact quest not started`,
       })
     }
 
     if (quest.endDate && quest.endDate < new Date()) {
       throw new BadRequestException({
-        validator_errors: EError.QUEST_ALREADY_ENDED,
+        validatorErrors: EError.QUEST_ALREADY_ENDED,
         message: `UserQuestService::triggerSocialQuest() | Social interact quest already ended`,
       })
     }
@@ -123,7 +123,7 @@ export class UserQuestService {
         const canCompleteOneTime = await this.canCompleteOneTimeQuest(userId, quest.id)
         if (!canCompleteOneTime) {
           throw new BadRequestException({
-            validator_errors: EError.USER_QUEST_ALREADY_COMPLETED,
+            validatorErrors: EError.USER_QUEST_ALREADY_COMPLETED,
             message: `UserQuestService::triggerSocialQuest() | User quest already completed`,
           })
         }
@@ -133,7 +133,7 @@ export class UserQuestService {
         const canCompleteDaily = await this.canCompleteDailyQuest(userId, quest.id)
         if (!canCompleteDaily) {
           throw new BadRequestException({
-            validator_errors: EError.USER_QUEST_ALREADY_COMPLETED,
+            validatorErrors: EError.USER_QUEST_ALREADY_COMPLETED,
             message: `UserQuestService::triggerSocialQuest() | User quest already completed`,
           })
         }
@@ -143,7 +143,7 @@ export class UserQuestService {
         const canCompleteMultiTime = await this.canCompleteMultiTimeQuest(userId, quest.id)
         if (!canCompleteMultiTime) {
           throw new BadRequestException({
-            validator_errors: EError.USER_QUEST_ALREADY_COMPLETED,
+            validatorErrors: EError.USER_QUEST_ALREADY_COMPLETED,
             message: `UserQuestService::triggerSocialQuest() | User quest already completed`,
           })
         }

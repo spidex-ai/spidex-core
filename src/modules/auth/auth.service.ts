@@ -9,12 +9,17 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestException, Unauthorized } from '@shared/exception/exception.resolver';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import {
+  ConnectGoogleRequestDto,
   ConnectWalletRequestDto,
+  ConnectXRequestDto,
   RefreshTokenRequestDto
 } from './dtos/auth-request.dto';
 
 import verifyDataSignature from '@cardano-foundation/cardano-verify-datasignature';
 import { AuthResponseOutputDto } from '@modules/auth/dtos/auth-response.dto';
+import { FirebaseAuthervice } from 'external/firebase/firebase-auth.service';
+import { XApiHttpService } from 'external/x/x-api.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +27,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly usersService: UserService,
     private readonly configService: ConfigService,
+    private readonly xClient: XApiHttpService,
+    private readonly firebaseAuthService: FirebaseAuthervice,
   ) { }
 
   getConnectWalletSignMessage() {
@@ -41,7 +48,7 @@ export class AuthService {
     );
     if (!verify) {
       throw new Unauthorized({
-        validator_errors: EError.UNAUTHORIZED,
+        validatorErrors: EError.UNAUTHORIZED,
         message: `AuthService::connectWallet() | Cannot connect: Invalid data`,
       });
     }
@@ -67,7 +74,7 @@ export class AuthService {
 
     if (!user || user.status !== EUserStatus.ACTIVE) {
       throw new BadRequestException({
-        validator_errors: EError.USER_NOT_EXIST,
+        validatorErrors: EError.USER_NOT_EXIST,
         message: `User not found or not active`,
       });
     }
@@ -99,7 +106,7 @@ export class AuthService {
 
       if (!verify) {
         throw new BadRequestException({
-          validator_errors: EError.VERIFY_SIGNATURE_FAILED,
+          validatorErrors: EError.VERIFY_SIGNATURE_FAILED,
           message: `AuthService::verifySignature() | Failed to verify signature`,
         });
       }
@@ -107,10 +114,98 @@ export class AuthService {
       return true;
     } catch (error) {
       throw new BadRequestException({
-        validator_errors: EError.VERIFY_SIGNATURE_FAILED,
+        validatorErrors: EError.VERIFY_SIGNATURE_FAILED,
         message: `AuthService::verifySignature() | Failed to verify signature: ${error}`,
       });
     }
   };
+
+
+  async connectX(body: ConnectXRequestDto): Promise<AuthResponseOutputDto> {
+    const { code, redirectUri, referralCode } = body;
+
+    const clientId = this.configService.get(EEnvKey.X_CLIENT_ID);
+    const clientSecret = this.configService.get(EEnvKey.X_CLIENT_SECRET);
+
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    const tokenResponse = await firstValueFrom(
+      this.xClient.post(
+        '/oauth2/token',
+        new URLSearchParams({
+          client_id: clientId,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+          code_verifier: 'challenge',
+        }),
+        {
+          headers: {
+            Authorization: `Basic ${basicAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      ),
+    ).catch(err => {
+      console.log(err);
+      throw new BadRequestException({
+        validatorErrors: EError.ERROR_NOT_CONNECT_TWITTER,
+        message: `AuthService::connectX() | Failed to connect X account: ${err}`,
+      });
+    });
+
+    const { access_token: xAccessToken } = tokenResponse.data;
+    const userResponse = await firstValueFrom(
+      this.xClient.get('/users/me', {
+        headers: { Authorization: `Bearer ${xAccessToken}`, 'Content-Type': 'application/json' },
+      }),
+    );
+
+    const data = userResponse?.data?.data;
+    const { id, username } = data;
+
+    if (!id || !username) {
+      throw new BadRequestException({
+        validatorErrors: EError.ERROR_NOT_CONNECT_TWITTER,
+        message: `AuthService::connectX() | Failed to connect X account: ${userResponse}`,
+      });
+    }
+
+    const user = await this.usersService.connectX({ id, username, referralCode });
+
+    const payload = { userId: user.id };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+    };
+  }
+
+  async connectGoogle(body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
+    const { idToken, referralCode } = body;
+
+    const { email, email_verified: emailVerified } = await this.firebaseAuthService.verifyIdToken(idToken);
+
+    if (!emailVerified) {
+      throw new BadRequestException({
+        validatorErrors: EError.USER_EMAIL_NOT_VERIFIED,
+        message: `AuthService::connectGoogle() | User email not verified`,
+      });
+    }
+
+
+    const user = await this.usersService.connectGoogle({ email, referralCode });
+
+    const payload = { userId: user.id };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+    };
+  }
 
 }
