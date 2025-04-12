@@ -165,4 +165,18 @@ export class SwapService {
         const response = await this.blockfrostService.getTransactionDetail(txHash);
         return response;
     }
+
+    async getTradingVolume(userId: number) {
+        const response = await this.swapTransactionRepository.createQueryBuilder('swap')
+            .where('swap.user_id = :userId', { userId })
+            .select(
+                'SUM(CASE WHEN swap.action = :buyAction THEN swap.token_b_amount ELSE swap.token_a_amount END) as "totalVolume"'
+            )
+            .setParameter('buyAction', SwapAction.BUY)
+            .setParameter('sellAction', SwapAction.SELL)
+            .groupBy('swap.user_id')
+            .getRawOne();
+
+        return response.totalVolume || 0;
+    }
 } 

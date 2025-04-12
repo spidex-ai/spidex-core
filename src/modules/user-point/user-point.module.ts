@@ -1,6 +1,7 @@
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
 import { UserPointRepository } from "@database/repositories/user-point.repository";
 import { AchievementModule } from "@modules/achivement/achivement.module";
+import { SwapModule } from "@modules/swap/swap.module";
 import { UserPointController } from "@modules/user-point/controllers/user-point.controller";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
 import { QuestModule } from "@modules/user-quest/quest.module";
@@ -18,7 +19,8 @@ import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
   forwardRef(() => QuestModule),
   forwardRef(() => UserReferralModule),
   forwardRef(() => AchievementModule),
-  forwardRef(() => UserModule)
+  forwardRef(() => UserModule),
+    SwapModule
   ],
   controllers: [UserPointController],
   providers: [UserPointService],

@@ -3,6 +3,7 @@ import { UserPointEntity } from "@database/entities/user-point.entity";
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
 import { UserPointRepository } from "@database/repositories/user-point.repository";
 import { AchievementService } from "@modules/achivement/services/achievement.service";
+import { SwapService } from "@modules/swap/swap.service";
 import { UserPointHistoryOutputDto, UserPointHistoryParamsDto } from "@modules/user-point/dtos/user-point-history.dto";
 import { LeaderboardStatsOutputDto, LeaderboardUserOutputDto } from "@modules/user-point/dtos/user-point-leaderboard.dto";
 import { UserPointInfoOutput, UserPointOutput } from "@modules/user-point/dtos/user-point-output.dto";
@@ -47,7 +48,9 @@ export class UserPointService {
     private readonly achievementService: AchievementService,
 
     @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService
+    private readonly userService: UserService,
+
+    private readonly swapService: SwapService,
   ) {
 
   }
@@ -189,11 +192,12 @@ export class UserPointService {
 
 
   async getMyInfo(userId: number): Promise<UserPointInfoOutput> {
-    const [point, referralInfo, achievements, nextAchievement] = await Promise.all([
+    const [point, referralInfo, achievements, nextAchievement, tradingVolume] = await Promise.all([
       this.getOrCreatePoint(userId),
       this.userReferralService.getReferralInfo(userId),
       this.achievementService.getUserAchievements(userId),
       this.achievementService.getNextAchievement(userId),
+      this.swapService.getTradingVolume(userId),
     ]);
 
 
@@ -203,6 +207,7 @@ export class UserPointService {
       referralInfo,
       achievements,
       nextAchievement,
+      tradingVolume,
     };
   }
 

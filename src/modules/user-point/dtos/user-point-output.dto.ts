@@ -34,4 +34,7 @@ export class UserPointInfoOutput {
 
   @ApiProperty()
   nextAchievement: NextAchievementOutput
+
+  @ApiProperty()
+  tradingVolume: number
 }
