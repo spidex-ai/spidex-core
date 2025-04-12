@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { QuestModule } from '@modules/user-quest/quest.module';
 import { SwapModule } from '@modules/swap/swap.module';
 import { TokenModule } from '@modules/token/token.module';
+import { PortfolioModule } from '@modules/portfolio/portfolio.module';
 export const MODULES = [
   UserModule,
   AuthModule,
@@ -15,5 +16,6 @@ export const MODULES = [
   UserPointModule,
   QuestModule,
   SwapModule,
-  TokenModule
+  TokenModule,
+  PortfolioModule
 ];

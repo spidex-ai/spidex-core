@@ -147,7 +147,6 @@ export class AuthService {
         },
       ),
     ).catch(err => {
-      console.log(err);
       throw new BadRequestException({
         validatorErrors: EError.ERROR_NOT_CONNECT_TWITTER,
         message: `AuthService::connectX() | Failed to connect X account: ${err}`,
