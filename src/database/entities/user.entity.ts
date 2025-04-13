@@ -43,15 +43,6 @@ export class UserEntity extends BaseExcludeDeletedAtEntity {
   @Column({ name: 'referral_code', nullable: true, default: null })
   referralCode: string;
 
-  @Column({ name: 'telegram_link', nullable: true, type: 'varchar' })
-  telegramLink: string;
-
-  @Column({ name: 'discord_link', nullable: true, default: null, type: 'varchar' })
-  discordLink: string;
-
-  @Column({ name: 'x_link', nullable: true, default: null, type: 'varchar' })
-  xLink: string;
-
   @OneToMany(() => UserPointLogEntity, userPointLog => userPointLog.user)
   userPointLogs: UserPointLogEntity[];
 }

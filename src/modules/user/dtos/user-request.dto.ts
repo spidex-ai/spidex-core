@@ -30,39 +30,6 @@ export class UpdateProfileDto {
   @Type(() => String)
   @IsString()
   avatar: string;
-
-  @ApiPropertyOptional({
-    description: 'twitter',
-    example: 'https://',
-  })
-  @Type(() => String)
-  @IsString()
-  @IsOptional()
-  @Expose()
-  @Matches(/^https:\/\//, { message: 'The URL must start with "https://".' })
-  xLink?: string;
-
-  @ApiPropertyOptional({
-    description: 'telegram',
-    example: 'https://t.me',
-  })
-  @Type(() => String)
-  @IsString()
-  @IsOptional()
-  @Expose()
-  @Matches(/^https:\/\/t.me/, { message: 'The URL must start with "https://t.me".' })
-  telegramLink?: string;
-
-  @ApiPropertyOptional({
-    description: 'discord',
-    example: 'https://discord.gg',
-  })
-  @Type(() => String)
-  @IsString()
-  @IsOptional()
-  @Expose()
-  @Matches(/^https:\/\/discord.gg/, { message: 'The URL must start with "https://discord.gg".' })
-  discordLink?: string;
 }
 
 export class UpdateStatusUserDto {
@@ -99,7 +66,7 @@ export class GetFollowingDto extends PageOptionsWithSearchDto {
   viewerId: number;
 }
 
-export class GetFollowerDto extends GetFollowingDto {}
+export class GetFollowerDto extends GetFollowingDto { }
 
 export class GetMyRepliesDto extends PageOptionsWithSearchDto {
   @ApiPropertyOptional()

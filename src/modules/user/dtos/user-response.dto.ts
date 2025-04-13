@@ -119,7 +119,7 @@ export class GetFollowingResponseDto {
   isFollowing: boolean;
 }
 
-export class GetFollowerResponseDto extends GetFollowingResponseDto {}
+export class GetFollowerResponseDto extends GetFollowingResponseDto { }
 
 export class FollowUserResponseDto {
   @ApiProperty()
@@ -209,30 +209,6 @@ export class UserProfileResponseDto {
   @ApiProperty()
   @Expose()
   status: string;
-
-  @ApiProperty()
-  @Expose()
-  xLink: string;
-
-  @ApiProperty()
-  @Expose()
-  discordLink: string;
-
-  @ApiProperty()
-  @Expose()
-  telegramLink: string;
-
-  @ApiProperty()
-  @Expose()
-  agentCount: number;
-
-  @ApiProperty()
-  @Expose()
-  totalUses: number;
-
-  @ApiProperty()
-  @Expose()
-  rating: number;
 }
 
 export class GetLoginManagementResponseDto {
