@@ -4,7 +4,13 @@ export interface BatchTokenCardanoInfo {
 
 export interface BatchTokenCardanoSubject {
     subject: string
-    logo: BatchTokenCardanoLogo
+    policy: string
+    logo?: BatchTokenCardanoLogo
+    name?: BatchTokenCardanoName
+    ticker?: BatchTokenCardanoTicker
+    description?: BatchTokenCardanoDescription
+    url?: BatchTokenCardanoUrl
+    decimals?: BatchTokenCardanoDecimals
 }
 
 
@@ -14,6 +20,35 @@ export interface BatchTokenCardanoLogo {
     value: string
 }
 
+export interface BatchTokenCardanoName {
+    signatures: BatchTokenCardanoSignature[]
+    sequenceNumber: number
+    value: string
+}
+
+export interface BatchTokenCardanoTicker {
+    signatures: BatchTokenCardanoSignature[]
+    sequenceNumber: number
+    value: string
+}
+
+export interface BatchTokenCardanoDescription {
+    signatures: BatchTokenCardanoSignature[]
+    sequenceNumber: number
+    value: string
+}
+
+export interface BatchTokenCardanoUrl {
+    signatures: BatchTokenCardanoSignature[]
+    sequenceNumber: number
+    value: string
+}
+
+export interface BatchTokenCardanoDecimals {
+    signatures: BatchTokenCardanoSignature[]
+    sequenceNumber: number
+    value: number
+}
 export interface BatchTokenCardanoSignature {
     signature: string
     publicKey: string

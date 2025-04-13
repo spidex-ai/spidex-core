@@ -1,35 +1,35 @@
+import { LOVELACE_TO_ADA_RATIO } from "@constants/cardano.constant";
+import { EEnvKey } from "@constants/env.constant";
 import { PortfolioAddressResponse, PortfolioTransactionResponse } from "@modules/portfolio/dtos/portfolio-response.dto";
 import { GetPortfolioTransactionsQuery } from "@modules/portfolio/dtos/portfolio.request.dto";
+import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Decimal } from "decimal.js";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
 import { TaptoolsService } from "external/taptools/taptools.service";
-import { TokenCardanoService } from "external/token-cardano/cardano-token.service";
 import { keyBy } from "lodash";
-import { Decimal } from "decimal.js";
-import { LOVELACE_TO_ADA_RATIO } from "@constants/cardano.constant";
-import { ConfigService } from "@nestjs/config";
-import { EEnvKey } from "@constants/env.constant";
 @Injectable()
 export class PortfolioService {
     constructor(
         private readonly blockfrostService: BlockfrostService,
         private readonly taptoolsService: TaptoolsService,
         private readonly tokenPriceService: TokenPriceService,
-        private readonly tokenCardanoService: TokenCardanoService,
         private readonly configService: ConfigService,
+        private readonly tokenMetaService: TokenMetaService,
     ) { }
 
     async getPortfolio(address: string): Promise<PortfolioAddressResponse> {
         const addressDetail = await this.blockfrostService.getAddressDetail(address);
-        const tokenIds = addressDetail.amount.map(amount => amount.unit);
+        const tokenIds = addressDetail.amount.map(amount => amount.unit).filter(unit => unit !== 'lovelace');
         const [tokenPrices, adaPrice, tokenDetails] = await Promise.all([
             this.taptoolsService.getTokenPrices(tokenIds),
             this.tokenPriceService.getAdaPriceInUSD(),
-            this.tokenCardanoService.batchTokenInfo(tokenIds, ['name', 'logo', 'ticker']),
+            this.tokenMetaService.getTokensMetadata(tokenIds, ['name', 'logo', 'ticker']),
         ]);
 
-        const tokenDetailsMap = keyBy(tokenDetails.subjects, 'subject');
+        const tokenDetailsMap = keyBy(tokenDetails, 'unit');
         const amount = addressDetail.amount.map(amount => {
             if (amount.unit === 'lovelace') {
                 const totalPrice = new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toNumber();
@@ -51,15 +51,16 @@ export class PortfolioService {
                 unit: amount.unit,
                 quantity: new Decimal(amount.quantity).toString(),
                 price: tokenPrices[amount.unit],
-                ticker: tokenDetail?.ticker?.value,
-                name: tokenDetail?.name?.value,
+                ticker: tokenDetail?.ticker,
+                name: tokenDetail?.name,
                 totalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).toNumber(),
                 usdPrice: new Decimal(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
                 usdTotalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
-                logo: tokenDetail?.logo?.value,
+                logo: tokenDetail?.logo,
             }
 
         }).filter(item => item.logo && item.ticker && item.name);
+
         return {
             address: addressDetail.address,
             amount,

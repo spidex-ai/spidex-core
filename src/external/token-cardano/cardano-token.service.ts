@@ -9,10 +9,9 @@ import {
 export class TokenCardanoService {
     constructor(private readonly client: HttpService) { }
 
-    async batchTokenInfo(tokens: string[], properties: string[]): Promise<BatchTokenCardanoInfo> {
+    async batchTokenInfo(tokens: string[]): Promise<BatchTokenCardanoInfo> {
         const response = await firstValueFrom(this.client.post<BatchTokenCardanoInfo>('metadata/query', {
             subjects: tokens,
-            properties: properties
         }));
         return response.data;
     }

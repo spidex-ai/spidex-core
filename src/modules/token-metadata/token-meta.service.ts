@@ -1,0 +1,94 @@
+import { TokenMetadataRepository } from "@database/repositories/token-metadata.repository";
+import { Injectable } from "@nestjs/common";
+import { S3Service } from "external/aws/s3/s3.service";
+import { TokenCardanoService } from "external/token-cardano/cardano-token.service";
+import { pick } from "lodash";
+import { In } from "typeorm";
+@Injectable()
+export class TokenMetaService {
+    constructor(
+        private readonly tokenMetadataRepository: TokenMetadataRepository,
+        private readonly s3Service: S3Service,
+        private readonly tokenCardanoService: TokenCardanoService,
+    ) { }
+
+    async getTokenMetadata(unit: string, properties: string[]) {
+        const pickProperties = ['unit'].concat(properties);
+        let tokenMetadata = await this.tokenMetadataRepository.findOne({ where: { unit } });
+        if (!tokenMetadata) {
+            const token = await this.tokenCardanoService.tokenInfo(unit);
+            if (!token) {
+                return null;
+            }
+
+            let logo
+            if (token.logo?.value) {
+                logo = await this.uploadTokenLogo(token.subject, token.logo.value);
+            }
+
+            tokenMetadata = this.tokenMetadataRepository.create({
+                unit: token.subject,
+                name: token.name?.value,
+                logo,
+                ticker: token.ticker?.value,
+                policy: token.policy,
+                description: token.description?.value,
+                url: token.url?.value,
+                decimals: token.decimals?.value,
+            });
+
+            await this.tokenMetadataRepository.save(tokenMetadata);
+        }
+
+        return pick(tokenMetadata, pickProperties);
+    }
+
+    async getTokensMetadata(units: string[], properties: string[]) {
+        const pickProperties = ['unit'].concat(properties);
+        const tokenMetadata = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
+        const missingUnits = units.filter(unit => !tokenMetadata.some(tokenMetadata => tokenMetadata.unit === unit));
+        let savedTokenMetadata
+        if (missingUnits.length > 0) {
+            const missingTokenMetadata = await this.tokenCardanoService.batchTokenInfo(missingUnits);
+            if (missingTokenMetadata?.subjects?.length > 0) {
+                savedTokenMetadata = await this.tokenMetadataRepository.save(await Promise.all(missingTokenMetadata.subjects.map(async (tokenMetadata) => {
+
+                    let logo
+                    if (tokenMetadata.logo?.value) {
+                        logo = await this.uploadTokenLogo(tokenMetadata.subject, tokenMetadata.logo.value);
+                    }
+
+
+                    const token = this.tokenMetadataRepository.create({
+                        unit: tokenMetadata.subject,
+                        name: tokenMetadata.name?.value,
+                        logo,
+                        ticker: tokenMetadata.ticker?.value,
+                        policy: tokenMetadata.policy,
+                        description: tokenMetadata.description?.value,
+                        url: tokenMetadata.url?.value,
+                        decimals: tokenMetadata.decimals?.value,
+                    });
+
+                    return token;
+                })));
+            }
+        }
+        if (savedTokenMetadata) {
+            tokenMetadata.push(...savedTokenMetadata);
+        }
+
+        return tokenMetadata.map(tokenMetadata => {
+            if (properties.length === 0) {
+                return tokenMetadata;
+            }
+
+            return pick(tokenMetadata, pickProperties);
+        });
+    }
+
+    async uploadTokenLogo(unit: string, logo: string) {
+        const logoUrl = await this.s3Service.uploadS3(Buffer.from(logo, 'base64'), `logo/${unit}.png`, 'image/png', 'token-metadata');
+        return logoUrl;
+    }
+}

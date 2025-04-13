@@ -1,6 +1,8 @@
 import { TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
 import { EError } from "@constants/error.constant";
+import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
+import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
 import { TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
 import { TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
@@ -12,15 +14,13 @@ import Decimal from "decimal.js";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
 import { TaptoolsService } from "external/taptools/taptools.service";
 import { TopToken, TopTokenMcap } from "external/taptools/types";
-import { TokenCardanoService } from "external/token-cardano/cardano-token.service";
-import { BatchTokenCardanoSubject } from "external/token-cardano/types";
 import { keyBy } from "lodash";
 
 @Injectable()
 export class TokenService {
     constructor(
         private readonly taptoolsService: TaptoolsService,
-        private readonly tokenCardanoService: TokenCardanoService,
+        private readonly tokenMetaService: TokenMetaService,
         private readonly tokenPriceService: TokenPriceService,
         private readonly swapService: SwapService,
         private readonly blockfrostService: BlockfrostService,
@@ -40,18 +40,18 @@ export class TokenService {
             const tokenIds = data.map((token) => token.unit);
 
             const [tokenDetails, tokenPrice] = await Promise.all([
-                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo', 'name', 'ticker']),
+                this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
                 this.tokenPriceService.getAdaPriceInUSD()
             ]);
 
-            const tokenDetailsMap = keyBy<BatchTokenCardanoSubject>(tokenDetails.subjects, 'subject');
+            const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
 
             const response = data.map((token) => ({
                 ...token,
                 usdPrice: token.price * tokenPrice,
-                logo: tokenDetailsMap[token.unit]?.logo?.value,
-                name: tokenDetailsMap[token.unit]?.name?.value,
-                ticker: tokenDetailsMap[token.unit]?.ticker?.value
+                logo: tokenDetailsMap[token.unit]?.logo,
+                name: tokenDetailsMap[token.unit]?.name,
+                ticker: tokenDetailsMap[token.unit]?.ticker
             }));
 
             await this.cache.set(cacheKey, response, TOP_MCAP_TOKENS_CACHE_TTL);
@@ -77,18 +77,18 @@ export class TokenService {
             const tokenIds = data.map((token) => token.unit);
 
             const [tokenDetails, tokenPrice] = await Promise.all([
-                this.tokenCardanoService.batchTokenInfo(tokenIds, ['logo', 'name', 'ticker']),
+                this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
                 this.tokenPriceService.getAdaPriceInUSD()
             ]);
 
-            const tokenDetailsMap = keyBy<BatchTokenCardanoSubject>(tokenDetails.subjects, 'subject');
+            const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
 
             const response = data.map((token) => ({
                 ...token,
                 usdPrice: token.price * tokenPrice,
-                logo: tokenDetailsMap[token.unit]?.logo?.value,
-                name: tokenDetailsMap[token.unit]?.name?.value,
-                ticker: tokenDetailsMap[token.unit]?.ticker?.value
+                logo: tokenDetailsMap[token.unit]?.logo,
+                name: tokenDetailsMap[token.unit]?.name,
+                ticker: tokenDetailsMap[token.unit]?.ticker
             }));
 
             await this.cache.set(cacheKey, response, TOP_VOLUME_TOKENS_CACHE_TTL);
