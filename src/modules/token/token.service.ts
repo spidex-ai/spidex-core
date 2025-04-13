@@ -4,7 +4,7 @@ import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
 import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
-import { TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenSearchRequest, TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
 import { TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
@@ -12,9 +12,11 @@ import { BadRequestException } from "@shared/exception";
 import { Cache } from "cache-manager";
 import Decimal from "decimal.js";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
+import { DexhunterService } from "external/dexhunter/dexhunter.service";
 import { TaptoolsService } from "external/taptools/taptools.service";
+import { BatchTokenCardanoSubject } from "external/token-cardano/types";
 import { TopToken, TopTokenMcap } from "external/taptools/types";
-import { keyBy } from "lodash";
+import { keyBy, map } from "lodash";
 
 @Injectable()
 export class TokenService {
@@ -24,6 +26,7 @@ export class TokenService {
         private readonly tokenPriceService: TokenPriceService,
         private readonly swapService: SwapService,
         private readonly blockfrostService: BlockfrostService,
+        private readonly dexHunterService: DexhunterService,
         @Inject(CACHE_MANAGER)
         private readonly cache: Cache
     ) { }
@@ -171,5 +174,28 @@ export class TokenService {
             usdTotalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).mul(usdPrice).toNumber()
         }));
         return data;
+    }
+
+    async searchTokens(request: TokenSearchRequest) {
+        const { query, verified, limit, page } = request;
+        console.log({ query })
+        const data = await this.dexHunterService.searchToken(query, verified, page, limit);
+        const tokenIds = map(data, 'token_id');
+        const [tokenDetails, adaPrice, tokenPrices] = await Promise.all([
+            this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'ticker', 'name']),
+            this.tokenPriceService.getAdaPriceInUSD(),
+            this.taptoolsService.getTokenPrices(tokenIds)
+        ]);
+        const mapTokenWithDetails = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
+        const tokensWithDetails = map(data, (token) => ({
+            ...token,
+            name: mapTokenWithDetails[token.token_id]?.name,
+            ticker: mapTokenWithDetails[token.token_id]?.ticker,
+            logo: mapTokenWithDetails[token.token_id]?.logo,
+            unit: token.token_id,
+            price: tokenPrices[token.token_id],
+            usdPrice: tokenPrices[token.token_id] * adaPrice,
+        }));
+        return tokensWithDetails;
     }
 }

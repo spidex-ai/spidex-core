@@ -3,12 +3,21 @@ import { TokenService } from "./token.service";
 import { ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GuardPublic } from "@shared/decorators/auth.decorator";
 import { TokenStatsResponse } from "@modules/token/dtos/token-response.dto";
-import { TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenSearchRequest, TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
 
 @Controller('tokens')
 @ApiTags('Tokens')
 export class TokenController {
     constructor(private readonly tokenService: TokenService) { }
+
+    @Get('search')
+    @GuardPublic()
+    @ApiQuery({ name: 'query', type: String, required: true, description: 'Query to search for' })
+    async searchTokens(@Query() request: TokenSearchRequest) {
+        return this.tokenService.searchTokens(request);
+    }
+
+
 
     @Get('top/mcap')
     @GuardPublic()

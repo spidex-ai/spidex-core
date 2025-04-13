@@ -1,4 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { PaginationDto } from "@shared/dtos/page-meta.dto";
+import { Transform } from "class-transformer";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export enum ETimeFrame {
     ONE_HOUR = '1h',
@@ -10,22 +13,32 @@ export enum ETimeFrame {
     ALL = 'all',
 }
 
-export class TokenTopTradersRequest {
+export class TokenTopTradersRequest extends PaginationDto {
     @ApiProperty({
         description: 'Time frame',
         example: ETimeFrame.ONE_HOUR,
     })
+    @IsEnum(ETimeFrame)
+    @IsNotEmpty()
     timeFrame: ETimeFrame;
+}
+
+
+export class TokenSearchRequest extends PaginationDto {
+    @ApiProperty({
+        description: 'Query',
+        example: 'token',
+    })
+    @IsString()
+    @IsNotEmpty()
+    query: string;
 
     @ApiProperty({
-        description: 'Limit',
-        example: 10,
+        description: 'Verified',
+        example: true,
     })
-    limit: number;
-
-    @ApiProperty({
-        description: 'Page',
-        example: 1,
-    })
-    page: number;
+    @IsBoolean()
+    @IsOptional()
+    @Transform(({ value }) => value === 'true')
+    verified: boolean;
 }

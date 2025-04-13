@@ -5,10 +5,11 @@ import { TokenController } from "@modules/token/token.controller";
 import { TokenService } from "@modules/token/token.service";
 import { Module } from "@nestjs/common";
 import { BlockfrostModule } from "external/blockfrost/blockfrost.module";
+import { DexhunterModule } from "external/dexhunter/dexhunter.module";
 import { TaptoolsModule } from "external/taptools/taptools.module";
 
 @Module({
-    imports: [TaptoolsModule, TokenPriceModule, TokenMetaModule, SwapModule, BlockfrostModule],
+    imports: [TaptoolsModule, TokenPriceModule, TokenMetaModule, SwapModule, BlockfrostModule, DexhunterModule],
     providers: [TokenService],
     exports: [TokenService],
     controllers: [TokenController],
