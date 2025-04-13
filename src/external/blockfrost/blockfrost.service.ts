@@ -8,7 +8,7 @@ export class BlockfrostService {
     constructor(private readonly client: HttpService) { }
 
     async getAddressDetail(address: string) {
-        const response = await firstValueFrom(this.client.get<BlockfrostAddressDetail>(`addresses/${address}`));
+        const response = await firstValueFrom(this.client.get<BlockfrostAddressDetail>(`addresses/${address}/extended`));
         return response.data;
     }
 

@@ -177,6 +177,6 @@ export class SwapService {
             .groupBy('swap.user_id')
             .getRawOne();
 
-        return response.totalVolume || 0;
+        return response?.totalVolume || 0;
     }
 } 
