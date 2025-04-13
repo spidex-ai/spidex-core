@@ -256,6 +256,6 @@ export class UserPointService {
   }
 
   async getPointLogsByReferralIds(referralIds: number[], page: number, limit: number): Promise<[UserPointLogEntity[], number]> {
-    return this.userPointLogRepository.findAndCount({ where: { referralId: In(referralIds), }, relations: ['referral', 'user'], skip: (page - 1) * limit, take: limit });
+    return this.userPointLogRepository.findAndCount({ where: { referralId: In(referralIds), }, relations: ['referral', 'referral.user'], skip: (page - 1) * limit, take: limit });
   }
 }
