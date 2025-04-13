@@ -39,7 +39,7 @@ export class AuthService {
     return this.usersService.getUserById(userId);
   }
 
-  async connectWallet(connectWalletInput: ConnectWalletRequestDto): Promise<AuthResponseOutputDto> {
+  async connectWallet(connectWalletInput: ConnectWalletRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
     const { referralCode } = connectWalletInput;
     const verify = await this.verifySignature(
       connectWalletInput.publicKey,
@@ -53,7 +53,7 @@ export class AuthService {
       });
     }
 
-    const user = await this.usersService.connectWallet({ ...connectWalletInput, referralCode });
+    const user = await this.usersService.connectWallet({ ...connectWalletInput, referralCode }, userId);
     const payload = { walletAddress: connectWalletInput.address, userId: user.id };
     const { accessToken, refreshToken } = await this.getTokens(payload);
 
@@ -121,7 +121,7 @@ export class AuthService {
   };
 
 
-  async connectX(body: ConnectXRequestDto): Promise<AuthResponseOutputDto> {
+  async connectX(body: ConnectXRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
     const { code, redirectUri, referralCode } = body;
 
     const clientId = this.configService.get(EEnvKey.X_CLIENT_ID);
@@ -170,7 +170,7 @@ export class AuthService {
       });
     }
 
-    const user = await this.usersService.connectX({ id, username, referralCode });
+    const user = await this.usersService.connectX({ id, username, referralCode }, userId);
 
     const payload = { userId: user.id };
     const { accessToken, refreshToken } = await this.getTokens(payload);
@@ -182,7 +182,7 @@ export class AuthService {
     };
   }
 
-  async connectGoogle(body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
+  async connectGoogle(body: ConnectGoogleRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
     const { idToken, referralCode } = body;
 
     const { email, email_verified: emailVerified } = await this.firebaseAuthService.verifyIdToken(idToken);
@@ -195,7 +195,7 @@ export class AuthService {
     }
 
 
-    const user = await this.usersService.connectGoogle({ email, referralCode });
+    const user = await this.usersService.connectGoogle({ email, referralCode }, userId);
 
     const payload = { userId: user.id };
     const { accessToken, refreshToken } = await this.getTokens(payload);

@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
-import { AuthUserGuard, GuardPublic } from '@shared/decorators/auth.decorator';
+import { AuthUserGuard, GuardPublic, GuardPublicOrAuth } from '@shared/decorators/auth.decorator';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import { AuthService } from './auth.service';
 import {
@@ -18,24 +18,25 @@ import {
 
 @Controller('auth')
 @ApiTags('Auth')
+@ApiBearerAuth()
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Get('connect-wallet/sign-message')
-  @GuardPublic()
+  @GuardPublicOrAuth()
   getConnectWalletPublicKey() {
     return this.authService.getConnectWalletSignMessage();
   }
 
   @Post('connect-wallet')
-  @GuardPublic()
+  @GuardPublicOrAuth()
   @ApiResponse({
     type: AuthResponseOutputDto,
     status: HttpStatus.OK,
     description: 'Successful',
   })
-  async connectWallet(@Body() connectWalletInput: ConnectWalletRequestDto) {
-    return this.authService.connectWallet(connectWalletInput);
+  async connectWallet(@AuthUser() user: IJwtPayload, @Body() connectWalletInput: ConnectWalletRequestDto) {
+    return this.authService.connectWallet(connectWalletInput, user?.userId);
   }
 
   @Get('me')
@@ -65,17 +66,17 @@ export class AuthController {
   @ApiOperation({
     summary: 'Connect X',
   })
-  @GuardPublic()
-  async connectX(@Body() body: ConnectXRequestDto): Promise<AuthResponseOutputDto> {
-    return await this.authService.connectX(body);
+  @GuardPublicOrAuth()
+  async connectX(@AuthUser() user: IJwtPayload, @Body() body: ConnectXRequestDto): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectX(body, user?.userId);
   }
 
   @Post('connect/google')
   @ApiOperation({
     summary: 'Connect Google',
   })
-  @GuardPublic()
-  async connectGoogle(@Body() body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
-    return await this.authService.connectGoogle(body);
+  @GuardPublicOrAuth()
+  async connectGoogle(@AuthUser() user: IJwtPayload, @Body() body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectGoogle(body, user?.userId);
   }
 }

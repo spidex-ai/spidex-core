@@ -42,99 +42,178 @@ export class UserService {
     return user;
   }
 
-  async connectWallet(connectWalletInput: ConnectWalletRequestDto) {
-    const { address: walletAddress } = connectWalletInput;
-    const user = await this.userRepository.findOne({
-      where: {
+  async connectWallet(connectWalletInput: ConnectWalletRequestDto, userId?: number) {
+    if (userId) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new BadRequestException({
+          validatorErrors: EError.USER_NOT_EXIST,
+        });
+      }
+
+      if (user.walletAddress) {
+        throw new BadRequestException({
+          validatorErrors: EError.ALREADY_CONNECTED_WALLET,
+        });
+      }
+
+      const existingUser = await this.userRepository.findOne({ where: { walletAddress: connectWalletInput.address } });
+      if (existingUser) {
+        throw new BadRequestException({
+          validatorErrors: EError.WALLET_ADDRESS_USED,
+        });
+      }
+
+      user.walletAddress = connectWalletInput.address;
+      await this.userRepository.save(user);
+      return user;
+    } else {
+      const { address: walletAddress } = connectWalletInput;
+      const user = await this.userRepository.findOne({
+        where: {
+          walletAddress,
+        },
+      });
+      if (user) {
+        if (user.status != EUserStatus.ACTIVE) {
+          throw new BadRequestException({
+            validatorErrors: EError.USER_DEACTIVATED,
+          });
+        }
+        return user;
+      }
+
+      const newUser = await this.userRepository.create({
         walletAddress,
-      },
-    });
-    if (user) {
-      if (user.status != EUserStatus.ACTIVE) {
-        throw new BadRequestException({
-          validatorErrors: EError.USER_DEACTIVATED,
-        });
-      }
-      return user;
+        status: EUserStatus.ACTIVE,
+        username: getRandomUserName(),
+        referralCode: this.generateReferralCode(),
+      });
+
+      await this.createUser(newUser, {
+        referralCode: connectWalletInput.referralCode,
+      });
+
+      return newUser;
     }
-
-    const newUser = await this.userRepository.create({
-      walletAddress,
-      status: EUserStatus.ACTIVE,
-      username: getRandomUserName(),
-      referralCode: this.generateReferralCode(),
-    });
-
-    await this.createUser(newUser, {
-      referralCode: connectWalletInput.referralCode,
-    });
-
-    return newUser;
   }
 
-  async connectX(connectXInput: ConnectXBodyDto) {
+  async connectX(connectXInput: ConnectXBodyDto, userId?: number) {
     const { id, username } = connectXInput;
-    const user = await this.userRepository.findOne({
-      where: {
-        xId: id,
-      },
-    });
-
-    if (user) {
-      if (user.status != EUserStatus.ACTIVE) {
+    if (userId) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
         throw new BadRequestException({
-          validatorErrors: EError.USER_DEACTIVATED,
+          validatorErrors: EError.USER_NOT_EXIST,
         });
       }
 
+      if (user.xId) {
+        throw new BadRequestException({
+          validatorErrors: EError.ALREADY_CONNECTED_X,
+        });
+      }
+
+      const existingUser = await this.userRepository.findOne({ where: { xId: id } });
+      if (existingUser) {
+        throw new BadRequestException({
+          validatorErrors: EError.X_USERNAME_USED,
+        });
+      }
+
+      user.xId = id;
+      user.xUsername = username;
+      await this.userRepository.save(user);
       return user;
+
+    } else {
+      const user = await this.userRepository.findOne({
+        where: {
+          xId: id,
+        },
+      });
+
+      if (user) {
+        if (user.status != EUserStatus.ACTIVE) {
+          throw new BadRequestException({
+            validatorErrors: EError.USER_DEACTIVATED,
+          });
+        }
+
+        return user;
+      }
+
+      const newUser = await this.userRepository.create({
+        status: EUserStatus.ACTIVE,
+        username: getRandomUserName(),
+        xId: id,
+        xUsername: username,
+        referralCode: this.generateReferralCode(),
+      });
+
+      await this.createUser(newUser, {
+        referralCode: connectXInput.referralCode,
+      });
+
+      return newUser;
     }
-
-    const newUser = await this.userRepository.create({
-      status: EUserStatus.ACTIVE,
-      username: getRandomUserName(),
-      xId: id,
-      xUsername: username,
-      referralCode: this.generateReferralCode(),
-    });
-
-    await this.createUser(newUser, {
-      referralCode: connectXInput.referralCode,
-    });
-
-    return newUser;
   }
 
-  async connectGoogle(connectGoogleBody: ConnectGoogleBodyDto) {
+  async connectGoogle(connectGoogleBody: ConnectGoogleBodyDto, userId?: number) {
     const { email, referralCode } = connectGoogleBody;
-    const user = await this.userRepository.findOne({
-      where: {
-        email,
-      },
-    });
-
-    if (user) {
-      if (user.status != EUserStatus.ACTIVE) {
+    if (userId) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
         throw new BadRequestException({
-          validatorErrors: EError.USER_DEACTIVATED,
+          validatorErrors: EError.USER_NOT_EXIST,
+        });
+      }
+      if (user.email) {
+        throw new BadRequestException({
+          validatorErrors: EError.GOOGLE_EMAIL_USED,
         });
       }
 
+      const existingUser = await this.userRepository.findOne({ where: { email } });
+      if (existingUser) {
+        throw new BadRequestException({
+          validatorErrors: EError.GOOGLE_EMAIL_USED,
+        });
+      }
+
+      user.email = email;
+      await this.userRepository.save(user);
       return user;
+    } else {
+      const user = await this.userRepository.findOne({
+        where: {
+          email,
+        },
+      });
+
+      if (user) {
+        if (user.status != EUserStatus.ACTIVE) {
+          throw new BadRequestException({
+            validatorErrors: EError.USER_DEACTIVATED,
+          });
+        }
+
+        return user;
+      }
+
+      const newUser = await this.userRepository.create({
+        email,
+        status: EUserStatus.ACTIVE,
+        username: getRandomUserName(),
+        referralCode: this.generateReferralCode(),
+      });
+
+      await this.createUser(newUser, {
+        referralCode,
+      });
+
+      return newUser;
     }
-
-    const newUser = await this.userRepository.create({
-      email,
-      status: EUserStatus.ACTIVE,
-      username: getRandomUserName(),
-      referralCode: this.generateReferralCode(),
-    });
-
-    await this.createUser(newUser, {
-      referralCode,
-    });
-
-    return newUser;
   }
 
   @Transactional()
