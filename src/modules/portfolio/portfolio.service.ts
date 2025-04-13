@@ -59,7 +59,7 @@ export class PortfolioService {
                 logo: tokenDetail?.logo?.value,
             }
 
-        })
+        }).filter(item => item.logo && item.ticker && item.name);
         return {
             address: addressDetail.address,
             amount,
