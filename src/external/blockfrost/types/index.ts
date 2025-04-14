@@ -1,9 +1,20 @@
-export interface BlockfrostAddressDetail {
+
+export class BlockfrostAddressDetail {
     address: string
     amount: BlockfrostAmount[]
     stake_address: string
     type: string
     script: boolean
+
+    static empty(address) {
+        return {
+            address,
+            amount: [],
+            stake_address: "",
+            type: "",
+            script: false,
+        }
+    }
 }
 
 export interface BlockfrostAmount {
