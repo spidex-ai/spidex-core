@@ -22,6 +22,9 @@ export class PortfolioService {
 
     async getPortfolio(address: string): Promise<PortfolioAddressResponse> {
         const addressDetail = await this.blockfrostService.getAddressDetail(address);
+        if (!addressDetail) {
+            return {}
+        }
         const tokenIds = addressDetail.amount.map(amount => amount.unit).filter(unit => unit !== 'lovelace');
         const [tokenPrices, adaPrice, tokenDetails] = await Promise.all([
             this.taptoolsService.getTokenPrices(tokenIds),

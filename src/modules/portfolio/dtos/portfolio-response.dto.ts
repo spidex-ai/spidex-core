@@ -32,25 +32,25 @@ class BlockfrostAmountDto {
 
 export class PortfolioAddressResponse {
     @ApiProperty()
-    address: string;
+    address?: string;
 
     @ApiProperty({ type: () => [BlockfrostAmountDto] })
-    amount: BlockfrostAmountDto[];
+    amount?: BlockfrostAmountDto[];
 
     @ApiProperty()
-    stakeAddress: string;
+    stakeAddress?: string;
 
     @ApiProperty()
-    type: string;
+    type?: string;
 
     @ApiProperty()
-    script: boolean;
+    script?: boolean;
 
     @ApiProperty()
-    totalPrice: number;
+    totalPrice?: number;
 
     @ApiProperty()
-    totalUsdPrice: number;
+    totalUsdPrice?: number;
 }
 
 export class PortfolioTransactionResponse {

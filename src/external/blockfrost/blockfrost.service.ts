@@ -7,9 +7,16 @@ import { firstValueFrom } from "rxjs";
 export class BlockfrostService {
     constructor(private readonly client: HttpService) { }
 
-    async getAddressDetail(address: string) {
-        const response = await firstValueFrom(this.client.get<BlockfrostAddressDetail>(`addresses/${address}/extended`));
-        return response.data;
+    async getAddressDetail(address: string): Promise<BlockfrostAddressDetail | null> {
+        try {
+            const response = await firstValueFrom(this.client.get<BlockfrostAddressDetail>(`addresses/${address}`));
+            return response.data;
+        } catch (error) {
+            if (error.response.status === 404) {
+                return null
+            }
+            throw error
+        }
     }
 
     async getTransactions(address: string, page: number = 1, count: number = 20, order: 'asc' | 'desc' = 'desc') {
