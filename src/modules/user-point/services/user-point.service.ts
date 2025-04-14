@@ -1,9 +1,10 @@
-import { UserPointLogEntity } from "@database/entities/user-point-log.entity";
+import { EUserPointLogType, UserPointLogEntity } from "@database/entities/user-point-log.entity";
 import { UserPointEntity } from "@database/entities/user-point.entity";
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
 import { UserPointRepository } from "@database/repositories/user-point.repository";
 import { AchievementService } from "@modules/achivement/services/achievement.service";
 import { SwapService } from "@modules/swap/swap.service";
+import { SystemConfigService } from "@modules/system-config/system-config.service";
 import { UserPointHistoryOutputDto, UserPointHistoryParamsDto } from "@modules/user-point/dtos/user-point-history.dto";
 import { LeaderboardStatsOutputDto, LeaderboardUserOutputDto } from "@modules/user-point/dtos/user-point-leaderboard.dto";
 import { UserPointInfoOutput, UserPointOutput } from "@modules/user-point/dtos/user-point-output.dto";
@@ -50,7 +51,9 @@ export class UserPointService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
 
+    @Inject(forwardRef(() => SwapService))
     private readonly swapService: SwapService,
+    private readonly systemConfigService: SystemConfigService,
   ) {
 
   }
@@ -63,9 +66,34 @@ export class UserPointService {
 
   @Transactional()
   async handleUserPointChangeEvent(data: IUserPointChangeEvent) {
-    const { type, } = data;
+    const { type, userId, amount } = data;
     switch (type) {
       case EUserPointType.CORE:
+        const referral = await this.userReferralService.getReferralByUserId(userId);
+        if (referral) {
+          const referralRate = await this.systemConfigService.getReferralPointRate();
+          const bonusPoint = new BigNumber(amount).multipliedBy(referralRate)
+
+          await Promise.all([
+            this.emitUserPointChangeEvent({
+              logType: EUserPointLogType.FROM_REFERRAL,
+              type: EUserPointType.REFERRAL,
+              amount: bonusPoint.toString(),
+              userId: referral.referredBy,
+              referralId: referral.id,
+              plusToReferral: true,
+            }),
+
+            this.emitUserPointChangeEvent({
+              logType: EUserPointLogType.FROM_REFERRAL,
+              type: EUserPointType.REFERRAL,
+              amount: bonusPoint.toString(),
+              userId: userId,
+              referralId: referral.id,
+            }),
+          ])
+
+        }
         await this.increasePoint(data);
         break;
       case EUserPointType.REFERRAL:
@@ -83,28 +111,16 @@ export class UserPointService {
   ): Promise<{ point: UserPointEntity, pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.increasePoint.name} was called`);
 
-    const { userId, amount, type: pointType, logType, userQuestId, referralId, } = data;
+    const { userId, amount, type: pointType, logType, userQuestId, referralId, plusToReferral } = data;
     return this.redisLockService.withLock(
       LOCK_KEY_USER_POINT(userId, pointType),
       async () => {
         const point = await this.getOrCreatePoint(userId);
-        const haveReferral = await this.userReferralService.getReferralByUserId(userId);
-        let exactAmount = amount;
-        if (haveReferral) {
-          const referralRate = 10;
-          exactAmount = new BigNumber(amount).plus(new BigNumber(amount).multipliedBy(referralRate).dividedBy(100)).toString();
-        }
-
-
-        const newAmount = new BigNumber(point.amount)
-          .plus(exactAmount)
-          .toString();
-
-
-        point.amount = newAmount;
+        const newAmount = new BigNumber(point.amount).plus(amount);
+        point.amount = newAmount.toString();
         const pointLog = this.userPointLogRepository.create({
           userId,
-          amount: exactAmount,
+          amount,
           pointType,
           logType,
           userQuestId,
@@ -112,12 +128,13 @@ export class UserPointService {
         });
 
 
+
         await Promise.all([
           this.userPointRepository.save(point),
           this.userPointLogRepository.save(pointLog),
         ]);
 
-        if (referralId) {
+        if (referralId && plusToReferral) {
           await this.userReferralService.addPoints(referralId, amount);
         }
 
@@ -255,7 +272,7 @@ export class UserPointService {
     return result;
   }
 
-  async getPointLogsByReferralIds(referralIds: number[], page: number, limit: number): Promise<[UserPointLogEntity[], number]> {
-    return this.userPointLogRepository.findAndCount({ where: { referralId: In(referralIds), }, relations: ['referral', 'referral.user'], skip: (page - 1) * limit, take: limit });
+  async getPointLogsByReferralIds(userId: number, referralIds: number[], page: number, limit: number): Promise<[UserPointLogEntity[], number]> {
+    return this.userPointLogRepository.findAndCount({ where: { referralId: In(referralIds), userId }, relations: ['referral', 'referral.user'], skip: (page - 1) * limit, take: limit });
   }
 }

@@ -1,9 +1,14 @@
 import { SwapTransactionRepository } from "@database/repositories/swap-transaction.repository";
 import { SwapController } from "@modules/swap/swap.controller";
 import { SwapService } from "@modules/swap/swap.service";
-import { Module } from "@nestjs/common";
+import { SystemConfigModule } from "@modules/system-config/system-config.module";
+import { TokenMetaModule } from "@modules/token-metadata/token-meta.module";
+import { TokenPriceModule } from "@modules/token-price/token-price.module";
+import { UserPointModule } from "@modules/user-point/user-point.module";
+import { Module, forwardRef } from "@nestjs/common";
 import { BlockfrostModule } from "external/blockfrost/blockfrost.module";
 import { DexhunterModule } from "external/dexhunter/dexhunter.module";
+import { TaptoolsModule } from "external/taptools/taptools.module";
 import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
 
 @Module({
@@ -11,7 +16,11 @@ import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
         CustomRepositoryModule.forFeature([SwapTransactionRepository]),
         DexhunterModule,
         BlockfrostModule,
-        
+        SystemConfigModule,
+        TokenPriceModule,
+        TaptoolsModule,
+        TokenMetaModule,
+        forwardRef(() => UserPointModule),
     ],
     controllers: [SwapController],
     providers: [SwapService],

@@ -14,7 +14,6 @@ import Decimal from "decimal.js";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
 import { DexhunterService } from "external/dexhunter/dexhunter.service";
 import { TaptoolsService } from "external/taptools/taptools.service";
-import { BatchTokenCardanoSubject } from "external/token-cardano/types";
 import { TopToken, TopTokenMcap } from "external/taptools/types";
 import { keyBy, map } from "lodash";
 

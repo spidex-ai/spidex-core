@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { InternalServerErrorException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { KafkaContext } from "@nestjs/microservices";
 import { KafkaConfig } from "@nestjs/microservices/external/kafka.interface";
@@ -100,7 +100,11 @@ export async function heartbeatWrapped(context: KafkaContext, logger: Logger, na
         }
 
         logger.error(`Error in handler ${name} after ${retryCount} retries:`, error);
-        throw error;
+        // Ensure we're throwing a proper Error object
+        const errorToThrow = error?.message
+            ? new Error(error.message)
+            : new Error(typeof error === 'string' ? error : 'An unknown error occurred');
+        throw new InternalServerErrorException(errorToThrow);
     } finally {
         isRunning = false;
 

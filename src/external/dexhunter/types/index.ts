@@ -98,7 +98,7 @@ export interface SubmitSwapResponse {
     cbor: string
     strat_id: string
 }
-export interface EsitmateSwapResponse {
+export interface DexHunterEsitmateSwapResponse {
     splits: Split[]
     average_price: number
     total_fee: number

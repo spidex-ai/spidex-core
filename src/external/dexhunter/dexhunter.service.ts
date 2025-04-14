@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
-import { SearchTokenInfo, TokenDetail, PoolStatsResponse, EsitmateSwapPayload, EsitmateSwapResponse, BuildSwapResponse, SwapPayload, SubmitSwapPayload, SubmitSwapResponse } from "external/dexhunter/types";
+import { SearchTokenInfo, TokenDetail, PoolStatsResponse, EsitmateSwapPayload, DexHunterEsitmateSwapResponse, BuildSwapResponse, SwapPayload, SubmitSwapPayload, SubmitSwapResponse } from "external/dexhunter/types";
 import { firstValueFrom } from "rxjs";
 
 @Injectable()
@@ -27,8 +27,8 @@ export class DexhunterService {
         return response.data;
     }
 
-    async estimateSwap(payload: EsitmateSwapPayload): Promise<EsitmateSwapResponse> {
-        const response = await firstValueFrom(this.client.post<BuildSwapResponse>('swap/estimate', payload));
+    async estimateSwap(payload: EsitmateSwapPayload): Promise<DexHunterEsitmateSwapResponse> {
+        const response = await firstValueFrom(this.client.post<DexHunterEsitmateSwapResponse>('swap/estimate', payload));
         return response.data;
     }
 

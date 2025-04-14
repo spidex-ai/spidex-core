@@ -1,11 +1,20 @@
 import { EError } from '@constants/error.constant';
-import { SwapAction } from '@database/entities/swap-transaction.entity';
+import { SwapAction, SwapExchange, SwapStatus } from '@database/entities/swap-transaction.entity';
+import { EUserPointLogType } from '@database/entities/user-point-log.entity';
 import { SwapTransactionRepository } from '@database/repositories/swap-transaction.repository';
 import { BuildSwapRequest, EstimateSwapRequest, GetPoolStatsRequest, SubmitSwapRequest } from '@modules/swap/dtos/swap-request.dto';
-import { Injectable, Logger } from '@nestjs/common';
+import { EstimateSwapResponse } from '@modules/swap/dtos/swap-response.dto';
+import { SystemConfigService } from '@modules/system-config/system-config.service';
+import { TokenMetaService } from '@modules/token-metadata/token-meta.service';
+import { TokenPriceService } from '@modules/token-price/token-price.service';
+import { UserPointService } from '@modules/user-point/services/user-point.service';
+import { EUserPointType } from '@modules/user-point/user-point.constant';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
+import Decimal from 'decimal.js';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
+import { TaptoolsService } from 'external/taptools/taptools.service';
 import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
@@ -14,11 +23,48 @@ export class SwapService {
     constructor(
         private readonly dexhunterService: DexhunterService,
         private readonly blockfrostService: BlockfrostService,
-        private readonly swapTransactionRepository: SwapTransactionRepository
+        private readonly swapTransactionRepository: SwapTransactionRepository,
+        private readonly tapToolsService: TaptoolsService,
+        private readonly systemConfigService: SystemConfigService,
+        private readonly tokenPriceService: TokenPriceService,
+        private readonly tokenMetaService: TokenMetaService,
+        @Inject(forwardRef(() => UserPointService))
+        private readonly userPointService: UserPointService,
     ) { }
 
-    async buildSwap(payload: BuildSwapRequest) {
+    async buildSwap(userId: number, payload: BuildSwapRequest) {
         try {
+
+            const tokenAUnit = payload.tokenIn;
+            const tokenBUnit = payload.tokenOut;
+            const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
+
+
+            let tokenIn, tokenOut;
+
+            if (payload.tokenIn === '') {
+                tokenIn = {
+                    unit: 'ada',
+                    name: 'Ada',
+                    price: adaPrice
+                }
+            } else {
+                const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit]);
+                tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name', 'unit']);
+                tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
+            }
+            if (payload.tokenOut === '') {
+                tokenOut = {
+                    unit: 'ada',
+                    name: 'Ada',
+                    price: adaPrice
+                }
+            } else {
+                const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit]);
+                tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name', 'unit']);
+                tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
+            }
+
             const response = await this.dexhunterService.buildSwap({
                 buyer_address: payload.buyerAddress,
                 token_in: payload.tokenIn,
@@ -28,6 +74,43 @@ export class SwapService {
                 tx_optimization: payload.txOptimization || true,
                 blacklisted_dexes: payload.blacklistedDexes || [],
             });
+
+            const swapSellTx = this.swapTransactionRepository.create({
+                userId: userId,
+                address: payload.buyerAddress,
+                tokenA: payload.tokenIn,
+                tokenAName: tokenIn.name,
+                tokenB: payload.tokenOut,
+                tokenBName: tokenOut.name,
+                tokenAAmount: new Decimal(payload.amountIn).toString(),
+                tokenBAmount: new Decimal(response.total_output).toString(),
+                action: SwapAction.SELL,
+                timestamp: new Date(),
+                exchange: SwapExchange.DEXHUNTER,
+                cborHex: response.cbor,
+                totalFee: response.total_fee,
+                totalUsd: new Decimal(payload.amountIn).times(tokenIn.price).toString(),
+            });
+
+            const swapBuyTx = this.swapTransactionRepository.create({
+                userId: userId,
+                address: payload.buyerAddress,
+                tokenA: payload.tokenOut,
+                tokenAName: tokenOut.name,
+                tokenB: payload.tokenIn,
+                tokenBName: tokenIn.name,
+                tokenAAmount: new Decimal(response.total_output).toString(),
+                tokenBAmount: new Decimal(payload.amountIn).toString(),
+                action: SwapAction.BUY,
+                timestamp: new Date(),
+                exchange: SwapExchange.DEXHUNTER,
+                cborHex: response.cbor,
+                totalFee: response.total_fee,
+                totalUsd: new Decimal(response.total_output).times(tokenOut.price).toString(),
+            });
+
+            await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
+
             return response;
         } catch (error) {
             this.logger.error(`Failed to build swap: ${error}`);
@@ -39,16 +122,26 @@ export class SwapService {
         }
     }
 
-    async estimateSwap(payload: EstimateSwapRequest) {
+    async estimateSwap(payload: EstimateSwapRequest): Promise<EstimateSwapResponse> {
         try {
-            const response = await this.dexhunterService.estimateSwap({
-                token_in: payload.tokenIn,
-                token_out: payload.tokenOut,
-                amount_in: payload.amountIn,
-                slippage: payload.slippage || 0.01,
-                blacklisted_dexes: payload.blacklistedDexes || [],
-            });
-            return response;
+            const [response, estimatedPoint] = await Promise.all([
+                this.dexhunterService.estimateSwap({
+                    token_in: payload.tokenIn,
+                    token_out: payload.tokenOut,
+                    amount_in: payload.amountIn,
+                    slippage: payload.slippage || 0.01,
+                    blacklisted_dexes: payload.blacklistedDexes || [],
+                }),
+                this.getEstimatedPoint({
+                    tokenIn: payload.tokenIn,
+                    amountIn: payload.amountIn
+                })
+            ]);
+
+            return {
+                ...response,
+                estimated_point: estimatedPoint
+            };
         } catch (error) {
             this.logger.error(`Failed to estimate swap: ${error}`);
             throw new BadRequestException({
@@ -60,13 +153,49 @@ export class SwapService {
     }
 
     @Transactional()
-    async submitSwap(payload: SubmitSwapRequest) {
+    async submitSwap(userId: number, payload: SubmitSwapRequest) {
         try {
-            const response = await this.dexhunterService.submitSwap(payload);
-            // Create 2 swap transactions, 1 for buy and 1 for sell
+            const swapTxs = await this.swapTransactionRepository.findBy({
+                cborHex: payload.txCbor,
+            });
 
+            if (swapTxs.length === 0) {
+                throw new BadRequestException({
+                    message: 'Swap transaction not found',
+                    validatorErrors: EError.SWAP_TRANSACTION_NOT_FOUND,
+                });
+            }
 
-            return response;
+            const swapSellTx = swapTxs.find(tx => tx.action === SwapAction.SELL);
+            const swapBuyTx = swapTxs.find(tx => tx.action === SwapAction.BUY);
+
+            if (!swapSellTx || !swapBuyTx) {
+                throw new BadRequestException({
+                    message: 'Swap transaction not found',
+                    validatorErrors: EError.SWAP_TRANSACTION_NOT_FOUND,
+                });
+            }
+
+            swapSellTx.status = SwapStatus.SUCCESS;
+            swapBuyTx.status = SwapStatus.SUCCESS;
+
+            const point = await this.getEstimatedPoint({
+                tokenIn: swapSellTx.tokenA,
+                amountIn: new Decimal(swapSellTx.tokenAAmount).toNumber()
+            });
+
+            await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
+
+            // const response = await this.dexhunterService.submitSwap(payload);
+
+            await this.userPointService.emitUserPointChangeEvent({
+                userId: userId,
+                logType: EUserPointLogType.FROM_CORE,
+                amount: point,
+                type: EUserPointType.CORE,
+            })
+
+            return {};
         } catch (error) {
             this.logger.error(`Failed to submit swap: ${error}`);
             throw new BadRequestException({
@@ -124,19 +253,21 @@ export class SwapService {
             // Query to get trading volumes
             const traders = await this.swapTransactionRepository
                 .createQueryBuilder('swap')
-                .leftJoin('users', 'user', 'user.id = swap.user_id')
                 .select([
-                    'user.wallet_address',
-                    'SUM(CASE WHEN swap.action = :buyAction THEN swap.token_b_amount ELSE 0 END) as "buyVolume"',
-                    'SUM(CASE WHEN swap.action = :sellAction THEN swap.token_a_amount ELSE 0 END) as "sellVolume"',
-                    'SUM(CASE WHEN swap.action = :buyAction THEN swap.token_b_amount ELSE -swap.token_a_amount END) as "netVolume"',
-                    'SUM(CASE WHEN swap.action = :buyAction THEN swap.token_b_amount ELSE swap.token_a_amount END) as "totalVolume"'
+                    'swap.address',
+                    'SUM(CASE WHEN swap.action = :buyAction THEN swap.total_usd ELSE 0 END) as "buyVolume"',
+                    'SUM(CASE WHEN swap.action = :sellAction THEN swap.total_usd ELSE 0 END) as "sellVolume"',
+                    'SUM(CASE WHEN swap.action = :buyAction THEN swap.total_usd ELSE -swap.total_usd END) as "netVolume"',
+                    'SUM(swap.total_usd) as "totalVolume"'
                 ])
                 .where('(swap.token_a = :tokenId OR swap.token_b = :tokenId)', { tokenId })
                 .andWhere('swap.timestamp >= :startTime', { startTime })
-                .setParameter('buyAction', SwapAction.BUY)
-                .setParameter('sellAction', SwapAction.SELL)
-                .groupBy('swap.user_id, user.wallet_address')
+                .andWhere('swap.status = :status', { status: SwapStatus.SUCCESS })
+                .setParameters({
+                    buyAction: SwapAction.BUY,
+                    sellAction: SwapAction.SELL
+                })
+                .groupBy('swap.address')
                 .orderBy('"totalVolume"', 'DESC')
                 .skip((page - 1) * limit)
                 .take(limit)
@@ -145,7 +276,7 @@ export class SwapService {
 
             // Format the response
             return traders.map(trader => ({
-                address: trader.wallet_address,
+                address: trader.address,
                 totalVolume: parseFloat(trader.totalVolume),
                 buyVolume: parseFloat(trader.buyVolume),
                 sellVolume: parseFloat(trader.sellVolume),
@@ -169,14 +300,30 @@ export class SwapService {
     async getTradingVolume(userId: number) {
         const response = await this.swapTransactionRepository.createQueryBuilder('swap')
             .where('swap.user_id = :userId', { userId })
+            .andWhere('swap.status = :status', { status: SwapStatus.SUCCESS })
             .select(
-                'SUM(CASE WHEN swap.action = :buyAction THEN swap.token_b_amount ELSE swap.token_a_amount END) as "totalVolume"'
+                'SUM(swap.total_usd) as "totalVolume"'
             )
-            .setParameter('buyAction', SwapAction.BUY)
-            .setParameter('sellAction', SwapAction.SELL)
             .groupBy('swap.user_id')
             .getRawOne();
 
         return response?.totalVolume || 0;
+    }
+
+    async getEstimatedPoint({ tokenIn, amountIn }: { tokenIn: string, amountIn: number }) {
+        const [tokenInPrice, adaPriceInUsd, usdToPoint] = await Promise.all([
+            this.tapToolsService.getTokenPrices([tokenIn]),
+            this.tokenPriceService.getAdaPriceInUSD(),
+            this.systemConfigService.getUsdToPoint()
+        ]);
+        let tokenInPriceInUsd = 0;
+        if (!tokenIn) {
+            tokenInPriceInUsd = adaPriceInUsd * amountIn;
+        } else {
+            tokenInPriceInUsd = tokenInPrice[tokenIn] * adaPriceInUsd * amountIn;
+        }
+
+        const estimatedPoint = new Decimal(tokenInPriceInUsd * usdToPoint).toString();
+        return estimatedPoint;
     }
 } 

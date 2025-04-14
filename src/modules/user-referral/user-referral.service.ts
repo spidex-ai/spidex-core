@@ -116,7 +116,7 @@ export class UserReferralService {
     async getReferralHistory(userId: number, pagination: PaginationDto): Promise<PageDto<ReferralHistoryOutput>> {
         const { page, limit } = pagination;
         const referralIds = await this.referralRepository.find({ where: { referredBy: userId } });
-        const [userPointLogs, total] = await this.userPointService.getPointLogsByReferralIds(referralIds.map(referral => referral.id), page, limit);
+        const [userPointLogs, total] = await this.userPointService.getPointLogsByReferralIds(userId, referralIds.map(referral => referral.id), page, limit);
 
         const data = userPointLogs.map(userPointLog => {
             const output: ReferralHistoryOutput = {

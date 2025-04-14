@@ -1,21 +1,25 @@
 import { BuildSwapRequest, EstimateSwapRequest, SubmitSwapRequest } from '@modules/swap/dtos/swap-request.dto';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GuardPublic } from '@shared/decorators/auth.decorator';
 import { SwapService } from './swap.service';
+import { AuthUser } from '@shared/decorators/auth-user.decorator';
+import { IJwtPayload } from '@shared/interfaces/auth.interface';
 
 @ApiTags('Swap')
 @Controller('swap')
+@ApiBearerAuth()
 export class SwapController {
     constructor(private readonly swapService: SwapService) { }
     @Post('build')
-    @GuardPublic()
     @ApiOperation({ summary: 'Build a swap' })
     @ApiResponse({ status: 200, description: 'Swap built successfully' })
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 500, description: 'Internal Server Error' })
-    async buildSwap(@Body() body: BuildSwapRequest) {
-        return this.swapService.buildSwap(body);
+    async buildSwap(
+        @AuthUser() user: IJwtPayload,
+        @Body() body: BuildSwapRequest) {
+        return this.swapService.buildSwap(user.userId, body);
     }
 
 
@@ -34,8 +38,8 @@ export class SwapController {
     @ApiResponse({ status: 200, description: 'Swap submitted successfully' })
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 500, description: 'Internal Server Error' })
-    async submitSwap(@Body() body: SubmitSwapRequest) {
-        return this.swapService.submitSwap(body);
+    async submitSwap(@AuthUser() user: IJwtPayload, @Body() body: SubmitSwapRequest) {
+        return this.swapService.submitSwap(user.userId, body);
     }
 
     @Get('pool-stats/:tokenIn/:tokenOut')
