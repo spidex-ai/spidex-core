@@ -1,4 +1,4 @@
-import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
+import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOKEN_TRADES_CACHE_KEY, TOKEN_TRADES_CACHE_TTL, TOP_HOLDERS_CACHE_KEY, TOP_HOLDERS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
 import { EError } from "@constants/error.constant";
 import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
@@ -177,6 +177,12 @@ export class TokenService {
     }
 
     async getTokenTrades(tokenId: string, timeFrame: string = '24h', limit: number = 10, page: number = 1): Promise<TokenTradesResponse[]> {
+        const cacheKey = TOKEN_TRADES_CACHE_KEY(tokenId, timeFrame, limit, page);
+        const cachedData = await this.cache.get<TokenTradesResponse[]>(cacheKey);
+        if (cachedData) {
+            return cachedData;
+        }
+
         const [data, usdPrice] = await Promise.all([
             this.taptoolsService.getTokenTrades(tokenId, timeFrame, page, limit),
             this.tokenPriceService.getAdaPriceInUSD()
@@ -188,6 +194,7 @@ export class TokenService {
             usdTotalPrice: new Decimal(trade.price).mul(trade.tokenAAmount).mul(usdPrice).toNumber(),
         }));
 
+        await this.cache.set(cacheKey, response, TOKEN_TRADES_CACHE_TTL);
         return response;
     }
 
@@ -198,6 +205,12 @@ export class TokenService {
     }
 
     async getTopHolders(tokenId: string, limit: number = 10, page: number = 1): Promise<TokenTopHoldersResponse[]> {
+        const cacheKey = TOP_HOLDERS_CACHE_KEY(tokenId, limit, page);
+        const cachedData = await this.cache.get<TokenTopHoldersResponse[]>(cacheKey);
+        if (cachedData) {
+            return cachedData;
+        }
+
         const [tokenDetail, tokenPrice, usdPrice, topHolders] = await Promise.all([
             this.blockfrostService.getTokenDetail(tokenId),
             this.taptoolsService.getTokenPrices([tokenId]),
@@ -211,6 +224,8 @@ export class TokenService {
             totalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).toNumber(),
             usdTotalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).mul(usdPrice).toNumber()
         }));
+
+        await this.cache.set(cacheKey, data, TOP_HOLDERS_CACHE_TTL);
         return data;
     }
 

@@ -14,3 +14,9 @@ export const TOKEN_STATS_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;
 
 export const TOKEN_DETAILS_CACHE_KEY = (tokenId: string) => `token_details_${tokenId}`;
 export const TOKEN_DETAILS_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;
+
+export const TOP_HOLDERS_CACHE_KEY = (tokenId: string, limit: number, page: number) => `top_holders_${tokenId}_${limit}_${page}`;
+export const TOP_HOLDERS_CACHE_TTL = 5 * MILLISECONDS_PER_MINUTE;
+
+export const TOKEN_TRADES_CACHE_KEY = (tokenId: string, timeFrame: string, limit: number, page: number) => `token_trades_${tokenId}_${timeFrame}_${limit}_${page}`;
+export const TOKEN_TRADES_CACHE_TTL = 5 * MILLISECONDS_PER_MINUTE;
