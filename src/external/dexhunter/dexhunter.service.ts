@@ -13,6 +13,9 @@ export class DexhunterService {
  */
     async searchToken(query: string, verified: boolean = true, page: number = 0, limit: number = 10): Promise<SearchTokenInfo[]> {
         const response = await firstValueFrom(this.client.get<SearchTokenInfo[]>('swap/tokens', { params: { query, verified, page, limit } }));
+        if (!response.data) {
+            return [];
+        }
         const paginatedData = response.data.slice(page * limit, (page + 1) * limit).filter(token => token.is_verified === verified);
         return paginatedData;
     }
