@@ -42,9 +42,9 @@ export class SwapService {
 
             let tokenIn, tokenOut;
 
-            if (payload.tokenIn === '') {
+            if (payload.tokenIn === 'ADA') {
                 tokenIn = {
-                    unit: 'ada',
+                    unit: '',
                     name: 'Ada',
                     price: adaPrice
                 }
@@ -53,9 +53,9 @@ export class SwapService {
                 tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name', 'unit']);
                 tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
             }
-            if (payload.tokenOut === '') {
+            if (payload.tokenOut === 'ADA') {
                 tokenOut = {
-                    unit: 'ada',
+                    unit: '',
                     name: 'Ada',
                     price: adaPrice
                 }
@@ -67,8 +67,8 @@ export class SwapService {
 
             const response = await this.dexhunterService.buildSwap({
                 buyer_address: payload.buyerAddress,
-                token_in: payload.tokenIn,
-                token_out: payload.tokenOut,
+                token_in: tokenIn.unit,
+                token_out: tokenOut.unit,
                 amount_in: payload.amountIn,
                 slippage: payload.slippage || 0.01,
                 tx_optimization: payload.txOptimization || true,
@@ -78,9 +78,9 @@ export class SwapService {
             const swapSellTx = this.swapTransactionRepository.create({
                 userId: userId,
                 address: payload.buyerAddress,
-                tokenA: payload.tokenIn,
+                tokenA: tokenIn.unit,
                 tokenAName: tokenIn.name,
-                tokenB: payload.tokenOut,
+                tokenB: tokenOut.unit,
                 tokenBName: tokenOut.name,
                 tokenAAmount: new Decimal(payload.amountIn).toString(),
                 tokenBAmount: new Decimal(response.total_output).toString(),
@@ -95,9 +95,9 @@ export class SwapService {
             const swapBuyTx = this.swapTransactionRepository.create({
                 userId: userId,
                 address: payload.buyerAddress,
-                tokenA: payload.tokenOut,
+                tokenA: tokenOut.unit,
                 tokenAName: tokenOut.name,
-                tokenB: payload.tokenIn,
+                tokenB: tokenIn.unit,
                 tokenBName: tokenIn.name,
                 tokenAAmount: new Decimal(response.total_output).toString(),
                 tokenBAmount: new Decimal(payload.amountIn).toString(),
@@ -124,16 +124,38 @@ export class SwapService {
 
     async estimateSwap(payload: EstimateSwapRequest): Promise<EstimateSwapResponse> {
         try {
+            let tokenIn, tokenOut;
+
+            if (payload.tokenIn === 'ADA') {
+                tokenIn = {
+                    unit: '',
+                }
+            } else {
+                tokenIn = {
+                    unit: payload.tokenIn,
+                }
+            }
+
+            if (payload.tokenOut === 'ADA') {
+                tokenOut = {
+                    unit: '',
+                }
+            } else {
+                tokenOut = {
+                    unit: payload.tokenOut,
+                }
+            }
+
             const [response, estimatedPoint] = await Promise.all([
                 this.dexhunterService.estimateSwap({
-                    token_in: payload.tokenIn,
-                    token_out: payload.tokenOut,
+                    token_in: tokenIn.unit,
+                    token_out: tokenOut.unit,
                     amount_in: payload.amountIn,
                     slippage: payload.slippage || 0.01,
                     blacklisted_dexes: payload.blacklistedDexes || [],
                 }),
                 this.getEstimatedPoint({
-                    tokenIn: payload.tokenIn,
+                    tokenIn: tokenIn.unit,
                     amountIn: payload.amountIn
                 })
             ]);
