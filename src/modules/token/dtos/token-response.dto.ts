@@ -140,10 +140,10 @@ export class TokenTopHoldersResponse {
 
 export class TokenDetailsResponse {
     @ApiProperty()
-    token_id: string
+    unit: string
 
     @ApiProperty()
-    token_policy: string
+    policy: string
 
     @ApiProperty()
     ticker: string
@@ -156,9 +156,6 @@ export class TokenDetailsResponse {
 
     @ApiProperty()
     logo?: string
-
-    @ApiProperty()
-    unit: string
 
     @ApiProperty()
     total_supply: number
@@ -177,5 +174,4 @@ export class TokenDetailsResponse {
 
     @ApiProperty()
     description: string
-
 }
