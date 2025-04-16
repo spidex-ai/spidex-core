@@ -37,11 +37,9 @@ export interface ISocialInteractRequirement {
   url: string;
 }
 
-export interface IChatWithAIRequirement {
-  count: number;
-}
 
-export type TQuestRequirement = ISocialInteractRequirement | IChatWithAIRequirement;
+
+export type TQuestRequirement = ISocialInteractRequirement;
 
 @Entity('quests')
 export class QuestEntity extends BaseEntity {

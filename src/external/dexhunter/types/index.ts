@@ -1,4 +1,4 @@
-export interface SearchTokenInfo {
+export interface DexHunterSearchTokenInfo {
     token_id: string
     token_decimals: number
     token_policy: string
@@ -13,20 +13,16 @@ export interface SearchTokenInfo {
 }
 
 
-export interface TokenDetail {
+export interface DexHunterTokenDetail {
     token_id: string
+    token_decimals: number
+    token_policy: string
     token_ascii: string
     ticker: string
     is_verified: boolean
-    logo: string
-    total_supply: number
-    decimals: number
-    unit: string
-}
-
-export interface CardanoTokenDetail extends SearchTokenInfo {
-    total_supply?: number
-    decimals?: number
+    supply: number
+    creation_date: string
+    price: number
 }
 
 /**

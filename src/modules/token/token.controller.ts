@@ -36,6 +36,19 @@ export class TokenController {
         return this.tokenService.getTopVolumeTokens(timeFrame, limit, page);
     }
 
+
+    @Get(':tokenId')
+    @GuardPublic()
+    @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Token stats',
+        type: TokenStatsResponse
+    })
+    async getTokenDetails(@Param('tokenId') tokenId: string) {
+        return this.tokenService.getTokenDetails(tokenId);
+    }
+
     @Get(':tokenId/stats')
     @GuardPublic()
     @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })

@@ -1,11 +1,11 @@
-import { TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
+import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
 import { EError } from "@constants/error.constant";
 import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
 import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
 import { TokenSearchRequest, TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
-import { TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
+import { TokenDetailsResponse, TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
 import { BadRequestException } from "@shared/exception";
@@ -29,6 +29,46 @@ export class TokenService {
         @Inject(CACHE_MANAGER)
         private readonly cache: Cache
     ) { }
+
+    async getTokenDetails(tokenId: string): Promise<TokenDetailsResponse> {
+
+        const cacheKey = TOKEN_DETAILS_CACHE_KEY(tokenId);
+        const cachedData = await this.cache.get<TokenDetailsResponse>(cacheKey);
+        if (cachedData) {
+            return cachedData;
+        }
+
+        const data = await this.dexHunterService.getTokenDetail(tokenId);
+        const [
+            tokenMetadata,
+            adaPrice,
+            tokenPrice
+        ] = await Promise.all([
+            this.tokenMetaService.getTokenMetadata(tokenId, ['unit', 'logo', 'name', 'ticker']),
+            this.tokenPriceService.getAdaPriceInUSD(),
+            this.taptoolsService.getTokenPrices([tokenId])
+        ]);
+
+
+        const tokensWithDetails: TokenDetailsResponse = {
+            token_id: tokenId,
+            token_policy: tokenMetadata.policy,
+            ticker: tokenMetadata.ticker,
+            is_verified: data.is_verified,
+            creation_date: data.creation_date,
+            logo: tokenMetadata.logo,
+            unit: tokenMetadata.unit,
+            total_supply: data.supply,
+            decimals: data.token_decimals,
+            price: tokenPrice[tokenId],
+            usdPrice: tokenPrice[tokenId] * adaPrice,
+            name: tokenMetadata.name,
+            description: tokenMetadata.description,
+        };
+
+        await this.cache.set(cacheKey, tokensWithDetails, TOKEN_DETAILS_CACHE_TTL);
+        return tokensWithDetails;
+    }
 
     async getTopMcapTokens(limit: number = 10, page: number = 1): Promise<TopTokenMcap[]> {
         try {

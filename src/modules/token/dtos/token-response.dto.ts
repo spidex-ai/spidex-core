@@ -137,3 +137,45 @@ export class TokenTopHoldersResponse {
     @ApiProperty()
     usdTotalPrice: number
 }
+
+export class TokenDetailsResponse {
+    @ApiProperty()
+    token_id: string
+
+    @ApiProperty()
+    token_policy: string
+
+    @ApiProperty()
+    ticker: string
+
+    @ApiProperty()
+    is_verified: boolean
+
+    @ApiProperty()
+    creation_date: string
+
+    @ApiProperty()
+    logo?: string
+
+    @ApiProperty()
+    unit: string
+
+    @ApiProperty()
+    total_supply: number
+
+    @ApiProperty()
+    decimals: number
+
+    @ApiProperty()
+    price: number
+
+    @ApiProperty()
+    usdPrice: number
+
+    @ApiProperty()
+    name: string
+
+    @ApiProperty()
+    description: string
+
+}

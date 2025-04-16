@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
-import { SearchTokenInfo, TokenDetail, PoolStatsResponse, EsitmateSwapPayload, DexHunterEsitmateSwapResponse, BuildSwapResponse, SwapPayload, SubmitSwapPayload, SubmitSwapResponse } from "external/dexhunter/types";
+import { DexHunterSearchTokenInfo, DexHunterTokenDetail, PoolStatsResponse, EsitmateSwapPayload, DexHunterEsitmateSwapResponse, BuildSwapResponse, SwapPayload, SubmitSwapPayload, SubmitSwapResponse } from "external/dexhunter/types";
 import { firstValueFrom } from "rxjs";
 
 @Injectable()
@@ -11,8 +11,8 @@ export class DexhunterService {
  * @param quote - Quote currency (default: ADA)
  * @returns Promise with market stats
  */
-    async searchToken(query: string, verified: boolean = true, page: number = 0, limit: number = 10): Promise<SearchTokenInfo[]> {
-        const response = await firstValueFrom(this.client.get<SearchTokenInfo[]>('swap/tokens', { params: { query, verified, page, limit } }));
+    async searchToken(query: string, verified: boolean = true, page: number = 0, limit: number = 10): Promise<DexHunterSearchTokenInfo[]> {
+        const response = await firstValueFrom(this.client.get<DexHunterSearchTokenInfo[]>('swap/tokens', { params: { query, verified, page, limit } }));
         if (!response.data) {
             return [];
         }
@@ -20,8 +20,8 @@ export class DexhunterService {
         return paginatedData;
     }
 
-    async getTokenDetail(tokenId: string): Promise<TokenDetail> {
-        const response = await firstValueFrom(this.client.get<TokenDetail>(`swap/token/${tokenId}`));
+    async getTokenDetail(tokenId: string): Promise<DexHunterTokenDetail> {
+        const response = await firstValueFrom(this.client.get<DexHunterTokenDetail>(`swap/token/${tokenId}`));
         return response.data;
     }
 
