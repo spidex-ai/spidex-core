@@ -208,7 +208,7 @@ export class SwapService {
 
             await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
 
-            // const response = await this.dexhunterService.submitSwap(payload);
+            const response = await this.dexhunterService.submitSwap(payload);
 
             await this.userPointService.emitUserPointChangeEvent({
                 userId: userId,
@@ -217,7 +217,7 @@ export class SwapService {
                 type: EUserPointType.CORE,
             })
 
-            return {};
+            return response;
         } catch (error) {
             this.logger.error(`Failed to submit swap: ${error}`);
             throw new BadRequestException({
