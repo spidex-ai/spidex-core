@@ -1,4 +1,4 @@
-import { EQuestType } from "@database/entities/quest.entity";
+import { EQuestCategory, EQuestType } from "@database/entities/quest.entity";
 import { UserReferralEntity } from "@database/entities/user-referral.entity";
 import { UserReferralRepository } from "@database/repositories/user-referral.repository";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
@@ -31,13 +31,29 @@ export class UserReferralService {
         const savedReferral = await this.referralRepository.save(referral);
 
 
-        const quest = await this.questService.getQuestByType(EQuestType.REFER_FRIEND);
-        if (quest) {
-            const canComplete = await this.userQuestService.canCompleteMultiTimeQuest(savedReferral.referredBy, quest.id);
-            if (canComplete) {
-                await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+        const quests = await this.questService.getQuestInType([EQuestType.REFER_FRIEND, EQuestType.FIRST_REFER]);
+        await Promise.all(quests.map(async (quest) => {
+            switch (quest.category) {
+                case EQuestCategory.ONE_TIME:
+                    const canCompleteOneTime = await this.userQuestService.canCompleteOneTimeQuest(savedReferral.referredBy, quest.id,);
+                    if (canCompleteOneTime) {
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                    }
+                    break;
+                case EQuestCategory.DAILY:
+                    const canCompleteDaily = await this.userQuestService.canCompleteDailyQuest(savedReferral.referredBy, quest.id,);
+                    if (canCompleteDaily) {
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                    }
+                    break;
+                case EQuestCategory.MULTI_TIME:
+                    const canCompleteMultiTime = await this.userQuestService.canCompleteMultiTimeQuest(savedReferral.referredBy, quest.id,);
+                    if (canCompleteMultiTime) {
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                    }
+                    break;
             }
-        }
+        }))
         return savedReferral;
     }
 

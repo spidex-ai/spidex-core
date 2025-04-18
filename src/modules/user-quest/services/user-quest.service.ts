@@ -172,6 +172,7 @@ export class UserQuestService {
 
     const shouldAddToReferralPoint = [
       EQuestType.REFER_FRIEND,
+      EQuestType.FIRST_REFER,
     ].includes(quest.type)
 
     let referralId = null
