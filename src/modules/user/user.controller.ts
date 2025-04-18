@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
 import { AuthUserGuard, GuardPublic } from '@shared/decorators/auth.decorator';
@@ -18,7 +18,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @Post('update-profile')
+  @Put('profile')
   @AuthUserGuard()
   @ApiBearerAuth()
   @ApiResponse({
