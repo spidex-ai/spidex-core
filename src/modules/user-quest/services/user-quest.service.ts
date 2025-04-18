@@ -391,9 +391,8 @@ export class UserQuestService {
 
     const total = userQuestOutputs.length
     const paginatedUserQuestOutputs = orderBy(userQuestOutputs, [
-      'status',
-      'createdAt'
-    ], ['DESC', 'DESC']).slice((page - 1) * limit, page * limit)
+      'type'
+    ], ['DESC']).slice((page - 1) * limit, page * limit)
 
     return new PageDto<UserQuestInfoOutput>(paginatedUserQuestOutputs, new PageMetaDto(total, new PageOptionsDto(page, limit)))
   }
