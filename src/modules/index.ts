@@ -8,6 +8,7 @@ import { QuestModule } from '@modules/user-quest/quest.module';
 import { SwapModule } from '@modules/swap/swap.module';
 import { TokenModule } from '@modules/token/token.module';
 import { PortfolioModule } from '@modules/portfolio/portfolio.module';
+import { MediasModule } from '@modules/medias/medias.module';
 export const MODULES = [
   UserModule,
   AuthModule,
@@ -17,5 +18,6 @@ export const MODULES = [
   QuestModule,
   SwapModule,
   TokenModule,
-  PortfolioModule
+  PortfolioModule,
+  MediasModule
 ];
