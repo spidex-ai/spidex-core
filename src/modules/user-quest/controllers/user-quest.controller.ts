@@ -1,4 +1,4 @@
-import { GetCheckInListFilterDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
+import { GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { UserQuestService } from "@modules/user-quest/services/user-quest.service";
 import { Controller, Get, Param, Put, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
@@ -38,13 +38,13 @@ export class UserQuestController {
     return this.userQuestService.triggerSocialQuest(user.userId, questId)
   }
 
+  @AuthUserGuard()
+  @Put('trigger-agent-quest')
+  async triggerAgentQuest(@AuthUser() user: IJwtPayload, @Query() query: TriggerAgentQuestQueryDto) {
+    return this.userQuestService.triggerAgentQuest(user.userId, query)
+  }
 
 
-  // @UseGuards(JwtUserAuthGuard)
-  // @Put('trigger-social-quest/:questId')
-  // async triggerSocialQuest(@ReqContext() ctx: RequestContext, @Param('questId') questId: string) {
-  //   return this.userQuestService.triggerSocialQuest(ctx, questId)
-  // }
 
   @AuthUserGuard()
   @Get('')

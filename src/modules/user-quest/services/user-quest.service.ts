@@ -8,7 +8,7 @@ import { SwapService } from "@modules/swap/swap.service";
 import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
 import { EUserPointType } from "@modules/user-point/user-point.constant";
-import { EUserQuestStatus, GetCheckInListFilterDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
+import { EAgentType, EUserQuestStatus, GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
@@ -470,6 +470,76 @@ export class UserQuestService {
           const canCompleteMultiTime = await this.canCompleteMultiTimeQuest(data.userId, quest.id, options);
           if (canCompleteMultiTime) {
             await this.completeQuest(data.userId, quest);
+          }
+          break;
+      }
+    }))
+  }
+
+  async triggerAgentQuest(userId: number, query: TriggerAgentQuestQueryDto): Promise<void> {
+    const { agentType } = query
+    let questTypes = [
+      EQuestType.FIRST_PROMPT,
+      EQuestType.DAILY_PROMPT,
+    ]
+
+    switch (agentType) {
+      case EAgentType.TRADING:
+        questTypes = [
+          ...questTypes,
+          EQuestType.PROMPT_RELATED_TO_TRADING_AGENT,
+        ]
+        break
+      case EAgentType.TOKEN:
+        questTypes = [
+          ...questTypes,
+          EQuestType.PROMPT_RELATED_TO_TOKEN_AGENT,
+        ]
+        break
+      case EAgentType.KNOWLEDGE:
+        questTypes = [
+          ...questTypes,
+          EQuestType.PROMPT_RELATED_TO_KNOWLEDGE_AGENT,
+        ]
+        break
+      case EAgentType.PORTFOLIO:
+        questTypes = [
+          ...questTypes,
+          EQuestType.PROMPT_RELATED_TO_PORTFOLIO_AGENT,
+        ]
+
+        break
+      case EAgentType.MARKET:
+        questTypes = [
+          ...questTypes,
+          EQuestType.PROMPT_RELATED_TO_MARKET_AGENT,
+        ]
+        break
+      default:
+        this.logger.warn(`UserQuestService::triggerAgentQuest() | Invalid agent type`, { agentType })
+        return
+    }
+    const quests = await this.questService.getQuestInType(questTypes)
+
+
+    await Promise.all(quests.map(async (quest) => {
+      switch (quest.category) {
+        case EQuestCategory.ONE_TIME:
+          const canCompleteOneTime = await this.canCompleteOneTimeQuest(userId, quest.id,);
+          if (canCompleteOneTime) {
+            await this.completeQuest(userId, quest);
+          }
+          break;
+        case EQuestCategory.DAILY:
+          const canCompleteDaily = await this.canCompleteDailyQuest(userId, quest.id,);
+          if (canCompleteDaily) {
+            await this.completeQuest(userId, quest);
+          }
+          break;
+        case EQuestCategory.MULTI_TIME:
+          const canCompleteMultiTime = await this.canCompleteMultiTimeQuest(userId, quest.id,);
+          if (canCompleteMultiTime) {
+            await this.completeQuest(userId, quest);
           }
           break;
       }

@@ -1,8 +1,8 @@
 import { EQuestCategory, EQuestType, TQuestRequirement } from "@database/entities/quest.entity";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { PaginationDto } from "@shared/dtos/page-meta.dto";
-import { Expose } from "class-transformer";
-import { IsDateString } from "class-validator";
+import { Expose, Transform } from "class-transformer";
+import { IsDateString, IsEnum, IsOptional } from "class-validator";
 
 
 
@@ -94,4 +94,25 @@ export class UserQuestOutput {
   @Expose()
   @ApiProperty()
   resetAt: Date
+}
+
+
+export enum EAgentType {
+  TRADING = 1,
+  TOKEN = 2,
+  KNOWLEDGE = 3,
+  PORTFOLIO = 4,
+  MARKET = 5,
+}
+
+export class TriggerAgentQuestQueryDto {
+  @Expose()
+  @ApiPropertyOptional({
+    enum: EAgentType,
+    example: EAgentType.TRADING
+  })
+  @IsOptional()
+  @IsEnum(EAgentType)
+  @Transform(({ value }) => value ? +value : undefined)
+  agentType?: EAgentType
 }
