@@ -5,6 +5,7 @@ import { SystemConfigModule } from "@modules/system-config/system-config.module"
 import { TokenMetaModule } from "@modules/token-metadata/token-meta.module";
 import { TokenPriceModule } from "@modules/token-price/token-price.module";
 import { UserPointModule } from "@modules/user-point/user-point.module";
+import { QuestModule } from "@modules/user-quest/quest.module";
 import { Module, forwardRef } from "@nestjs/common";
 import { BlockfrostModule } from "external/blockfrost/blockfrost.module";
 import { DexhunterModule } from "external/dexhunter/dexhunter.module";
@@ -21,6 +22,7 @@ import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
         TaptoolsModule,
         TokenMetaModule,
         forwardRef(() => UserPointModule),
+        forwardRef(() => QuestModule),
     ],
     controllers: [SwapController],
     providers: [SwapService],

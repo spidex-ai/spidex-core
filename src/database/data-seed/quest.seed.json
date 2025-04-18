@@ -1,37 +1,28 @@
 [
   {
-    "name": "Share your first post on X",
-    "description": "Share your first post on X",
-    "category": 0,
-    "type": 0,
-    "requirements": {
-      "url": "https://x.com/your-handle"
-    },
-    "points": 20,
+    "name": "Daily check-in",
+    "description": "Daily check-in to earn points",
+    "category": 1,
+    "type": 10,
+    "points": 10,
     "status": 1,
     "limit": 1
   },
   {
-    "name": "Join Discord",
-    "description": "Join our Discord community to connect with other users",
-    "category": 0,
-    "type": 1,
-    "requirements": {
-      "url": "https://discord.gg/your-community"
-    },
-    "points": 20,
+    "name": "Daily trade",
+    "description": "Daily trade to earn points",
+    "category": 1,
+    "type": 32,
+    "points": 10,
     "status": 1,
     "limit": 1
   },
   {
-    "name": "Join Telegram",
-    "description": "Join our Telegram group to stay updated",
-    "category": 0,
-    "type": 2,
-    "requirements": {
-      "url": "https://t.me/your-community"
-    },
-    "points": 20,
+    "name": "Daily prompt",
+    "description": "Daily prompt to earn points",
+    "category": 1,
+    "type": 41,
+    "points": 10,
     "status": 1,
     "limit": 1
   },
@@ -43,26 +34,317 @@
     "requirements": {
       "url": "https://x.com/your-handle"
     },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Like post on X",
+    "description": "Like post on X",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Retweet post on X",
+    "description": "Retweet post on X",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Comment post on X",
+    "description": "Comment post on X",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Join Discord",
+    "description": "Join our Discord community to connect with other users",
+    "category": 0,
+    "type": 1,
+    "requirements": {
+      "url": "https://discord.gg/your-community"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Chat on Discord",
+    "description": "Chat on Discord",
+    "category": 0,
+    "type": 1,
+    "requirements": {
+      "url": "https://discord.gg/your-community"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "One trade >= $500",
+    "description": "One trade >= $500",
+    "category": 0,
+    "type": 31,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 500
+    }
+  },
+  {
+    "name": "One trade >= $2000",
+    "description": "One trade >= $2000",
+    "category": 0,
+    "type": 31,
+    "points": 50,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 2000
+    }
+  },
+  {
+    "name": "One trade >= $5000",
+    "description": "One trade >= $5000",
+    "category": 0,
+    "type": 31,
+    "points": 100,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 5000
+    }
+  },
+  {
+    "name": "Total trade volume >= $1000",
+    "description": "Total trade volume >= $1000",
+    "category": 0,
+    "type": 33,
+    "points": 10,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 1000
+    }
+  },
+  {
+    "name": "Total trade volume >= $5000",
+    "description": "Total trade volume >= $5000",
+    "category": 0,
+    "type": 33,
+    "points": 50,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 5000
+    }
+  },
+  {
+    "name": "Total trade volume >= $10000",
+    "description": "Total trade volume >= $10000",
+    "category": 0,
+    "type": 33,
+    "points": 100,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 10000
+    }
+  },
+  {
+    "name": "Total trade volume >= $50000",
+    "description": "Total trade volume >= $50000",
+    "category": 0,
+    "type": 33,
+    "points": 500,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "amount": 50000
+    }
+  },
+  {
+    "name": "Visit platform",
+    "description": "Visit platform",
+    "category": 0,
+    "type": 0,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    }
+  },
+  {
+    "name": "Follow platform on X",
+    "description": "Follow platform on X",
+    "category": 0,
+    "type": 3,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    }
+  },
+  {
+    "name": "Like post of platform on X",
+    "description": "Like post of platform on X",
+    "category": 0,
+    "type": 0,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    }
+  },
+  {
+    "name": "Retweet post of platform on X",
+    "description": "Retweet post of platform on X",
+    "category": 0,
+    "type": 0,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "url": "https://x.com/your-handle"
+    }
+  },
+  {
+    "name": "Join platform's Discord",
+    "description": "Join platform's Discord",
+    "category": 0,
+    "type": 1,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "url": "https://discord.gg/your-community"
+    }
+  },
+  {
+    "name": "Join platform's Telegram",
+    "description": "Join platform's Telegram",
+    "category": 0,
+    "type": 2,
+    "requirements": {
+      "url": "https://t.me/your-community"
+    },
     "points": 20,
     "status": 1,
     "limit": 1
   },
   {
-    "name": "Daily Login",
-    "description": "Log in daily to earn points",
-    "category": 1,
-    "type": 10,
+    "name": "Trade partner token",
+    "description": "Trade partner token",
+    "category": 0,
+    "type": 34,
+    "points": 20,
+    "status": 1,
+    "limit": 1,
+    "requirements": {
+      "token": "token_id"
+    }
+  },
+  {
+    "name": "First trade",
+    "description": "First trade",
+    "category": 0,
+    "type": 30,
     "points": 10,
     "status": 1,
-    "limit": -1
+    "limit": 1
+  },
+  {
+    "name": "First prompt",
+    "description": "First prompt",
+    "category": 0,
+    "type": 40,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "First refer",
+    "description": "First refer",
+    "category": 0,
+    "type": 21,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Prompt to use trading agent",
+    "description": "Prompt to use trading agent",
+    "category": 0,
+    "type": 42,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Prompt to use token agent",
+    "description": "Prompt to use token agent",
+    "category": 0,
+    "type": 43,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Prompt to use knowledge agent",
+    "description": "Prompt to use knowledge agent",
+    "category": 0,
+    "type": 44,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Prompt to use portfolio agent",
+    "description": "Prompt to use portfolio agent",
+    "category": 0,
+    "type": 45,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Prompt to use market agent",
+    "description": "Prompt to use market agent",
+    "category": 0,
+    "type": 46,
+    "points": 10,
+    "status": 1,
+    "limit": 1
   },
   {
     "name": "Refer a Friend",
     "description": "Invite your friends to join the platform",
     "category": 2,
     "type": 20,
-    "points": 30,
+    "points": 10,
     "status": 1,
-    "limit": 5
+    "limit": -1
   }
 ]

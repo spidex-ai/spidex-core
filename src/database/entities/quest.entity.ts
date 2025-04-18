@@ -21,9 +21,23 @@ export enum EQuestType {
 
   // Multi-time quest
   REFER_FRIEND = 20,
+  FIRST_REFER = 21,
 
   // Trade quest
-  TRADE = 30,
+  FIRST_TRADE = 30,
+  TRADE_VOLUME = 31,
+  DAILY_TRADE = 32,
+  TOTAL_TRADE_VOLUME = 33,
+  TRADE_PARTNER_TOKEN = 34,
+
+  // Prompt quest
+  FIRST_PROMPT = 40,
+  DAILY_PROMPT = 41,
+  PROMPT_RELATED_TO_TRADING_AGENT = 42,
+  PROMPT_RELATED_TO_TOKEN_AGENT = 43,
+  PROMPT_RELATED_TO_KNOWLEDGE_AGENT = 44,
+  PROMPT_RELATED_TO_PORTFOLIO_AGENT = 45,
+  PROMPT_RELATED_TO_MARKET_AGENT = 46,
 }
 
 export enum EQuestStatus {
@@ -37,9 +51,19 @@ export interface ISocialInteractRequirement {
   url: string;
 }
 
+export interface ITradeRequirement {
+  amount: number;
+}
 
+export interface ITradeVolumeRequirement {
+  amount: number;
+}
 
-export type TQuestRequirement = ISocialInteractRequirement;
+export interface ITradePartnerTokenRequirement {
+  token: string;
+}
+
+export type TQuestRequirement = ISocialInteractRequirement | ITradeRequirement | ITradePartnerTokenRequirement;
 
 @Entity('quests')
 export class QuestEntity extends BaseEntity {

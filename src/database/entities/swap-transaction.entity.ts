@@ -19,7 +19,10 @@ export enum SwapStatus {
 
 @Entity('swap_transactions')
 @Index(['cborHex', 'action',], { unique: true })
+@Index(['txHash', 'action',], { unique: true })
+@Index(['txHash', 'status'])
 @Index(['cborHex'])
+@Index(['txHash'])
 export class SwapTransactionEntity extends BaseExcludeDeletedAtEntity {
     @Column({ type: 'enum', enum: SwapAction })
     action: SwapAction
@@ -32,6 +35,9 @@ export class SwapTransactionEntity extends BaseExcludeDeletedAtEntity {
 
     @Column({ type: 'varchar', name: 'address' })
     address: string
+
+    @Column({ type: 'varchar', name: 'tx_hash', nullable: true })
+    txHash: string
 
     @Column({ type: 'varchar', name: 'exchange' })
     exchange: string

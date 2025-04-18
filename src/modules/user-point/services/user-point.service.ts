@@ -232,11 +232,26 @@ export class UserPointService {
     const { page, limit } = query;
     const { pointLogs, total } = await this.userPointLogRepository.getMyHistory(userId, page, limit);
     const result: UserPointHistoryOutputDto[] = pointLogs.map(e => {
+      let questName
+      switch (e.pointType) {
+        case EUserPointType.QUEST:
+          questName = e.userQuest?.quest?.name
+          break
+        case EUserPointType.REFERRAL:
+          questName = "From referral"
+          break
+        case EUserPointType.CORE:
+          questName = "From trading"
+          break
+        default:
+          questName = "Unknown"
+      }
+
       return {
         id: e.id,
         amount: e.amount,
         createdAt: e.createdAt,
-        questName: e.userQuest?.quest?.name,
+        questName: questName,
       }
     })
 

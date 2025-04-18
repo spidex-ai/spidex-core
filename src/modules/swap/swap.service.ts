@@ -1,5 +1,5 @@
 import { EError } from '@constants/error.constant';
-import { SwapAction, SwapExchange, SwapStatus } from '@database/entities/swap-transaction.entity';
+import { SwapAction, SwapExchange, SwapStatus, SwapTransactionEntity } from '@database/entities/swap-transaction.entity';
 import { EUserPointLogType } from '@database/entities/user-point-log.entity';
 import { SwapTransactionRepository } from '@database/repositories/swap-transaction.repository';
 import { BuildSwapRequest, EstimateSwapRequest, GetPoolStatsRequest, SubmitSwapRequest } from '@modules/swap/dtos/swap-request.dto';
@@ -9,8 +9,10 @@ import { TokenMetaService } from '@modules/token-metadata/token-meta.service';
 import { TokenPriceService } from '@modules/token-price/token-price.service';
 import { UserPointService } from '@modules/user-point/services/user-point.service';
 import { EUserPointType } from '@modules/user-point/user-point.constant';
+import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
+import { getTxHashFromCbor } from '@shared/utils/cardano';
 import Decimal from 'decimal.js';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
@@ -30,6 +32,7 @@ export class SwapService {
         private readonly tokenMetaService: TokenMetaService,
         @Inject(forwardRef(() => UserPointService))
         private readonly userPointService: UserPointService,
+        private readonly userQuestService: UserQuestService
     ) { }
 
     async buildSwap(userId: number, payload: BuildSwapRequest) {
@@ -38,7 +41,6 @@ export class SwapService {
             const tokenAUnit = payload.tokenIn;
             const tokenBUnit = payload.tokenOut;
             const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
-
 
             let tokenIn, tokenOut;
 
@@ -75,6 +77,8 @@ export class SwapService {
                 blacklisted_dexes: payload.blacklistedDexes || [],
             });
 
+            const txHash = getTxHashFromCbor(response.cbor);
+
             const swapSellTx = this.swapTransactionRepository.create({
                 userId: userId,
                 address: payload.buyerAddress,
@@ -90,6 +94,7 @@ export class SwapService {
                 cborHex: response.cbor,
                 totalFee: response.total_fee,
                 totalUsd: new Decimal(payload.amountIn).times(tokenIn.price).toString(),
+                txHash: txHash,
             });
 
             const swapBuyTx = this.swapTransactionRepository.create({
@@ -107,6 +112,7 @@ export class SwapService {
                 cborHex: response.cbor,
                 totalFee: response.total_fee,
                 totalUsd: new Decimal(response.total_output).times(tokenOut.price).toString(),
+                txHash: txHash,
             });
 
             await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
@@ -125,7 +131,6 @@ export class SwapService {
     async estimateSwap(payload: EstimateSwapRequest): Promise<EstimateSwapResponse> {
         try {
             let tokenIn, tokenOut;
-
             if (payload.tokenIn === 'ADA') {
                 tokenIn = {
                     unit: '',
@@ -177,8 +182,11 @@ export class SwapService {
     @Transactional()
     async submitSwap(userId: number, payload: SubmitSwapRequest) {
         try {
+            const txHash = getTxHashFromCbor(payload.txCbor);
+
+
             const swapTxs = await this.swapTransactionRepository.findBy({
-                cborHex: payload.txCbor,
+                txHash: txHash,
             });
 
             if (swapTxs.length === 0) {
@@ -215,6 +223,11 @@ export class SwapService {
                 logType: EUserPointLogType.FROM_CORE,
                 amount: point,
                 type: EUserPointType.CORE,
+            })
+
+            await this.userQuestService.emitUserQuestRelatedTradeEvent({
+                userId: userId,
+                txHash: txHash,
             })
 
             return response;
@@ -316,6 +329,16 @@ export class SwapService {
 
     async getTransactionDetail(txHash: string) {
         const response = await this.blockfrostService.getTransactionDetail(txHash);
+        return response;
+    }
+
+    async getSellSwapTransaction(txHash: string): Promise<SwapTransactionEntity | null> {
+        const response = await this.swapTransactionRepository.findOne({ where: { txHash, action: SwapAction.SELL, status: SwapStatus.SUCCESS } });
+        return response;
+    }
+
+    async getSwapTransactionByTxHash(txHash: string): Promise<SwapTransactionEntity[] | null> {
+        const response = await this.swapTransactionRepository.findBy({ txHash, status: SwapStatus.SUCCESS });
         return response;
     }
 

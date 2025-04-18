@@ -1,6 +1,7 @@
 import { QuestRepository } from "@database/repositories/quest.repository";
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
 import { UserQuestRepository } from "@database/repositories/user-quest.repository";
+import { SwapModule } from "@modules/swap/swap.module";
 import { UserPointModule } from "@modules/user-point/user-point.module";
 import { UserQuestController } from "@modules/user-quest/controllers/user-quest.controller";
 import { QuestService } from "@modules/user-quest/services/quest.service";
@@ -19,6 +20,7 @@ import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
     KafkaModule,
   forwardRef(() => UserPointModule),
   forwardRef(() => UserReferralModule),
+  forwardRef(() => SwapModule),
   ],
   providers: [UserQuestService, QuestService,],
   controllers: [UserQuestController,],

@@ -19,28 +19,28 @@ export class UserQuestConsumerService {
     private readonly coreMicroservice: ClientProxy,
   ) { }
 
-  async handleQuestRelatedToChatWithAiEvent(context: KafkaContext, data: IQuestRelatedToTradeEvent) {
-    await heartbeatWrapped(context, this.logger, 'handleQuestRelatedToChatWithAiEvent', async () => {
-      await this.userQuestService.handleQuestRelatedToChatWithAiEvent(data);
+  async handleQuestRelatedToTradeEvent(context: KafkaContext, data: IQuestRelatedToTradeEvent) {
+    await heartbeatWrapped(context, this.logger, 'handleQuestRelatedToTradeEvent', async () => {
+      await this.userQuestService.handleQuestRelatedToTradeEvent(data);
     });
   }
 
-  async handleQuestRelatedToChatWithAiEventDeadLetter(_: KafkaContext, message: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
+  async handleQuestRelatedToTradeEventDeadLetter(_: KafkaContext, message: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
     this.logger.error(message);
     await firstValueFrom(this.coreMicroservice.emit<IDeadLetterMessage<IQuestRelatedToTradeEvent>>(
-      USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_CHAT_WITH_AI,
+      USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_TRADE,
       {
         key: message.key,
         value: message
       }));
   }
 
-  async handleQuestRelatedToChatWithAiEventDeadLetterRetry(context: KafkaContext, deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
+  async handleQuestRelatedToTradeEventDeadLetterRetry(context: KafkaContext, deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
     const MAX_RETRY = 5;
     if (deadLetterMessage.retryCount > MAX_RETRY) {
       // TODO: send alert to telegram
       return;
     }
-    await this.handleQuestRelatedToChatWithAiEvent(context, deadLetterMessage.message);
+    await this.handleQuestRelatedToTradeEvent(context, deadLetterMessage.message);
   }
 } 

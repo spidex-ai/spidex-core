@@ -1,12 +1,16 @@
 
-import { decode } from 'cbor'
+import { decode, encode } from 'cbor'
+import { blake2b } from 'blakejs'
 const cbor = '84a700818258200da1f96a6d4e65ea1f74f328d5435c6cbf4512304214d781d1148150256dd911000184a300583911c3e28c36c3447315ba5a56f33da6a6ddc1770a876a8d9f0cb3a97c4c69b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd1011a002c4020028201d81859012dd8799fd8799f581c504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b0ffd8799fd8799f581c504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b0ffd8799fd8799fd8799f581c69b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd1ffffffffd87980d8799fd8799f581c504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b0ffd8799fd8799fd8799f581c69b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd1ffffffffd87980d8799f581cf5808c2c990d86da54bfc97d89cee6efa20cd8461616359478d96b4c58202ffadbb87144e875749122e0bbb9f535eeaa7f5660c6c4a91bcc4121e477f08dffd8799fd87a80d8799f1a00030d40ff182ad87980ff1a000aae60d87a80ff825839018c7eb5cfdb7a49de9407d2d00061f1b4e9847f16202c4cbe76e34c49dc97c3a5194cf42aff7995077c789f7903cf21bff6c027ef92e0e16f1a000f430882583901504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b069b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd11a001e848082583901504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b069b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd11a003a602b021a00042ead031a0917df19075820bfd6dd1e96e4fd26c6379aa3093aaef25639d58ee76d045bd4528ef9f2fed808081a0917d1090e82581c504b597d90d03dca9dd9d8efdc3aa77cacefee9aa11cd31d6daf98b0581c69b24d0d13b2fc2295bc93aab80fe263068189c7efff2763135d0fd1a0f5a11902a2a1636d7367816f44657868756e746572205472616465'
 
 const decoded = decode(cbor)
-for (const item of decoded) {
-    console.log(item)
-    // If item is buffer, convert to hex
-    if (Buffer.isBuffer(item)) {
-        console.log(item.toString('hex'))
-    }
-}
+// The first element is the transaction body
+const txBody = decoded[0];
+
+// Re-encode just the transaction body
+const txBodyCbor = encode(txBody);
+
+// Hash it with blake2b-256
+const txHash = blake2b(txBodyCbor, null, 32);
+
+console.log(Buffer.from(txHash).toString('hex'))

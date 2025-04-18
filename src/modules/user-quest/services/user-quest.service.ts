@@ -1,14 +1,17 @@
 import { EError } from "@constants/error.constant";
-import { EQuestCategory, EQuestStatus, EQuestType, QUEST_UNLIMITED, QuestEntity } from "@database/entities/quest.entity";
+import { EQuestCategory, EQuestStatus, EQuestType, ITradePartnerTokenRequirement, ITradeVolumeRequirement, QUEST_UNLIMITED, QuestEntity } from "@database/entities/quest.entity";
 import { EUserPointLogType } from "@database/entities/user-point-log.entity";
 import { UserQuestEntity } from "@database/entities/user-quest.entity";
 import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
 import { UserQuestRepository } from "@database/repositories/user-quest.repository";
+import { SwapService } from "@modules/swap/swap.service";
 import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
 import { EUserPointType } from "@modules/user-point/user-point.constant";
 import { EUserQuestStatus, GetCheckInListFilterDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
+import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
+import { IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
 import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
@@ -20,7 +23,9 @@ import { CORE_MICROSERVICE } from "@shared/modules/kafka/kafka.constant";
 import { LoggerService } from "@shared/modules/loggers/logger.service";
 import { getEndOfDay, getStartOfDay } from "@shared/utils/dayjs";
 import { isNullOrUndefined } from "@shared/utils/util";
+import Decimal from "decimal.js";
 import { flattenDeep, groupBy, orderBy } from "lodash";
+import { firstValueFrom } from "rxjs";
 import { And, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { Transactional } from "typeorm-transactional";
 
@@ -40,6 +45,8 @@ export class UserQuestService {
     @Inject(forwardRef(() => UserReferralService))
     private userReferralService: UserReferralService,
     private userPointLogRepository: UserPointLogRepository,
+    @Inject(forwardRef(() => SwapService))
+    private swapService: SwapService,
   ) { }
 
   async checkIn(userId: number): Promise<void> {
@@ -184,7 +191,7 @@ export class UserQuestService {
   }
 
 
-  async canCompleteOneTimeQuest(userId: number, questId: number): Promise<boolean> {
+  async canCompleteOneTimeQuest(userId: number, questId: number, options?: TQuestOptions): Promise<boolean> {
     const quest = await this.questService.getQuestById(questId)
     if (!quest) {
       this.logger.warn(`UserQuestService::canCompleteOneTimeQuest() | Quest not found`, { questId })
@@ -196,11 +203,11 @@ export class UserQuestService {
       return false
     }
 
-    const canComplete = await this.canCompleteQuestByType(userId, quest)
+    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
     return canComplete
   }
 
-  async canCompleteDailyQuest(userId: number, questId: number): Promise<boolean> {
+  async canCompleteDailyQuest(userId: number, questId: number, options?: TQuestOptions): Promise<boolean> {
     const startOfDay = getStartOfDay(new Date());
     const endOfDay = getEndOfDay(new Date());
     const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId, createdAt: And(LessThanOrEqual(endOfDay), MoreThanOrEqual(startOfDay)), deletedAt: IsNull() } });
@@ -215,11 +222,11 @@ export class UserQuestService {
     }
 
 
-    const canComplete = await this.canCompleteQuestByType(userId, quest)
+    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
     return canComplete
   }
 
-  async canCompleteMultiTimeQuest(userId: number, questId: number): Promise<boolean> {
+  async canCompleteMultiTimeQuest(userId: number, questId: number, options?: TQuestOptions): Promise<boolean> {
     const quest = await this.questService.getQuestById(questId)
     if (!quest) {
       this.logger.warn(`UserQuestService::canCompleteMultiTimeQuest() | Quest not found`, { questId })
@@ -239,15 +246,92 @@ export class UserQuestService {
       }
     }
 
-    const canComplete = await this.canCompleteQuestByType(userId, quest)
+    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
     return canComplete
   }
 
-  async canCompleteQuestByType(userId: number, quest: QuestEntity): Promise<boolean> {
-    console.log('canCompleteQuestByType', userId, quest)
+  async canCompleteQuestByType(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<boolean> {
+    switch (quest.type) {
+      case EQuestType.DAILY_TRADE:
+        return this.canCompleteDailyTradeQuest(userId, quest)
+      case EQuestType.FIRST_TRADE:
+        return this.canCompleteFirstTradeQuest(userId, quest)
+      case EQuestType.TRADE_VOLUME:
+        return this.canCompleteTradeVolumeQuest(userId, quest, options)
+      case EQuestType.TOTAL_TRADE_VOLUME:
+        return this.canCompleteTotalTradeVolumeQuest(userId, quest)
+      case EQuestType.TRADE_PARTNER_TOKEN:
+        return this.canCompleteTradePartnerTokenQuest(userId, quest, options)
+      default:
+        this.logger.warn(`UserQuestService::canCompleteQuestByType() | Quest type not found`, { questId: quest.id })
+        return true
+    }
+  }
+
+
+  async canCompleteDailyTradeQuest(userId: number, quest: QuestEntity,): Promise<boolean> {
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    if (userQuest) {
+      return false
+    }
     return true
   }
 
+  async canCompleteFirstTradeQuest(userId: number, quest: QuestEntity,): Promise<boolean> {
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    if (userQuest) {
+      return false
+    }
+    return true
+  }
+
+  async canCompleteTradeVolumeQuest(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<boolean> {
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    if (userQuest) {
+      return false
+    }
+    const tradeOptions = options as IQuestRelatedToTradeOptions
+    const tx = await this.swapService.getSellSwapTransaction(tradeOptions.txHash)
+    if (!tx) {
+      return false
+    }
+
+    const requirements = quest.requirements as ITradeVolumeRequirement
+    if (new Decimal(tx.totalUsd).lt(requirements.amount)) {
+      return false
+    }
+    return true
+  }
+
+  async canCompleteTradePartnerTokenQuest(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<boolean> {
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    if (userQuest) {
+      return false
+    }
+    const tradeOptions = options as IQuestRelatedToTradeOptions
+    const txs = await this.swapService.getSwapTransactionByTxHash(tradeOptions.txHash)
+    if (!txs || txs.length === 0) {
+      return false
+    }
+    const requirements = quest.requirements as ITradePartnerTokenRequirement
+    if (txs.some(tx => tx.tokenA === requirements.token || tx.tokenB === requirements.token)) {
+      return true
+    }
+    return false
+  }
+
+  async canCompleteTotalTradeVolumeQuest(userId: number, quest: QuestEntity,): Promise<boolean> {
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    if (userQuest) {
+      return false
+    }
+    const totalTradeVolume = await this.swapService.getTradingVolume(userId)
+    const requirements = quest.requirements as ITradeVolumeRequirement
+    if (totalTradeVolume < requirements.amount) {
+      return false
+    }
+    return true
+  }
 
   async getQuests(userId: number, filter: UserQuestFilterDto): Promise<PageDto<UserQuestInfoOutput>> {
 
@@ -344,28 +428,46 @@ export class UserQuestService {
     return userQuests
   }
 
+  async emitUserQuestRelatedTradeEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
+    await firstValueFrom(this.coreMicroservice.emit<IQuestRelatedToTradeEvent>(
+      USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_TRADE,
+      {
+        key: data.userId,
+        value: data
+      }
+    ))
+  }
 
-  async handleQuestRelatedToChatWithAiEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
+
+  async handleQuestRelatedToTradeEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
     const quests = await this.questService.getQuestInType([
-      EQuestType.TRADE,
+      EQuestType.DAILY_TRADE,
+      EQuestType.FIRST_TRADE,
+      EQuestType.TRADE_PARTNER_TOKEN,
+      EQuestType.TRADE_VOLUME,
+      EQuestType.TOTAL_TRADE_VOLUME,
     ])
+
+    const options = {
+      txHash: data.txHash,
+    }
 
     await Promise.all(quests.map(async (quest) => {
       switch (quest.category) {
         case EQuestCategory.ONE_TIME:
-          const canCompleteOneTime = await this.canCompleteOneTimeQuest(data.userId, quest.id);
+          const canCompleteOneTime = await this.canCompleteOneTimeQuest(data.userId, quest.id, options);
           if (canCompleteOneTime) {
             await this.completeQuest(data.userId, quest);
           }
           break;
         case EQuestCategory.DAILY:
-          const canCompleteDaily = await this.canCompleteDailyQuest(data.userId, quest.id);
+          const canCompleteDaily = await this.canCompleteDailyQuest(data.userId, quest.id, options);
           if (canCompleteDaily) {
             await this.completeQuest(data.userId, quest);
           }
           break;
         case EQuestCategory.MULTI_TIME:
-          const canCompleteMultiTime = await this.canCompleteMultiTimeQuest(data.userId, quest.id);
+          const canCompleteMultiTime = await this.canCompleteMultiTimeQuest(data.userId, quest.id, options);
           if (canCompleteMultiTime) {
             await this.completeQuest(data.userId, quest);
           }

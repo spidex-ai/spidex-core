@@ -60,6 +60,7 @@
     "axios": "^1.8.4",
     "bcrypt": "5.1.1",
     "bignumber.js": "9.1.2",
+    "blake2b": "^2.1.4",
     "bull": "4.11.3",
     "cache-manager": "^4.1.0",
     "cache-manager-redis-yet": "^5.1.5",

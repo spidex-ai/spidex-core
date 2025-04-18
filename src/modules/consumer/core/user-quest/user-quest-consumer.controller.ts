@@ -13,12 +13,12 @@ export class UserQuestConsumerController {
     private readonly userQuestConsumerService: UserQuestConsumerService
   ) { }
 
-  @EventPattern(USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_CHAT_WITH_AI)
-  async handleQuestRelatedToChatWithAiEvent(@Payload() data: IQuestRelatedToTradeEvent, @Ctx() context: KafkaContext) {
+  @EventPattern(USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_TRADE)
+  async handleQuestRelatedToTradeEvent(@Payload() data: IQuestRelatedToTradeEvent, @Ctx() context: KafkaContext) {
     try {
-      await this.userQuestConsumerService.handleQuestRelatedToChatWithAiEvent(context, data)
+      await this.userQuestConsumerService.handleQuestRelatedToTradeEvent(context, data)
     } catch (error) {
-      this.logger.error(`Error handling quest related to chat with ai event: ${error}`, error)
+      this.logger.error(`Error handling quest related to trade event: ${error}`, error)
 
       const deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent> = {
         key: data.userId.toString(),
@@ -29,7 +29,7 @@ export class UserQuestConsumerController {
       };
 
       // Send to dead letter queue
-      await this.userQuestConsumerService.handleQuestRelatedToChatWithAiEventDeadLetter(context, deadLetterMessage);
+      await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetter(context, deadLetterMessage);
     }
 
     const { offset } = context.getMessage();
@@ -39,8 +39,8 @@ export class UserQuestConsumerController {
     await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
   }
 
-  @EventPattern(USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_CHAT_WITH_AI)
-  async handleQuestRelatedToChatWithAiEventDeadLetter(
+  @EventPattern(USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_TRADE)
+  async handleQuestRelatedToTradeEventDeadLetter(
     @Payload() message: IDeadLetterMessage<IQuestRelatedToTradeEvent>,
     @Ctx() context: KafkaContext) {
     const { offset } = context.getMessage();
@@ -48,13 +48,13 @@ export class UserQuestConsumerController {
     const topic = context.getTopic();
     const consumer = context.getConsumer();
     try {
-      await this.userQuestConsumerService.handleQuestRelatedToChatWithAiEventDeadLetterRetry(context, message);
+      await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetterRetry(context, message);
     } catch (error) {
       this.logger.error(`Error handling quest related to chat with ai event dead letter: ${error}`, error)
       message.deadLetterReason = (error as Error).message
       message.stack = (error as Error).stack
       message.retryCount++
-      await this.userQuestConsumerService.handleQuestRelatedToChatWithAiEventDeadLetterRetry(context, message);
+      await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetterRetry(context, message);
     }
     await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
   }
