@@ -4,7 +4,7 @@ import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
 import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
-import { TokenSearchRequest, TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
 import { TokenDetailsResponse, TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
@@ -69,8 +69,9 @@ export class TokenService {
         return tokensWithDetails;
     }
 
-    async getTopMcapTokens(limit: number = 10, page: number = 1): Promise<TopTokenMcap[]> {
+    async getTopMcapTokens(request: TokenTopMcapRequest): Promise<TopTokenMcap[]> {
         try {
+            const { limit, page } = request;
             const cacheKey = TOP_MCAP_TOKENS_CACHE_KEY(limit, page);
             const cachedData = await this.cache.get<TopTokenMcap[]>(cacheKey);
             if (cachedData) {
@@ -106,8 +107,9 @@ export class TokenService {
         }
     }
 
-    async getTopVolumeTokens(timeFrame: string = '24h', limit: number = 10, page: number = 1): Promise<TopToken[]> {
+    async getTopVolumeTokens(request: TokenTopVolumeRequest): Promise<TopToken[]> {
         try {
+            const { timeFrame, limit, page } = request;
             const cacheKey = TOP_VOLUME_TOKENS_CACHE_KEY(timeFrame, limit, page);
             const cachedData = await this.cache.get<TopToken[]>(cacheKey);
             if (cachedData) {

@@ -3,7 +3,7 @@ import { TokenService } from "./token.service";
 import { ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GuardPublic } from "@shared/decorators/auth.decorator";
 import { TokenStatsResponse } from "@modules/token/dtos/token-response.dto";
-import { TokenSearchRequest, TokenTopTradersRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
 
 @Controller('tokens')
 @ApiTags('Tokens')
@@ -23,8 +23,8 @@ export class TokenController {
     @GuardPublic()
     @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limit of tokens to return' })
     @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
-    async getTopMcapTokens(@Query('limit') limit: number = 10, @Query('page') page: number = 1) {
-        return this.tokenService.getTopMcapTokens(limit, page);
+    async getTopMcapTokens(@Query() request: TokenTopMcapRequest) {
+        return this.tokenService.getTopMcapTokens(request);
     }
 
     @Get('top/volume')
@@ -32,8 +32,8 @@ export class TokenController {
     @ApiQuery({ name: 'timeFrame', type: String, required: false, description: 'Time frame to get top volume tokens' })
     @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limit of tokens to return' })
     @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
-    async getTopVolumeTokens(@Query('timeFrame') timeFrame: string = '24h', @Query('limit') limit: number = 10, @Query('page') page: number = 1) {
-        return this.tokenService.getTopVolumeTokens(timeFrame, limit, page);
+    async getTopVolumeTokens(@Query() request: TokenTopVolumeRequest) {
+        return this.tokenService.getTopVolumeTokens(request);
     }
 
 

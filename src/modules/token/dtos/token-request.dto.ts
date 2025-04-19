@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { PaginationDto } from "@shared/dtos/page-meta.dto";
 import { Transform } from "class-transformer";
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export enum ETimeFrame {
     ONE_HOUR = '1h',
@@ -41,4 +41,19 @@ export class TokenSearchRequest extends PaginationDto {
     @IsOptional()
     @Transform(({ value }) => value === 'true')
     verified: boolean;
+}
+
+
+export class TokenTopVolumeRequest extends PaginationDto {
+    @ApiProperty({
+        description: 'Time frame',
+        example: ETimeFrame.ONE_HOUR,
+    })
+    @IsEnum(ETimeFrame)
+    @IsNotEmpty()
+    timeFrame: ETimeFrame;
+}
+
+export class TokenTopMcapRequest extends PaginationDto {
+
 }

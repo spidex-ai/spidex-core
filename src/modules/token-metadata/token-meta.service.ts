@@ -46,48 +46,76 @@ export class TokenMetaService {
     }
 
     async getTokensMetadata(units: string[], properties: string[]) {
-        const pickProperties = ['unit'].concat(properties);
-        const tokenMetadata = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
-        const missingUnits = units.filter(unit => !tokenMetadata.some(tokenMetadata => tokenMetadata.unit === unit));
-        let savedTokenMetadata
-        if (missingUnits.length > 0) {
-            const missingTokenMetadata = await this.tokenCardanoService.batchTokenInfo(missingUnits);
-            if (missingTokenMetadata?.subjects?.length > 0) {
-                savedTokenMetadata = await this.tokenMetadataRepository.save(await Promise.all(missingTokenMetadata.subjects.map(async (tokenMetadata) => {
+        try {
+            const pickProperties = ['unit'].concat(properties);
+            const tokenMetadata = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
+            const missingUnits = units.filter(unit => !tokenMetadata.some(tokenMetadata => tokenMetadata.unit === unit));
+            let savedTokenMetadataV1
+            let savedTokenMetadataV2
+            if (missingUnits.length > 0) {
+                const missingTokenMetadata = await this.tokenCardanoService.batchTokenInfo(missingUnits);
+                if (missingTokenMetadata?.subjects?.length > 0) {
+                    savedTokenMetadataV1 = await this.tokenMetadataRepository.save(await Promise.all(missingTokenMetadata.subjects.map(async (tokenMetadata) => {
 
-                    let logo
-                    if (tokenMetadata.logo?.value) {
-                        logo = await this.uploadTokenLogo(tokenMetadata.subject, tokenMetadata.logo.value);
-                    }
+                        let logo
+                        if (tokenMetadata.logo?.value) {
+                            logo = await this.uploadTokenLogo(tokenMetadata.subject, tokenMetadata.logo.value);
+                        }
 
 
-                    const token = this.tokenMetadataRepository.create({
-                        unit: tokenMetadata.subject,
-                        name: tokenMetadata.name?.value,
-                        logo,
-                        ticker: tokenMetadata.ticker?.value,
-                        policy: tokenMetadata.policy,
-                        description: tokenMetadata.description?.value,
-                        url: tokenMetadata.url?.value,
-                        decimals: tokenMetadata.decimals?.value,
-                    });
+                        const token = this.tokenMetadataRepository.create({
+                            unit: tokenMetadata.subject,
+                            name: tokenMetadata.name?.value,
+                            logo,
+                            ticker: tokenMetadata.ticker?.value,
+                            policy: tokenMetadata.policy,
+                            description: tokenMetadata.description?.value,
+                            url: tokenMetadata.url?.value,
+                            decimals: tokenMetadata.decimals?.value,
+                        });
 
-                    return token;
-                })));
+                        return token;
+                    })));
+                }
+
+                if (missingTokenMetadata?.subjects?.length < missingUnits.length) {
+                    const missingIds = missingUnits.filter(unit => !missingTokenMetadata?.subjects?.some(tokenMetadata => tokenMetadata.subject === unit));
+                    const missingTokenMetadataV2 = await Promise.all(missingIds.map(async (unit) => {
+                        const blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
+                        return this.tokenMetadataRepository.create({
+                            unit,
+                            name: blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
+                            logo: blockfrostToken?.metadata?.logo || blockfrostToken?.onchain_metadata?.image,
+                            ticker: blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
+                            policy: blockfrostToken?.policy_id,
+                            description: blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
+                            url: blockfrostToken?.metadata?.url,
+                            decimals: blockfrostToken?.metadata?.decimals,
+                        });
+                    }));
+                    savedTokenMetadataV2 = await this.tokenMetadataRepository.save(missingTokenMetadataV2);
+                }
+
+            }
+            if (savedTokenMetadataV1) {
+                tokenMetadata.push(...savedTokenMetadataV1);
             }
 
-        }
-        if (savedTokenMetadata) {
-            tokenMetadata.push(...savedTokenMetadata);
-        }
-
-        return tokenMetadata.map(tokenMetadata => {
-            if (properties.length === 0) {
-                return tokenMetadata;
+            if (savedTokenMetadataV2) {
+                tokenMetadata.push(...savedTokenMetadataV2);
             }
 
-            return pick(tokenMetadata, pickProperties);
-        });
+            return tokenMetadata.map(tokenMetadata => {
+                if (properties.length === 0) {
+                    return tokenMetadata;
+                }
+
+                return pick(tokenMetadata, pickProperties);
+            });
+        } catch (error) {
+            console.log({ error });
+            return [];
+        }
     }
 
     async uploadTokenLogo(unit: string, logo: string) {
