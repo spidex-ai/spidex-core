@@ -51,8 +51,8 @@ export class TokenService {
 
 
         const tokensWithDetails: TokenDetailsResponse = {
-            policy: tokenMetadata.policy,
-            ticker: tokenMetadata.ticker,
+            policy: tokenMetadata?.policy,
+            ticker: tokenMetadata?.ticker,
             is_verified: data.is_verified,
             creation_date: data.creation_date,
             logo: tokenMetadata.logo,

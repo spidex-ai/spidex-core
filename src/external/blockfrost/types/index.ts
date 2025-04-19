@@ -46,7 +46,11 @@ export interface BlockfrostTokenDetail {
 }
 
 export interface OnchainMetadata {
-    ANY_ADDITIONAL_PROPERTY: string
+    name: string
+    image: string
+    ticker: string
+    poolAuthor: string
+    description: string
 }
 
 export interface Metadata {

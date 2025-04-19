@@ -1,6 +1,7 @@
 import { TokenMetadataRepository } from "@database/repositories/token-metadata.repository";
 import { Injectable } from "@nestjs/common";
 import { S3Service } from "external/aws/s3/s3.service";
+import { BlockfrostService } from "external/blockfrost/blockfrost.service";
 import { TokenCardanoService } from "external/token-cardano/cardano-token.service";
 import { pick } from "lodash";
 import { In } from "typeorm";
@@ -10,14 +11,15 @@ export class TokenMetaService {
         private readonly tokenMetadataRepository: TokenMetadataRepository,
         private readonly s3Service: S3Service,
         private readonly tokenCardanoService: TokenCardanoService,
+        private readonly blockfrostService: BlockfrostService
     ) { }
 
     async getTokenMetadata(unit: string, properties: string[]) {
         const pickProperties = ['unit'].concat(properties);
         let tokenMetadata = await this.tokenMetadataRepository.findOne({ where: { unit } });
         if (!tokenMetadata) {
-            const token = await this.tokenCardanoService.tokenInfo(unit);
-            if (!token) {
+            const [token, blockfrostToken] = await Promise.all([this.tokenCardanoService.tokenInfo(unit), this.blockfrostService.getTokenDetail(unit)]);
+            if (!token && !blockfrostToken) {
                 return null;
             }
 
@@ -27,14 +29,14 @@ export class TokenMetaService {
             }
 
             tokenMetadata = this.tokenMetadataRepository.create({
-                unit: token.subject,
-                name: token.name?.value,
+                unit: token?.subject || blockfrostToken?.asset,
+                name: token?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
                 logo,
-                ticker: token.ticker?.value,
-                policy: token.policy,
-                description: token.description?.value,
-                url: token.url?.value,
-                decimals: token.decimals?.value,
+                ticker: token?.ticker?.value || blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
+                policy: token?.policy || blockfrostToken?.policy_id,
+                description: token?.description?.value || blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
+                url: token?.url?.value || blockfrostToken?.metadata?.url,
+                decimals: token?.decimals?.value || blockfrostToken?.metadata?.decimals
             });
 
             await this.tokenMetadataRepository.save(tokenMetadata);
@@ -73,6 +75,7 @@ export class TokenMetaService {
                     return token;
                 })));
             }
+
         }
         if (savedTokenMetadata) {
             tokenMetadata.push(...savedTokenMetadata);
