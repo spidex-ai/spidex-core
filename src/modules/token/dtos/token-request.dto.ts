@@ -51,7 +51,7 @@ export class TokenTopVolumeRequest extends PaginationDto {
     })
     @IsEnum(ETimeFrame)
     @IsNotEmpty()
-    timeFrame: ETimeFrame;
+    timeframe: ETimeFrame;
 }
 
 export class TokenTopMcapRequest extends PaginationDto {

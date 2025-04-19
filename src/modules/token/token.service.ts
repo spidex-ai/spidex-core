@@ -109,14 +109,14 @@ export class TokenService {
 
     async getTopVolumeTokens(request: TokenTopVolumeRequest): Promise<TopToken[]> {
         try {
-            const { timeFrame, limit, page } = request;
-            const cacheKey = TOP_VOLUME_TOKENS_CACHE_KEY(timeFrame, limit, page);
+            const { timeframe, limit, page } = request;
+            const cacheKey = TOP_VOLUME_TOKENS_CACHE_KEY(timeframe, limit, page);
             const cachedData = await this.cache.get<TopToken[]>(cacheKey);
             if (cachedData) {
                 return cachedData;
             }
 
-            const data = await this.taptoolsService.getTopTokensByVolume(timeFrame, page, limit);
+            const data = await this.taptoolsService.getTopTokensByVolume(timeframe, page, limit);
             const tokenIds = data.map((token) => token.unit);
 
             const [tokenDetails, tokenPrice] = await Promise.all([
