@@ -70,10 +70,10 @@ export class AuthService {
       secret: this.configService.get(EEnvKey.JWT_REFRESH_TOKEN_SECRET),
     });
 
-    const user = await this.usersService.getUserById(decodedData.userId);
+    const user = await this.usersService.getUserById(decodedData.userId, false);
 
     if (!user || user.status !== EUserStatus.ACTIVE) {
-      throw new BadRequestException({
+      throw new Unauthorized({
         validatorErrors: EError.USER_NOT_EXIST,
         message: `User not found or not active`,
       });

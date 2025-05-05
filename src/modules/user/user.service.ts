@@ -29,14 +29,17 @@ export class UserService {
     private readonly userReferralService: UserReferralService,
   ) { }
 
-  async getUserById(id: number) {
+  async getUserById(id: number, throwError = true) {
     const user = await this.userRepository.findOne({
       where: {
         id,
       },
     });
     if (isNullOrUndefined(user)) {
-      throw new BadRequestException({ validatorErrors: EError.USER_NOT_EXIST, message: `UID ${id} is not found` });
+      if (throwError) {
+        throw new BadRequestException({ validatorErrors: EError.USER_NOT_EXIST, message: `UID ${id} is not found` });
+      }
+      return null;
     }
 
     return user;
