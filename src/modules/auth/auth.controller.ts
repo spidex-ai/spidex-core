@@ -79,4 +79,6 @@ export class AuthController {
   async connectGoogle(@AuthUser() user: IJwtPayload, @Body() body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
     return await this.authService.connectGoogle(body, user?.userId);
   }
+
+  
 }

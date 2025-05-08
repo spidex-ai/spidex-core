@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     command: 
-      sh -c "yarn db:migration:run && yarn dev"
+      sh -c "yarn db:migration:run && yarn start:prod"
     restart: always
     ports:
       - ${APP_PORT}:${APP_PORT}

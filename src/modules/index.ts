@@ -9,6 +9,7 @@ import { SwapModule } from '@modules/swap/swap.module';
 import { TokenModule } from '@modules/token/token.module';
 import { PortfolioModule } from '@modules/portfolio/portfolio.module';
 import { MediasModule } from '@modules/medias/medias.module';
+import { AdminModule } from '@modules/admin/admin.module';
 export const MODULES = [
   UserModule,
   AuthModule,
@@ -19,5 +20,6 @@ export const MODULES = [
   SwapModule,
   TokenModule,
   PortfolioModule,
-  MediasModule
+  MediasModule,
+  AdminModule
 ];
