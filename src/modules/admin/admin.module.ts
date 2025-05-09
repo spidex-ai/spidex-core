@@ -8,11 +8,18 @@ import { ConfigService } from '@nestjs/config';
 import { EEnvKey } from '@constants/env.constant';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
+import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
+import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
+import { AdminConsumer } from './admin.consumer';
 
 @Module({
   imports: [
-    CustomRepositoryModule.forFeature([AdminRepository]),
+    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository]),
     PasswordEncoderModule,
+    BullModule.registerQueue({
+      name: CRAWL_DOCS_QUEUE_NAME,
+    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -26,6 +33,7 @@ import { ConfigModule } from '@nestjs/config';
   ConfigModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService]
+  providers: [AdminService, AdminConsumer],
+  exports: [AdminService]
 })
 export class AdminModule {}

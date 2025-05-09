@@ -8,15 +8,20 @@ import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
 import { JwtService } from '@nestjs/jwt';
 import { EEnvKey } from '@constants/env.constant';
 import { ConfigService } from '@nestjs/config';
-
-
+import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
+import { v4 as uuidv4 } from 'uuid';
+import { InjectQueue } from '@nestjs/bullmq';
+import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
+import { Queue } from 'bull';
 @Injectable()
 export class AdminService {
   constructor(
+    @InjectQueue(CRAWL_DOCS_QUEUE_NAME) private crawlDocsQueue: Queue,
     private readonly adminRepository: AdminRepository,
     private readonly passwordEncoder: PasswordEncoder,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly crawlDocsRepository: CrawlDocsRepository,
   ) {}
 
   async create() {
@@ -65,14 +70,18 @@ export class AdminService {
   }
 
   async crawlDocs(crawlDocsDto: CrawlDocsDto) { 
-    const { url, name } = crawlDocsDto;
-    // const crawlResponse = await this.firecrawlService.crawlUrl(url);
-    // if (!crawlResponse.success) {
-    //   throw new BadRequestException('Failed to crawl docs');
-    // }
+    const { urls, name } = crawlDocsDto;
+    for (const url of urls) {
+      const crawlDocs = this.crawlDocsRepository.create({
+        url,
+        name: name || uuidv4(),
+        status: 'pending',
+      });
+      await this.crawlDocsRepository.save(crawlDocs);
+      await this.crawlDocsQueue.add(CRAWL_DOCS_QUEUE_NAME, crawlDocs);
+    }
     return {
-      url,
-      name,
+      success: true,
     };
   }
 }
