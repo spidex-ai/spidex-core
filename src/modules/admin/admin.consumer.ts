@@ -8,7 +8,7 @@ import FirecrawlApp, { FirecrawlDocument } from '@mendable/firecrawl-js';
 import { openai } from '@ai-sdk/openai';
 import { embed, generateText } from 'ai';
 import { KnowledgeInput } from './types';
-import { addKnowledge } from 'external/db/services';
+import { addKnowledge } from 'external/cosmos-db/services';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
 
 @Injectable()
