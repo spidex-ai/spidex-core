@@ -172,7 +172,6 @@ export class UserQuestService {
 
     const shouldAddToReferralPoint = [
       EQuestType.REFER_FRIEND,
-      EQuestType.FIRST_REFER,
     ].includes(quest.type)
 
     let referralId = null
@@ -255,14 +254,6 @@ export class UserQuestService {
     switch (quest.type) {
       case EQuestType.DAILY_TRADE:
         return this.canCompleteDailyTradeQuest(userId, quest)
-      case EQuestType.FIRST_TRADE:
-        return this.canCompleteFirstTradeQuest(userId, quest)
-      case EQuestType.TRADE_VOLUME:
-        return this.canCompleteTradeVolumeQuest(userId, quest, options)
-      case EQuestType.TOTAL_TRADE_VOLUME:
-        return this.canCompleteTotalTradeVolumeQuest(userId, quest)
-      case EQuestType.TRADE_PARTNER_TOKEN:
-        return this.canCompleteTradePartnerTokenQuest(userId, quest, options)
       default:
         this.logger.warn(`UserQuestService::canCompleteQuestByType() | Quest type not found`, { questId: quest.id })
         return true
@@ -442,10 +433,6 @@ export class UserQuestService {
   async handleQuestRelatedToTradeEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
     const quests = await this.questService.getQuestInType([
       EQuestType.DAILY_TRADE,
-      EQuestType.FIRST_TRADE,
-      EQuestType.TRADE_PARTNER_TOKEN,
-      EQuestType.TRADE_VOLUME,
-      EQuestType.TOTAL_TRADE_VOLUME,
     ])
 
     const options = {
@@ -476,49 +463,10 @@ export class UserQuestService {
     }))
   }
 
-  async triggerAgentQuest(userId: number, query: TriggerAgentQuestQueryDto): Promise<void> {
-    const { agentType } = query
-    let questTypes = [
-      EQuestType.FIRST_PROMPT,
+  async triggerAgentQuest(userId: number, _: TriggerAgentQuestQueryDto): Promise<void> {
+    const questTypes = [
       EQuestType.DAILY_PROMPT,
     ]
-
-    switch (agentType) {
-      case EAgentType.TRADING:
-        questTypes = [
-          ...questTypes,
-          EQuestType.PROMPT_RELATED_TO_TRADING_AGENT,
-        ]
-        break
-      case EAgentType.TOKEN:
-        questTypes = [
-          ...questTypes,
-          EQuestType.PROMPT_RELATED_TO_TOKEN_AGENT,
-        ]
-        break
-      case EAgentType.KNOWLEDGE:
-        questTypes = [
-          ...questTypes,
-          EQuestType.PROMPT_RELATED_TO_KNOWLEDGE_AGENT,
-        ]
-        break
-      case EAgentType.PORTFOLIO:
-        questTypes = [
-          ...questTypes,
-          EQuestType.PROMPT_RELATED_TO_PORTFOLIO_AGENT,
-        ]
-
-        break
-      case EAgentType.MARKET:
-        questTypes = [
-          ...questTypes,
-          EQuestType.PROMPT_RELATED_TO_MARKET_AGENT,
-        ]
-        break
-      default:
-        this.logger.warn(`UserQuestService::triggerAgentQuest() | Invalid agent type`, { agentType })
-        return
-    }
     const quests = await this.questService.getQuestInType(questTypes)
 
 

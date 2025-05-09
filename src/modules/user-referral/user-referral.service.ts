@@ -31,7 +31,7 @@ export class UserReferralService {
         const savedReferral = await this.referralRepository.save(referral);
 
 
-        const quests = await this.questService.getQuestInType([EQuestType.REFER_FRIEND, EQuestType.FIRST_REFER]);
+        const quests = await this.questService.getQuestInType([EQuestType.REFER_FRIEND]);
         await Promise.all(quests.map(async (quest) => {
             switch (quest.category) {
                 case EQuestCategory.ONE_TIME:
