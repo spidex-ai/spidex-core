@@ -1,8 +1,9 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AuthAdminGuard, GuardPublic } from '@shared/decorators/auth.decorator'; 
-import { AdminLoginDto, CrawlDocsDto } from './dtos/admin-request.dto';
+import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
+import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
 
 
 @Controller('admin')
@@ -32,5 +33,13 @@ export class AdminController {
     @AuthAdminGuard()
     async crawlDocs(@Body() crawlDocsDto: CrawlDocsDto) {
         return this.adminService.crawlDocs(crawlDocsDto);
+    }
+
+    @Get('crawl-docs')
+    @ApiOperation({ summary: 'Get crawl docs' })
+    @ApiBearerAuth()
+    @AuthAdminGuard()
+    async getCrawlDocs(@Query() getCrawlDocsDto: GetCrawlDocsDto) {
+        return this.adminService.getCrawlDocs(getCrawlDocsDto);
     }
 }

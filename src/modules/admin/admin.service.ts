@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AdminEntity, EAdminRole } from '@database/entities/admin.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { AdminRepository } from '@database/repositories/admin.repository';
 import { PasswordEncoder } from '@shared/modules/password-encoder/password-encoder';
-import { AdminLoginDto, CrawlDocsDto } from './dtos/admin-request.dto';
+import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
 import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
 import { JwtService } from '@nestjs/jwt';
 import { EEnvKey } from '@constants/env.constant';
@@ -13,6 +13,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { InjectQueue } from '@nestjs/bullmq';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
 import { Queue } from 'bull';
+import { plainToInstancesCustom } from '@shared/utils/class-transform';
+import { CrawlDocsEntity } from '@database/entities/crawl-docs.entity';
+import { PageOptionsDto } from '@shared/dtos/page-option.dto';
+import { PageMetaDto } from '@shared/dtos/page-meta.dto';
 @Injectable()
 export class AdminService {
   constructor(
@@ -82,6 +86,28 @@ export class AdminService {
     }
     return {
       success: true,
+    };
+  }
+
+  async getCrawlDocs(getCrawlDocsDto: GetCrawlDocsDto) {
+    const { keyword, page, limit } = getCrawlDocsDto;
+    const crawlDocs = this.crawlDocsRepository.createQueryBuilder('crawl_docs')
+
+    if (keyword) {  
+      crawlDocs.andWhere('crawl_docs.name LIKE :keyword OR crawl_docs.url LIKE :keyword', { keyword: `%${keyword}%` });
+    }
+
+    crawlDocs.orderBy('crawl_docs.created_at', 'DESC');
+    crawlDocs.skip((page - 1) * limit);
+    crawlDocs.take(limit);
+
+    const [result, total] = await crawlDocs.getManyAndCount();
+    return {
+        data: result,
+        meta: new PageMetaDto(total, new PageOptionsDto(
+            page,
+            limit
+        ))
     };
   }
 }

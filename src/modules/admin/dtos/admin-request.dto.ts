@@ -1,4 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { StringFieldOption } from "@shared/decorators/field.decorator";
+import { PaginationDto } from "@shared/dtos/page-meta.dto";
 import { IsArray, IsNotEmpty, IsString } from "class-validator";
 
 export class AdminRequestDto {}
@@ -36,4 +38,12 @@ export class CrawlDocsDto {
         example: 'docs',
     })
     name: string;
+}
+        
+export class GetCrawlDocsDto  extends PaginationDto {
+    @StringFieldOption({
+        description: 'The keyword of the docs',
+        example: 'docs',
+    })
+    keyword: string;
 }
