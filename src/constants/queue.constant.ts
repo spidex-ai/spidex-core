@@ -1,0 +1,1 @@
+export const CRAWL_DOCS_QUEUE_NAME = 'CRAWL_DOCS_QUEUE';

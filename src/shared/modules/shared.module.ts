@@ -6,7 +6,7 @@ import { RedisModule } from "@shared/modules/redis/redis.module";
 import { ConfigurationModule } from "config/config.module";
 import { DatabaseModule } from "config/database.module";
 import { CustomizeRedisModule } from "config/redis.module";
-
+import { BullQueueModule } from "./bull-queue/bull-queue.module";
 @Global()
 @Module({
     imports: [
@@ -16,6 +16,7 @@ import { CustomizeRedisModule } from "config/redis.module";
         RedisModule,
         LoggingModule,
         KafkaModule,
+        BullQueueModule,
     ],
 })
 export class SharedModule { }   

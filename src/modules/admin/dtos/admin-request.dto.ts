@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsNotEmpty, IsString } from "class-validator";
 
 export class AdminRequestDto {}
 
@@ -22,13 +22,12 @@ export class AdminLoginDto {
 }
 
 export class CrawlDocsDto {
-    @IsString()
     @IsNotEmpty()
     @ApiProperty({
         description: 'The url of the docs',
-        example: 'https://docs.spidex.io',
+        example: ['https://docs.spidex.io', 'https://docs.spidex.io/en/latest/'],
     })
-    url: string;
+    urls: string[];
 
     @IsString()
     @IsNotEmpty()
