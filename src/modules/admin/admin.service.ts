@@ -80,6 +80,8 @@ export class AdminService {
         url,
         name: name || uuidv4(),
         status: 'pending',
+        isCrawlSubPath: crawlDocsDto.isCrawlSubPath,
+        pathCount: 1,
       });
       await this.crawlDocsRepository.save(crawlDocs);
       await this.crawlDocsQueue.add(CRAWL_DOCS_QUEUE_NAME, crawlDocs);

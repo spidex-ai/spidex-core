@@ -25,11 +25,11 @@ export class AdminConsumer extends WorkerHost {
 
   async process(job: Job<CrawlDocsEntity>): Promise<void> {
     this.logger.log(`[CRAWL_DOCS_QUEUE] Processing crawl docs: ${job.data.url}`);
-    const { id, url, name } = job.data;
+    const { id, url, name, isCrawlSubPath } = job.data;
     try {
       const crawlResponse = await this.firecrawl.asyncCrawlUrl(url, {
-        limit: 500,
-        maxDepth: 10,
+        limit: isCrawlSubPath ? 500 : 1,
+        maxDepth: isCrawlSubPath ? 10 : 1,
         includePaths: [],
         excludePaths: [],
       });
@@ -42,6 +42,7 @@ export class AdminConsumer extends WorkerHost {
 
       let status = 'scraping';
       let docs: FirecrawlDocument<undefined>[] = [];
+      let total = 1;
       do {
         console.log('🚀 ~ AdminConsumer ~ process ~ status:', status);
         const statusResponse: any = await this.firecrawl.checkCrawlStatus(crawlResponse.id);
@@ -61,6 +62,7 @@ export class AdminConsumer extends WorkerHost {
         status = statusResponse.status;
         if (statusResponse.status === 'completed') {
           docs = statusResponse.data;
+          total = statusResponse.total;
         }
         await new Promise(resolve => setTimeout(resolve, 10000));
       } while (status === 'scraping');
@@ -104,6 +106,7 @@ export class AdminConsumer extends WorkerHost {
 
       await this.crawlDocsRepository.update(id, {
         status: 'completed',
+        pathCount: total,
       });
 
       return null;
@@ -111,6 +114,7 @@ export class AdminConsumer extends WorkerHost {
       this.logger.error(error);
       await this.crawlDocsRepository.update(id, {
         status: 'failed',
+        pathCount: 0,
       });
       return null;
     }

@@ -14,4 +14,10 @@ export class CrawlDocsEntity extends BaseExcludeDeletedAtEntity {
 
     @Column({ type: 'varchar', name: 'status', default: 'pending' })
     status: string
+
+    @Column({ type: 'boolean', name: 'is_crawl_sub_path', default: false })
+    isCrawlSubPath: boolean
+
+    @Column({ type: 'integer', name: 'path_count', default: 1 })
+    pathCount: number
 }
