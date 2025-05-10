@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { StringFieldOption } from "@shared/decorators/field.decorator";
 import { PaginationDto } from "@shared/dtos/page-meta.dto";
-import { IsArray, IsBoolean, IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class AdminRequestDto {}
 
@@ -38,6 +38,14 @@ export class CrawlDocsDto {
         example: 'docs',
     })
     name: string;
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({
+        description: 'The category of the docs',
+        example: 'docs',
+    }) 
+    category: string;
 
     @IsBoolean()
     @IsNotEmpty()

@@ -74,7 +74,7 @@ export class AdminService {
   }
 
   async crawlDocs(crawlDocsDto: CrawlDocsDto) { 
-    const { urls, name } = crawlDocsDto;
+    const { urls, name, category } = crawlDocsDto;
     for (const url of urls) {
       const crawlDocs = this.crawlDocsRepository.create({
         url,
@@ -82,6 +82,7 @@ export class AdminService {
         status: 'pending',
         isCrawlSubPath: crawlDocsDto.isCrawlSubPath,
         pathCount: 1,
+        category,
       });
       await this.crawlDocsRepository.save(crawlDocs);
       await this.crawlDocsQueue.add(CRAWL_DOCS_QUEUE_NAME, crawlDocs);
