@@ -64,11 +64,16 @@ export class AdminConsumer extends WorkerHost {
           docs = statusResponse.data;
           total = statusResponse.total;
         }
+
         await new Promise(resolve => setTimeout(resolve, 10000));
       } while (status === 'scraping');
 
       if (docs.length === 0) {
         this.logger.error('No documents found');
+        await this.crawlDocsRepository.update(id, {
+          status: 'completed',
+          pathCount: 0,
+        });
         return null;
       }
       const knowledge = await Promise.all(
@@ -111,6 +116,7 @@ export class AdminConsumer extends WorkerHost {
 
       return null;
     } catch (error) {
+      console.log("🚀 ~ AdminConsumer ~ process ~ error:", error)
       this.logger.error(error);
       await this.crawlDocsRepository.update(id, {
         status: 'failed',
