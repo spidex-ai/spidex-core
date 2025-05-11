@@ -4,7 +4,7 @@ import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
 import { TokenMetaService } from "@modules/token-metadata/token-meta.service";
 import { TokenPriceService } from "@modules/token-price/token-price.service";
-import { TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenOHLCVRequest, TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
 import { TokenDetailsResponse, TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
@@ -252,5 +252,11 @@ export class TokenService {
             usdPrice: tokenPrices[token.token_id] * adaPrice,
         }));
         return tokensWithDetails;
+    }
+
+    async getTokenOHLCV(tokenId: string, quote: string, request: TokenOHLCVRequest) {
+        const { interval, numIntervals } = request;
+        const data = await this.taptoolsService.getTokenOHLCV(tokenId, interval, numIntervals, quote);
+        return data;
     }
 }

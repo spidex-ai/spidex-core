@@ -3,7 +3,7 @@ import { TokenService } from "./token.service";
 import { ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GuardPublic } from "@shared/decorators/auth.decorator";
 import { TokenStatsResponse } from "@modules/token/dtos/token-response.dto";
-import { TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
+import { TokenOHLCVRequest, TokenSearchRequest, TokenTopMcapRequest, TokenTopTradersRequest, TokenTopVolumeRequest } from "@modules/token/dtos/token-request.dto";
 
 @Controller('tokens')
 @ApiTags('Tokens')
@@ -82,5 +82,13 @@ export class TokenController {
     @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
     async getTokenTopTraders(@Param('tokenId') tokenId: string, @Query() request: TokenTopTradersRequest) {
         return this.tokenService.getTopTraders(tokenId, request);
+    }
+
+    @Get(':tokenId/ohlcv/quote')
+    @GuardPublic()
+    @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+    @ApiQuery({ name: 'quote', type: String, required: false, description: 'Quote currency' })
+    async getTokenOHLCV(@Param('tokenId') tokenId: string, @Query('quote') quote: string = 'ADA', @Query() request: TokenOHLCVRequest) {
+        return this.tokenService.getTokenOHLCV(tokenId, quote, request);
     }
 }

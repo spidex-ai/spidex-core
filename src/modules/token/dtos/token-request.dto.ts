@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { PaginationDto } from "@shared/dtos/page-meta.dto";
 import { Transform } from "class-transformer";
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export enum ETimeFrame {
     ONE_HOUR = '1h',
@@ -56,4 +56,24 @@ export class TokenTopVolumeRequest extends PaginationDto {
 
 export class TokenTopMcapRequest extends PaginationDto {
 
+}
+
+
+export class TokenOHLCVRequest {
+    @ApiProperty({
+        description: 'Interval',
+        example: '1h',
+    })
+    @IsString()
+    @IsNotEmpty()
+    interval: string;
+
+    @ApiProperty({
+        description: 'Number of intervals',
+        example: 10,
+    })
+    @Transform(({ value }) => parseInt(value))
+    @IsNumber()
+    @IsNotEmpty()
+    numIntervals: number;
 }
