@@ -220,8 +220,6 @@ export class TokenService {
             this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTopTokenHolders(tokenId, page, limit)
         ]);
-        console.log("🚀 ~ TokenService ~ getTopHolders ~ tokenDetail:", tokenDetail)
-        console.log("🚀 ~ TokenService ~ getTopHolders ~ topHolders:", topHolders)
         const totalSupply = new Decimal(tokenDetail.quantity).div(10 ** tokenDetail.onchain_metadata.decimals).toNumber();
         const data: TokenTopHoldersResponse[] = topHolders.map((holder) => ({
             address: holder.address,
