@@ -102,7 +102,7 @@ export class TaptoolsService {
      * @param quote - Quote currency (default: ADA)
      * @returns Promise with token OHLCV data
      */
-    async getTokenOHLCV(unit: string, interval: string, numIntervals?: number, quote = 'ADA'): Promise<TokenOHLCV[]> {
+    async getTokenOHLCV(unit: string, interval: string, numIntervals?: number, quote = 'USD'): Promise<TokenOHLCV[]> {
         const response = await firstValueFrom(this.client.get<TokenOHLCV[]>('token/ohlcv', { params: { unit, interval, numIntervals, quote } }));
         return response.data;
     }

@@ -256,16 +256,7 @@ export class TokenService {
 
     async getTokenOHLCV(tokenId: string, quote: string, request: TokenOHLCVRequest) {
         const { interval, numIntervals } = request;
-        const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
         const data = await this.taptoolsService.getTokenOHLCV(tokenId, interval, numIntervals, quote);
-        const response = data.map((item) => ({
-            time: item.time,
-            open: item.open * adaPrice,
-            high: item.high * adaPrice,
-            low: item.low * adaPrice,
-            close: item.close * adaPrice,
-            volume: item.volume * adaPrice,
-        }));
-        return response;
+        return data;
     }
 }
