@@ -210,6 +210,7 @@ export class TokenService {
         const cacheKey = TOP_HOLDERS_CACHE_KEY(tokenId, limit, page);
         const cachedData = await this.cache.get<TokenTopHoldersResponse[]>(cacheKey);
         if (cachedData) {
+            console.log("🚀 ~ TokenService ~ getTopHolders ~ cachedData:", cachedData)
             return cachedData;
         }
 
@@ -219,10 +220,13 @@ export class TokenService {
             this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTopTokenHolders(tokenId, page, limit)
         ]);
+        console.log("🚀 ~ TokenService ~ getTopHolders ~ tokenDetail:", tokenDetail)
+        console.log("🚀 ~ TokenService ~ getTopHolders ~ topHolders:", topHolders)
+        const totalSupply = new Decimal(tokenDetail.quantity).div(10 ** tokenDetail.onchain_metadata.decimals).toNumber();
         const data: TokenTopHoldersResponse[] = topHolders.map((holder) => ({
             address: holder.address,
             amount: holder.amount,
-            ownershipPercentage: new Decimal(holder.amount).div(tokenDetail.quantity).mul(100).toNumber(),
+            ownershipPercentage: new Decimal(holder.amount).div(totalSupply).mul(100).toNumber(),
             totalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).toNumber(),
             usdTotalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).mul(usdPrice).toNumber()
         }));

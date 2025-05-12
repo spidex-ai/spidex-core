@@ -51,6 +51,7 @@ export interface OnchainMetadata {
     ticker: string
     poolAuthor: string
     description: string
+    decimals: number
 }
 
 export interface Metadata {
