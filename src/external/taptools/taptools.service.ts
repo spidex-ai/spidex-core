@@ -116,7 +116,7 @@ export class TaptoolsService {
      * @returns Promise with token trades
      */
     async getTokenTrades(unit: string, timeframe = '24h', page = 1, perPage = 100): Promise<TokenTrade[]> {
-        const response = await firstValueFrom(this.client.get<TokenTrade[]>('token/trades', { params: { unit, timeframe, page, perPage } }));
+        const response = await firstValueFrom(this.client.get<TokenTrade[]>('token/trades', { params: { unit, timeframe, page, perPage, sortBy: 'time', order: 'desc' } }));
         return response.data;
     }
 
