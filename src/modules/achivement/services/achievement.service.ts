@@ -1,3 +1,4 @@
+import { AchievementEntity } from "@database/entities/achievement.entity";
 import { UserAchievementEntity } from "@database/entities/user-achievement.entity";
 import { AchievementRepository } from "@database/repositories/achievement.repository";
 import { UserAchievementRepository } from "@database/repositories/user-achievement.repository";
@@ -20,6 +21,14 @@ export class AchievementService {
         @Inject(forwardRef(() => UserPointService))
         private readonly userPointService: UserPointService,
     ) { }
+
+    async getAchievements(): Promise<AchievementEntity[]> {
+        return this.achievementRepository.find({
+            order: {
+                points: 'ASC'
+            }
+        });
+    }
 
     @Transactional()
     async checkAndUnlockAchievements(userId: number): Promise<UserAchievementEntity[]> {
