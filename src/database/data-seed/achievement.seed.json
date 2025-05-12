@@ -1,5 +1,6 @@
 [
   {
+    "id": 1,
     "name": "Level 1",
     "icon": "/public/icons/achievements/level-1.png",
     "points": 100,
@@ -7,6 +8,7 @@
     "description": "Reach 100 points"
   },
   {
+    "id": 2,
     "name": "Level 2",
     "icon": "/public/icons/achievements/level-2.png",
     "points": 500,
@@ -14,6 +16,7 @@
     "description": "Reach 500 points"
   },
   {
+    "id": 3,
     "name": "Level 3",
     "icon": "/public/icons/achievements/level-3.png",
     "points": 1000,
