@@ -153,9 +153,9 @@ export class TaptoolsService {
      * @param unit - Token unit (policy + hex name)
      * @returns Promise with token pools
      */
-    async getTokenPools(unit: string): Promise<TokenPool[]> {
+    async getTokenPools(unit: string, isAdaOnly = false): Promise<TokenPool[]> {
         try {
-            const response = await firstValueFrom(this.client.get<TokenPool[]>('token/pools', { params: { unit } }));
+            const response = await firstValueFrom(this.client.get<TokenPool[]>('token/pools', { params: { unit, adaOnly: isAdaOnly ? 1 : 0 } }));
             return response.data;
         } catch (error) {
             console.error('TaptoolsService::getTokenPools error:', error);

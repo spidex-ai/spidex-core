@@ -164,7 +164,7 @@ export class TokenService {
             this.taptoolsService.getTokenMcap(tokenId),
             this.taptoolsService.getTokenHolders(tokenId),
             this.taptoolsService.getTokenTradingStats(tokenId, '24H'),
-            this.taptoolsService.getTokenPools(tokenId)
+            this.taptoolsService.getTokenPools(tokenId, true)
         ]);
 
         const usdPriceToken = new Decimal(mcap.price).mul(usdPrice).toNumber();
