@@ -30,26 +30,25 @@ export class UserReferralService {
         const referral = this.referralRepository.create(input);
         const savedReferral = await this.referralRepository.save(referral);
 
-
         const quests = await this.questService.getQuestInType([EQuestType.REFER_FRIEND]);
         await Promise.all(quests.map(async (quest) => {
             switch (quest.category) {
                 case EQuestCategory.ONE_TIME:
                     const canCompleteOneTime = await this.userQuestService.canCompleteOneTimeQuest(savedReferral.referredBy, quest.id,);
                     if (canCompleteOneTime) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, { referralId: savedReferral.id });
                     }
                     break;
                 case EQuestCategory.DAILY:
                     const canCompleteDaily = await this.userQuestService.canCompleteDailyQuest(savedReferral.referredBy, quest.id,);
                     if (canCompleteDaily) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, { referralId: savedReferral.id });
                     }
                     break;
                 case EQuestCategory.MULTI_TIME:
-                    const canCompleteMultiTime = await this.userQuestService.canCompleteMultiTimeQuest(savedReferral.referredBy, quest.id,);
+                    const canCompleteMultiTime = await this.userQuestService.canCompleteMultiTimeQuest(savedReferral.referredBy, quest.id);
                     if (canCompleteMultiTime) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, { referralId: savedReferral.id });
                     }
                     break;
             }
@@ -135,15 +134,24 @@ export class UserReferralService {
         const [userPointLogs, total] = await this.userPointService.getPointLogsByReferralIds(userId, referralIds.map(referral => referral.id), page, limit);
 
         const data = userPointLogs.map(userPointLog => {
-            const output: ReferralHistoryOutput = {
-                id: userPointLog.referralId,
-                username: userPointLog.referral.user.username,
-                avatar: userPointLog.referral.user.avatar,
-                point: userPointLog.amount,
-                createdAt: userPointLog.createdAt
+            if (userPointLog.referral.referredBy === userId) {
+                const output: ReferralHistoryOutput = {
+                    id: userPointLog.referralId,
+                    username: userPointLog.referral.user.username,
+                    avatar: userPointLog.referral.user.avatar,
+                    point: userPointLog.amount,
+                    createdAt: userPointLog.createdAt
+                }
+                return output;
+            } else {
+                return {
+                    id: userPointLog.referralId,
+                    username: userPointLog.referral.referredByUser.username,
+                    avatar: userPointLog.referral.referredByUser.avatar,
+                    point: userPointLog.amount,
+                    createdAt: userPointLog.createdAt
+                }
             }
-
-            return output;
         });
 
         return {
