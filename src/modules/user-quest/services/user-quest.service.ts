@@ -8,7 +8,7 @@ import { SwapService } from "@modules/swap/swap.service";
 import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
 import { EUserPointType } from "@modules/user-point/user-point.constant";
-import { EAgentType, EUserQuestStatus, GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
+import { EUserQuestStatus, GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
@@ -186,6 +186,7 @@ export class UserQuestService {
       logType: EUserPointLogType.FROM_QUEST,
       userQuestId: userQuest.id,
       referralId: referralId,
+      plusToReferral: shouldAddToReferralPoint,
     };
     await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
   }
