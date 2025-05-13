@@ -26,7 +26,7 @@ export class PortfolioService {
         const [tokenPrices, adaPrice, tokenDetails] = await Promise.all([
             this.taptoolsService.getTokenPrices(tokenIds),
             this.tokenPriceService.getAdaPriceInUSD(),
-            this.tokenMetaService.getTokensMetadata(tokenIds, ['name', 'logo', 'ticker']),
+            this.tokenMetaService.getTokensMetadata(tokenIds, ['name', 'logo', 'ticker', 'decimals']),
         ]);
 
         const tokenDetailsMap = keyBy(tokenDetails, 'unit');
@@ -47,15 +47,16 @@ export class PortfolioService {
                 }
             }
             const tokenDetail = tokenDetailsMap[amount.unit];
+            const quantity = new Decimal(amount.quantity).div(10 ** tokenDetail.decimals).toString();
             return {
                 unit: amount.unit,
-                quantity: new Decimal(amount.quantity).toString(),
+                quantity,
                 price: tokenPrices[amount.unit],
                 ticker: tokenDetail?.ticker,
                 name: tokenDetail?.name,
-                totalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).toNumber(),
+                totalPrice: new Decimal(quantity).mul(tokenPrices[amount.unit]).toNumber(),
                 usdPrice: new Decimal(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
-                usdTotalPrice: new Decimal(amount.quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
+                usdTotalPrice: new Decimal(quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
                 logo: tokenDetail?.logo,
             }
 
