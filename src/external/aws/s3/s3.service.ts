@@ -2,6 +2,8 @@ import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client
 import { EEnvKey } from '@constants/env.constant';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { BadRequestException } from '@shared/exception';
+import { EError } from '@constants/error.constant';
 
 @Injectable()
 export class S3Service {
@@ -26,26 +28,42 @@ export class S3Service {
     }
 
     async uploadS3(buffer: Buffer, key: string, contentType: string, folder: string) {
-        const s3Key = `${folder ? folder + '/' : ''}${key}`;
-        const command = new PutObjectCommand({
-            Bucket: this.bucket,
-            Body: Buffer.from(buffer),
-            Key: s3Key,
-            ContentType: contentType ?? 'application/octet-stream',
-        });
+        try {
+            const s3Key = `${folder ? folder + '/' : ''}${key}`;
+            const command = new PutObjectCommand({
+                Bucket: this.bucket,
+                Body: Buffer.from(buffer),
+                Key: s3Key,
+                ContentType: contentType ?? 'application/octet-stream',
+            });
 
-        await this.s3Client.send(command);
+            await this.s3Client.send(command);
 
-        return encodeURI(`${this.configService.get(EEnvKey.S3_URL)}/${s3Key}`);
+            return encodeURI(`${this.configService.get(EEnvKey.S3_URL)}/${s3Key}`);
+        } catch (error) {
+            throw new BadRequestException({
+                message: 'S3 upload failed',
+                validatorErrors: EError.S3_UPLOAD_FAILED,
+                data: error
+            });
+        }
     }
 
     async removeFromS3(key: string) {
-        const command = new DeleteObjectCommand({
-            Bucket: this.bucket,
-            Key: key,
-        });
+        try {
+            const command = new DeleteObjectCommand({
+                Bucket: this.bucket,
+                Key: key,
+            });
 
-        const deleteResult = await this.s3Client.send(command);
-        return deleteResult;
+            const deleteResult = await this.s3Client.send(command);
+            return deleteResult;
+        } catch (error) {
+            throw new BadRequestException({
+                message: 'S3 remove failed',
+                validatorErrors: EError.S3_REMOVE_FAILED,
+                data: error
+            });
+        }
     }
 }

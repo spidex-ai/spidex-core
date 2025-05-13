@@ -43,7 +43,7 @@ export const getToken = async (id: Token["id"]): Promise<Token | null> => {
  */
 export const findTokens = async (): Promise<Token[]> => {
     return find(
-        await getTokensContainer(), 
+        await getTokensContainer(),
         `SELECT * FROM c ORDER BY c._ts DESC`
     );
 };
@@ -66,12 +66,12 @@ export const getTokenBySymbol = async (symbol: string): Promise<Token | null> =>
     if (tokens.length === 1) {
         return tokens[0];
     } else {
-        let verifiedToken = tokens.find(token => token.tags.includes("verified"));
-        if(verifiedToken) {
+        const verifiedToken = tokens.find(token => token.tags.includes("verified"));
+        if (verifiedToken) {
             return verifiedToken;
         } else {
-            let communityToken = tokens.find(token => token.tags.includes("community"));
-            if(communityToken) {
+            const communityToken = tokens.find(token => token.tags.includes("community"));
+            if (communityToken) {
                 return communityToken;
             } else {
                 return tokens[0];
