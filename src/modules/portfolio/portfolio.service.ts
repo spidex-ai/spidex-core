@@ -1,4 +1,3 @@
-import { LOVELACE_TO_ADA_RATIO } from "@constants/cardano.constant";
 import { EEnvKey } from "@constants/env.constant";
 import { PortfolioAddressResponse, PortfolioTransactionResponse } from "@modules/portfolio/dtos/portfolio-response.dto";
 import { GetPortfolioTransactionsQuery } from "@modules/portfolio/dtos/portfolio.request.dto";
@@ -18,11 +17,13 @@ export class PortfolioService {
         private readonly tokenPriceService: TokenPriceService,
         private readonly configService: ConfigService,
         private readonly tokenMetaService: TokenMetaService,
-    ) { }
+
+    ) {
+    }
 
     async getPortfolio(address: string): Promise<PortfolioAddressResponse> {
-        const addressDetail = await this.blockfrostService.getAddressDetail(address);
-        const tokenIds = addressDetail.amount.map(amount => amount.unit).filter(unit => unit !== 'lovelace');
+        const addressDetail = await this.taptoolsService.getWalletPortfolioPositions(address);
+        const tokenIds = addressDetail.positionsFt.map(asset => asset.unit).filter(unit => unit !== '');
         const [tokenPrices, adaPrice, tokenDetails] = await Promise.all([
             this.taptoolsService.getTokenPrices(tokenIds),
             this.tokenPriceService.getAdaPriceInUSD(),
@@ -30,13 +31,13 @@ export class PortfolioService {
         ]);
 
         const tokenDetailsMap = keyBy(tokenDetails, 'unit');
-        const amount = addressDetail.amount.map(amount => {
-            if (amount.unit === 'lovelace') {
-                const totalPrice = new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toNumber();
+        const amount = addressDetail.positionsFt.map(asset => {
+            if (asset.unit === '') {
+                const totalPrice = new Decimal(asset.adaValue).toNumber();
                 const usdTotalPrice = new Decimal(totalPrice).mul(adaPrice).toNumber();
                 return {
-                    ...amount,
-                    quantity: new Decimal(amount.quantity).div(LOVELACE_TO_ADA_RATIO).toString(),
+                    unit: 'lovelace',
+                    quantity: new Decimal(asset.balance).toString(),
                     price: 1,
                     ticker: 'ADA',
                     name: 'Cardano',
@@ -46,28 +47,25 @@ export class PortfolioService {
                     logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
                 }
             }
-            const tokenDetail = tokenDetailsMap[amount.unit];
-            const quantity = new Decimal(amount.quantity).div(10 ** tokenDetail.decimals).toString();
+            const tokenDetail = tokenDetailsMap[asset.unit];
+            const quantity = new Decimal(asset.balance).toString();
             return {
-                unit: amount.unit,
+                unit: asset.unit,
                 quantity,
-                price: tokenPrices[amount.unit],
+                price: tokenPrices[asset.unit],
                 ticker: tokenDetail?.ticker,
                 name: tokenDetail?.name,
-                totalPrice: new Decimal(quantity).mul(tokenPrices[amount.unit]).toNumber(),
-                usdPrice: new Decimal(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
-                usdTotalPrice: new Decimal(quantity).mul(tokenPrices[amount.unit]).mul(adaPrice).toNumber(),
+                totalPrice: new Decimal(quantity).mul(tokenPrices[asset.unit]).toNumber(),
+                usdPrice: new Decimal(tokenPrices[asset.unit]).mul(adaPrice).toNumber(),
+                usdTotalPrice: new Decimal(quantity).mul(tokenPrices[asset.unit]).mul(adaPrice).toNumber(),
                 logo: tokenDetail?.logo,
             }
 
         }).filter(item => item.logo && item.ticker && item.name);
 
         return {
-            address: addressDetail.address,
+            address: address,
             amount,
-            stakeAddress: addressDetail.stake_address,
-            type: addressDetail.type,
-            script: addressDetail.script,
             totalPrice: amount.reduce((acc, curr) => {
                 if (curr.unit === 'lovelace') {
                     return acc.plus(curr.totalPrice);

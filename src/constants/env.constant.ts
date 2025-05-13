@@ -74,6 +74,9 @@ export enum EEnvKey {
   KAFKA_SSL = "KAFKA_SSL",
   KAFKA_REGION = "KAFKA_REGION",
 
+  BLOCKFROST_API_URL = "BLOCKFROST_API_URL",
+  BLOCKFROST_API_KEY = "BLOCKFROST_API_KEY",
+
 }
 
 export enum EEnvironment {

@@ -38,15 +38,6 @@ export class PortfolioAddressResponse {
     amount: BlockfrostAmountDto[];
 
     @ApiProperty()
-    stakeAddress: string;
-
-    @ApiProperty()
-    type: string;
-
-    @ApiProperty()
-    script: boolean;
-
-    @ApiProperty()
     totalPrice: number;
 
     @ApiProperty()

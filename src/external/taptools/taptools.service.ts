@@ -2,8 +2,7 @@ import { EError } from "@constants/error.constant";
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { BadRequestException } from "@shared/exception";
-import { TokenPrice, TokenPriceChange, TokenMcap, TokenQuote, TokenHolders, TokenHolder, TokenPool, TokenOHLCV, TokenTrade, TokenTradingStats, TokenLinks, TopToken, TopTokenMcap, TopTokenLiquidity, NFTCollectionInfo, NFTCollectionStats, NFTCollectionStatsExtended, NFTAssetStats, NFTAssetTraits, NFTCollectionTradesStats, NFTCollectionListings, NFTCollectionOHLCV, NFTCollectionTrade, NFTMarketStats, NFTMarketStatsExtended, NFTAssetSale, NFTCollectionAsset, NFTCollectionHoldersDistribution, NFTCollectionHolderTop, NFTCollectionHolderTrended, NFTCollectionListingDepth, NFTCollectionListingIndividual, NFTCollectionListingTrended, NFTCollectionVolumeTrended, NFTCollectionRarity, NFTCollectionRarityRank, NFTCollectionTraitPrice, NFTMarketVolumeTrended, NFTMarketplaceStats, NFTTopTimeframe, NFTTopVolume, NFTTopVolumeExtended, TokenDebtLoan, TokenDebtOffer, TokenIndicator, WalletPortfolioPosition, WalletTradeToken, WalletValueTrended, AddressUtxo } from "external/taptools/types";
-import { AddressInfo } from "net";
+import { TokenPrice, TokenPriceChange, TokenMcap, TokenQuote, TokenHolders, TokenHolder, TokenPool, TokenOHLCV, TokenTrade, TokenTradingStats, TokenLinks, TopToken, TopTokenMcap, TopTokenLiquidity, NFTCollectionInfo, NFTCollectionStats, NFTCollectionStatsExtended, NFTAssetStats, NFTAssetTraits, NFTCollectionTradesStats, NFTCollectionListings, NFTCollectionOHLCV, NFTCollectionTrade, NFTMarketStats, NFTMarketStatsExtended, NFTAssetSale, NFTCollectionAsset, NFTCollectionHoldersDistribution, NFTCollectionHolderTop, NFTCollectionHolderTrended, NFTCollectionListingDepth, NFTCollectionListingIndividual, NFTCollectionListingTrended, NFTCollectionVolumeTrended, NFTCollectionRarity, NFTCollectionRarityRank, NFTCollectionTraitPrice, NFTMarketVolumeTrended, NFTMarketplaceStats, NFTTopTimeframe, NFTTopVolume, NFTTopVolumeExtended, TokenDebtLoan, TokenDebtOffer, TokenIndicator, WalletPortfolioPosition, WalletTradeToken, WalletValueTrended, AddressUtxo, AddressInfo } from "external/taptools/types";
 import { firstValueFrom } from "rxjs";
 
 @Injectable()
@@ -1205,14 +1204,20 @@ export class TaptoolsService {
      * @param address - Cardano address
      * @returns Promise with address information
      */
-    async getAddressInfo(address: string): Promise<AddressInfo> {
+    async getAddressInfo({
+        address,
+        paymentCred
+    }: {
+        address?: string;
+        paymentCred?: string;
+    }): Promise<AddressInfo> {
         try {
             const response = await firstValueFrom(
-                this.client.get<AddressInfo>('address/info', { params: { address } })
+                this.client.get<AddressInfo>('address/info', { params: { address, paymentCred } })
             );
             return response.data;
         } catch (error) {
-            console.error('TaptoolsService::getAddressInfo error:', error);
+            console.error('TaptoolsService::getAddressInfo error:', error.response.data);
             throw new BadRequestException({
                 message: 'Get address info failed',
                 validatorErrors: EError.TAPTOOLS_GET_ADDRESS_INFO_FAILED,
