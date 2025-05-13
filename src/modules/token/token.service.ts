@@ -157,21 +157,26 @@ export class TokenService {
             usdPrice,
             mcap,
             holders,
-            tradingStats
+            tradingStats,
+            pools
         ] = await Promise.all([
             this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTokenMcap(tokenId),
             this.taptoolsService.getTokenHolders(tokenId),
-            this.taptoolsService.getTokenTradingStats(tokenId, '24H')
+            this.taptoolsService.getTokenTradingStats(tokenId, '24H'),
+            this.taptoolsService.getTokenPools(tokenId)
         ]);
 
+        const usdPriceToken = new Decimal(mcap.price).mul(usdPrice).toNumber();
+        const liquidity = pools.reduce((acc, pool) => acc + (pool.tokenALocked * usdPriceToken) + (pool.tokenBLocked * usdPrice), 0);
 
         const tokenStats = {
             price: mcap.price,
-            usdPrice: new Decimal(mcap.price).mul(usdPrice).toNumber(),
+            usdPrice: usdPriceToken,
             mcap,
             holders: holders.holders,
-            "24h": tradingStats
+            "24h": tradingStats,
+            liquidity
         }
 
         await this.cache.set(cacheKey, tokenStats, TOKEN_STATS_CACHE_TTL);
