@@ -7,6 +7,9 @@ import { DexhunterService } from "external/dexhunter/dexhunter.service";
     imports: [HttpModule.registerAsync({
         useFactory: (configService: ConfigService) => ({
             baseURL: configService.get<string>('DEXHUNTER_API_URL'),
+            headers: {
+                'X-Partner-Id': configService.get<string>('DEXHUNTER_PARTNER_ID'),
+            }
         }),
         inject: [ConfigService],
     })],
