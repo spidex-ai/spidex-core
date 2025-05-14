@@ -93,16 +93,21 @@ export class PortfolioService {
             }
             return units
         }).flat()));
-        const tokenDetails = await this.tokenMetaService.getTokensMetadata(uniqueTokenIds, ['logo', 'ticker']);
+        const tokenDetails = await this.tokenMetaService.getTokensMetadata(uniqueTokenIds, ['logo', 'ticker', 'name']);
         const tokenDetailsMap = keyBy(tokenDetails, 'unit');
         return transactions.map(transaction => {
             const tokenAIcon = transaction.tokenA === '' ? `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg` : tokenDetailsMap[transaction.tokenA]?.logo
             const tokenBIcon = transaction.tokenB === '' ? `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg` : tokenDetailsMap[transaction.tokenB]?.logo
 
+            const tokenAName = transaction.tokenA === '' ? 'Cardano' : tokenDetailsMap[transaction.tokenA]?.name
+            const tokenBName = transaction.tokenB === '' ? 'Cardano' : tokenDetailsMap[transaction.tokenB]?.name
+
             return {
                 ...transaction,
                 tokenAIcon: tokenAIcon,
+                tokenAName: tokenAName,
                 tokenBIcon: tokenBIcon,
+                tokenBName: tokenBName,
             }
         });
     }
