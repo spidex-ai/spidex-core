@@ -82,12 +82,28 @@ export class PortfolioService {
     }
 
     async getTransactions(address: string, query: GetPortfolioTransactionsQuery): Promise<PortfolioTransactionResponse[]> {
-        const transactions = await this.blockfrostService.getTransactions(address, query.page, query.count, query.order);
-        return transactions.map(transaction => ({
-            txHash: transaction.tx_hash,
-            txIndex: transaction.tx_index,
-            blockHeight: transaction.block_height,
-            blockTime: transaction.block_time,
-        }));
+        const transactions = await this.taptoolsService.getWalletTokenTrades(address, '', query.page, query.count);
+        const uniqueTokenIds = Array.from(new Set(transactions.map(transaction => {
+            const units = []
+            if (transaction.tokenA !== '') {
+                units.push(transaction.tokenA)
+            }
+            if (transaction.tokenB !== '') {
+                units.push(transaction.tokenB)
+            }
+            return units
+        }).flat()));
+        const tokenDetails = await this.tokenMetaService.getTokensMetadata(uniqueTokenIds, ['logo', 'ticker']);
+        const tokenDetailsMap = keyBy(tokenDetails, 'unit');
+        return transactions.map(transaction => {
+            const tokenAIcon = transaction.tokenA === '' ? `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg` : tokenDetailsMap[transaction.tokenA]?.logo
+            const tokenBIcon = transaction.tokenB === '' ? `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg` : tokenDetailsMap[transaction.tokenB]?.logo
+
+            return {
+                ...transaction,
+                tokenAIcon: tokenAIcon,
+                tokenBIcon: tokenBIcon,
+            }
+        });
     }
 }

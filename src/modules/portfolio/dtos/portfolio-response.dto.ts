@@ -46,14 +46,32 @@ export class PortfolioAddressResponse {
 
 export class PortfolioTransactionResponse {
     @ApiProperty()
-    txHash: string
+    action: string;
 
     @ApiProperty()
-    txIndex: number
+    time: number;
 
     @ApiProperty()
-    blockHeight: number
+    tokenA: string;
 
     @ApiProperty()
-    blockTime: number
+    tokenAName: string;
+
+    @ApiProperty()
+    tokenAIcon?: string;
+
+    @ApiProperty()
+    tokenAAmount: number;
+
+    @ApiProperty()
+    tokenB: string;
+
+    @ApiProperty()
+    tokenBName: string;
+
+    @ApiProperty()
+    tokenBAmount: number;
+
+    @ApiProperty()
+    tokenBIcon?: string;
 }
