@@ -4,11 +4,13 @@ import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
 import { BadRequestException } from "@shared/exception";
 import { CoingeckoService } from "external/coingecko/coingecko.service";
+import { TaptoolsService } from "external/taptools/taptools.service";
 
 @Injectable()
 export class TokenPriceService {
     constructor(
         private readonly coingeckoService: CoingeckoService,
+        private readonly tapToolsService: TaptoolsService,
         @Inject(CACHE_MANAGER)
         private readonly cache: Cache
     ) { }
@@ -21,8 +23,8 @@ export class TokenPriceService {
                 return cachedData;
             }
 
-            const response = await this.coingeckoService.getTokenPrice(['cardano'], ['usd']);
-            const adaPrice = response['cardano']['usd'];
+            const response = await this.tapToolsService.getTokenQuote('USD');
+            const adaPrice = response.price;
             await this.cache.set(cacheKey, adaPrice, TOKEN_PRICE_IN_USD_CACHE_TTL);
             return adaPrice;
         } catch (error) {
