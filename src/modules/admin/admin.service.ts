@@ -85,7 +85,10 @@ export class AdminService {
         category,
       });
       await this.crawlDocsRepository.save(crawlDocs);
-      await this.crawlDocsQueue.add(CRAWL_DOCS_QUEUE_NAME, crawlDocs);
+      await this.crawlDocsQueue.add(CRAWL_DOCS_QUEUE_NAME, crawlDocs, {
+        removeOnComplete: true,
+        removeOnFail: true,
+      });
     }
     return {
       success: true,
