@@ -36,7 +36,7 @@ export class TokenMetaService {
                 policy: token?.policy || blockfrostToken?.policy_id,
                 description: token?.description?.value || blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
                 url: token?.url?.value || blockfrostToken?.metadata?.url,
-                decimals: token?.decimals?.value || blockfrostToken?.metadata?.decimals
+                decimals: token?.decimals?.value || blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0
             });
 
             await this.tokenMetadataRepository.save(tokenMetadata);
@@ -71,7 +71,7 @@ export class TokenMetaService {
                             policy: tokenMetadata.policy,
                             description: tokenMetadata.description?.value,
                             url: tokenMetadata.url?.value,
-                            decimals: tokenMetadata.decimals?.value,
+                            decimals: tokenMetadata.decimals?.value || 0,
                         });
 
                         return token;
@@ -90,7 +90,7 @@ export class TokenMetaService {
                             policy: blockfrostToken?.policy_id,
                             description: blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
                             url: blockfrostToken?.metadata?.url,
-                            decimals: blockfrostToken?.metadata?.decimals,
+                            decimals: blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0,
                         });
                     }));
                     savedTokenMetadataV2 = await this.tokenMetadataRepository.save(missingTokenMetadataV2);
