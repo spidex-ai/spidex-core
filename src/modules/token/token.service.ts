@@ -1,5 +1,5 @@
 import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOKEN_TRADES_CACHE_KEY, TOKEN_TRADES_CACHE_TTL, TOP_HOLDERS_CACHE_KEY, TOP_HOLDERS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
-import { CARDANO_DECIMALS, CARDANO_LOVELACE_POLICY, CARDANO_LOVELACE_TICKER, CARDANO_LOVELACE_TOTAL_SUPPLY, CARDANO_LOVELACE_UNIT, CARDANO_TICKER, CARDANO_TOTAL_SUPPLY, CARDANO_UNIT } from "@constants/cardano.constant";
+import { CARDANO_DECIMALS, CARDANO_LOVELACE_UNIT, CARDANO_POLICY, CARDANO_TICKER, CARDANO_TOTAL_SUPPLY, CARDANO_UNIT } from "@constants/cardano.constant";
 import { EEnvKey } from "@constants/env.constant";
 import { EError } from "@constants/error.constant";
 import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
@@ -45,7 +45,7 @@ export class TokenService {
         if (tokenId.startsWith(CARDANO_LOVELACE_UNIT)) {
             const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
             return {
-                policy: CARDANO_LOVELACE_POLICY,
+                policy: CARDANO_POLICY,
                 ticker: CARDANO_TICKER,
                 is_verified: true,
                 creation_date: new Date().toISOString(),
