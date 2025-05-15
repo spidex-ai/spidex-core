@@ -1,4 +1,6 @@
 import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOKEN_TRADES_CACHE_KEY, TOKEN_TRADES_CACHE_TTL, TOP_HOLDERS_CACHE_KEY, TOP_HOLDERS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
+import { CARDANO_DECIMALS, CARDANO_LOVELACE_POLICY, CARDANO_LOVELACE_TICKER, CARDANO_LOVELACE_TOTAL_SUPPLY, CARDANO_LOVELACE_UNIT } from "@constants/cardano.constant";
+import { EEnvKey } from "@constants/env.constant";
 import { EError } from "@constants/error.constant";
 import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
 import { SwapService } from "@modules/swap/swap.service";
@@ -8,6 +10,7 @@ import { TokenOHLCVRequest, TokenSearchRequest, TokenTopMcapRequest, TokenTopTra
 import { TokenDetailsResponse, TokenStatsResponse, TokenTopHoldersResponse, TokenTradesResponse } from "@modules/token/dtos/token-response.dto";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { BadRequestException } from "@shared/exception";
 import { Cache } from "cache-manager";
 import Decimal from "decimal.js";
@@ -27,7 +30,8 @@ export class TokenService {
         private readonly blockfrostService: BlockfrostService,
         private readonly dexHunterService: DexhunterService,
         @Inject(CACHE_MANAGER)
-        private readonly cache: Cache
+        private readonly cache: Cache,
+        private readonly configService: ConfigService
     ) { }
 
     async getTokenDetails(tokenId: string): Promise<TokenDetailsResponse> {
@@ -38,7 +42,28 @@ export class TokenService {
             return cachedData;
         }
 
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT)) {
+            const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
+            return {
+                policy: CARDANO_LOVELACE_POLICY,
+                ticker: CARDANO_LOVELACE_TICKER,
+                is_verified: true,
+                creation_date: new Date().toISOString(),
+                logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
+                unit: CARDANO_LOVELACE_UNIT,
+                total_supply: CARDANO_LOVELACE_TOTAL_SUPPLY,
+                decimals: CARDANO_DECIMALS,
+                price: 1,
+                usdPrice: adaPrice,
+                name: 'Cardano',
+                description: 'Cardano is a blockchain platform that enables secure and scalable decentralized applications.',
+            }
+
+        }
+
+
         const data = await this.dexHunterService.getTokenDetail(tokenId);
+        console.log({ data })
         const [
             tokenMetadata,
             adaPrice,
