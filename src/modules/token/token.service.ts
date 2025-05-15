@@ -1,5 +1,5 @@
 import { TOKEN_DETAILS_CACHE_KEY, TOKEN_DETAILS_CACHE_TTL, TOKEN_STATS_CACHE_KEY, TOKEN_STATS_CACHE_TTL, TOKEN_TRADES_CACHE_KEY, TOKEN_TRADES_CACHE_TTL, TOP_HOLDERS_CACHE_KEY, TOP_HOLDERS_CACHE_TTL, TOP_MCAP_TOKENS_CACHE_KEY, TOP_MCAP_TOKENS_CACHE_TTL, TOP_VOLUME_TOKENS_CACHE_KEY, TOP_VOLUME_TOKENS_CACHE_TTL } from "@constants/cache.constant";
-import { CARDANO_DECIMALS, CARDANO_LOVELACE_POLICY, CARDANO_LOVELACE_TICKER, CARDANO_LOVELACE_TOTAL_SUPPLY, CARDANO_LOVELACE_UNIT } from "@constants/cardano.constant";
+import { CARDANO_DECIMALS, CARDANO_LOVELACE_POLICY, CARDANO_LOVELACE_TICKER, CARDANO_LOVELACE_TOTAL_SUPPLY, CARDANO_LOVELACE_UNIT, CARDANO_TICKER, CARDANO_TOTAL_SUPPLY, CARDANO_UNIT } from "@constants/cardano.constant";
 import { EEnvKey } from "@constants/env.constant";
 import { EError } from "@constants/error.constant";
 import { TokenMetadataEntity } from "@database/entities/token-metadata.entity";
@@ -46,12 +46,12 @@ export class TokenService {
             const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
             return {
                 policy: CARDANO_LOVELACE_POLICY,
-                ticker: CARDANO_LOVELACE_TICKER,
+                ticker: CARDANO_TICKER,
                 is_verified: true,
                 creation_date: new Date().toISOString(),
                 logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
-                unit: CARDANO_LOVELACE_UNIT,
-                total_supply: CARDANO_LOVELACE_TOTAL_SUPPLY,
+                unit: CARDANO_UNIT,
+                total_supply: CARDANO_TOTAL_SUPPLY,
                 decimals: CARDANO_DECIMALS,
                 price: 1,
                 usdPrice: adaPrice,
