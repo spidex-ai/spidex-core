@@ -14,11 +14,15 @@ export class RabbitMQService implements OnApplicationBootstrap {
     ) { }
 
     async onApplicationBootstrap() {
-        await Promise.all([
-            this.coreClient.connect(),
-        ]);
+        try {
+            await Promise.all([
+                this.coreClient.connect(),
+            ]);
 
-        this.logger.log('RabbitMQ connected');
+            this.logger.log('RabbitMQ connected');
+        } catch (error) {
+            this.logger.error('RabbitMQ connection failed', error);
+        }
     }
 
 
