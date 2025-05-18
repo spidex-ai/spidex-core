@@ -51,12 +51,14 @@ export class UserService {
       if (!user) {
         throw new BadRequestException({
           validatorErrors: EError.USER_NOT_EXIST,
+          message: `User is not found`,
         });
       }
 
       if (user.walletAddress) {
         throw new BadRequestException({
           validatorErrors: EError.ALREADY_CONNECTED_WALLET,
+          message: `User is already connected to wallet`,
         });
       }
 
@@ -64,6 +66,7 @@ export class UserService {
       if (existingUser) {
         throw new BadRequestException({
           validatorErrors: EError.WALLET_ADDRESS_USED,
+          message: `Wallet address is already used`,
         });
       }
 
@@ -81,6 +84,7 @@ export class UserService {
         if (user.status != EUserStatus.ACTIVE) {
           throw new BadRequestException({
             validatorErrors: EError.USER_DEACTIVATED,
+            message: `User is deactivated`,
           });
         }
         return user;
@@ -108,12 +112,14 @@ export class UserService {
       if (!user) {
         throw new BadRequestException({
           validatorErrors: EError.USER_NOT_EXIST,
+          message: `User is not found`,
         });
       }
 
       if (user.xId) {
         throw new BadRequestException({
           validatorErrors: EError.ALREADY_CONNECTED_X,
+          message: `User is already connected to X`,
         });
       }
 
@@ -121,6 +127,7 @@ export class UserService {
       if (existingUser) {
         throw new BadRequestException({
           validatorErrors: EError.X_USERNAME_USED,
+          message: `X username is already used`,
         });
       }
 
@@ -140,6 +147,7 @@ export class UserService {
         if (user.status != EUserStatus.ACTIVE) {
           throw new BadRequestException({
             validatorErrors: EError.USER_DEACTIVATED,
+            message: `User is deactivated`,
           });
         }
 
@@ -169,11 +177,13 @@ export class UserService {
       if (!user) {
         throw new BadRequestException({
           validatorErrors: EError.USER_NOT_EXIST,
+          message: `User is not found`,
         });
       }
       if (user.email) {
         throw new BadRequestException({
           validatorErrors: EError.GOOGLE_EMAIL_USED,
+          message: `Email is already used`,
         });
       }
 
@@ -181,6 +191,7 @@ export class UserService {
       if (existingUser) {
         throw new BadRequestException({
           validatorErrors: EError.GOOGLE_EMAIL_USED,
+          message: `Email is already used`,
         });
       }
 
@@ -198,6 +209,7 @@ export class UserService {
         if (user.status != EUserStatus.ACTIVE) {
           throw new BadRequestException({
             validatorErrors: EError.USER_DEACTIVATED,
+            message: `User is deactivated`,
           });
         }
 
@@ -227,6 +239,7 @@ export class UserService {
       if (!referralUser) {
         throw new BadRequestException({
           validatorErrors: EError.REFERRAL_CODE_NOT_FOUND,
+          message: `Referral code is not found`,
         });
       }
 
