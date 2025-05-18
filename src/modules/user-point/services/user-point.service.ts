@@ -14,19 +14,17 @@ import { EUserPointType } from "@modules/user-point/user-point.constant";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { UserService } from "@modules/user/user.service";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { ClientProxy } from "@nestjs/microservices";
 import { PageMetaDto, PaginationDto } from "@shared/dtos/page-meta.dto";
 import { PageOptionsDto } from "@shared/dtos/page-option.dto";
 import { PageDto } from "@shared/dtos/page.dto";
 import { BusinessException } from "@shared/exception";
-import { CORE_MICROSERVICE } from "@shared/modules/kafka/kafka.constant";
 import { LoggerService } from "@shared/modules/loggers/logger.service";
+import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
 import { RedisLockService } from "@shared/modules/redis/redis-lock.service";
 import { LOCK_KEY_USER_POINT } from "@shared/modules/redis/redis.constant";
 import { plainToInstanceCustom } from "@shared/utils/class-transform";
 import BigNumber from "bignumber.js";
 import { firstValueFrom } from "rxjs";
-import { In } from "typeorm";
 import { Transactional } from "typeorm-transactional";
 
 
@@ -39,8 +37,7 @@ export class UserPointService {
     private readonly userPointLogRepository: UserPointLogRepository,
 
     private readonly redisLockService: RedisLockService,
-    @Inject(CORE_MICROSERVICE)
-    private readonly coreMicroservice: ClientProxy,
+    private readonly rabbitMQService: RabbitMQService,
 
     @Inject(forwardRef(() => UserReferralService))
     private readonly userReferralService: UserReferralService,
@@ -60,7 +57,7 @@ export class UserPointService {
 
   async emitUserPointChangeEvent(event: IUserPointChangeEvent) {
     console.time('emitUserPointChangeEvent')
-    await firstValueFrom(this.coreMicroservice.emit(USER_POINT_EVENT_PATTERN.USER_POINT_CHANGE, event));
+    await this.rabbitMQService.emitToCore(USER_POINT_EVENT_PATTERN.USER_POINT_CHANGE, event);
     console.timeEnd('emitUserPointChangeEvent')
   }
 

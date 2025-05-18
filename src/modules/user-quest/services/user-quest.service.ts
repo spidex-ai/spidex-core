@@ -15,17 +15,15 @@ import { IQuestRelatedToReferralOptions, IQuestRelatedToTradeOptions, TQuestOpti
 import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
-import { ClientProxy } from "@nestjs/microservices";
 import { PageMetaDto } from "@shared/dtos/page-meta.dto";
 import { PageOptionsDto } from "@shared/dtos/page-option.dto";
 import { PageDto } from "@shared/dtos/page.dto";
-import { CORE_MICROSERVICE } from "@shared/modules/kafka/kafka.constant";
 import { LoggerService } from "@shared/modules/loggers/logger.service";
+import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
 import { getEndOfDay, getStartOfDay } from "@shared/utils/dayjs";
 import { isNullOrUndefined } from "@shared/utils/util";
 import Decimal from "decimal.js";
 import { flattenDeep, groupBy, orderBy } from "lodash";
-import { firstValueFrom } from "rxjs";
 import { And, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { Transactional } from "typeorm-transactional";
 
@@ -38,8 +36,7 @@ export class UserQuestService {
     private userQuestRepository: UserQuestRepository,
     @Inject(forwardRef(() => UserPointService))
     private userPointService: UserPointService,
-    @Inject(CORE_MICROSERVICE)
-    private coreMicroservice: ClientProxy,
+    private rabbitMQService: RabbitMQService,
     private questService: QuestService,
     private loggerService: LoggerService,
     @Inject(forwardRef(() => UserReferralService))
@@ -421,13 +418,10 @@ export class UserQuestService {
   }
 
   async emitUserQuestRelatedTradeEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
-    await firstValueFrom(this.coreMicroservice.emit<IQuestRelatedToTradeEvent>(
+    await this.rabbitMQService.emitToCore<IQuestRelatedToTradeEvent>(
       USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_TRADE,
-      {
-        key: data.userId,
-        value: data
-      }
-    ))
+      data
+    );
   }
 
 

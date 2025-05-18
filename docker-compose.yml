@@ -12,7 +12,7 @@ services:
     depends_on:
       - postgres
       - redis
-      - kafka-0
+      - rabbitmq
     env_file:
       - .env
     environment:
@@ -36,7 +36,7 @@ services:
     depends_on:
       - postgres
       - redis
-      - kafka-0
+      - rabbitmq
     networks:
       spidex-core-app:
 
@@ -64,41 +64,21 @@ services:
     networks:
       spidex-core-app:
 
-  kafka-0:
-    image: bitnami/kafka:3.4
-    container_name: spidex-core-kafka-0
-    ports:
-      - "${KAFKA_EXTERNAL_PORT}:${KAFKA_EXTERNAL_PORT}"
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: spidex-core-${NODE_ENV}-rabbitmq
     environment:
-      ALLOW_PLAINTEXT_LISTENER: yes
-      KAFKA_CFG_NODE_ID: 0
-      KAFKA_CFG_PROCESS_ROLES: controller,broker
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://0.0.0.0:${KAFKA_EXTERNAL_PORT}
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka-0:9092,EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT}
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka-0:9093
-      KAFKA_KRAFT_CLUSTER_ID: abcdefghijklmnopqrstuv
-    networks:
-      spidex-core-app:
-
-  kafka-ui:
-    container_name: spidex-core-kafka-ui
-    image: provectuslabs/kafka-ui:latest
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
     ports:
-      - ${KAFKA_UI_PORT}:8080
-    depends_on:
-      - kafka-0
-    environment:
-      KAFKA_CLUSTERS_0_NAME: "kafka-0"
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-0:9092
-      DYNAMIC_CONFIG_ENABLED: 'true'
-    networks:
-      spidex-core-app:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
 volumes:
   db:
+  rabbitmq_data:
 
 networks:
   spidex-core-app:

@@ -2,7 +2,7 @@ import { UserPointConsumerService } from "@modules/consumer/core/user-point/user
 import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
 import { USER_POINT_EVENT_PATTERN } from "@modules/user-point/interfaces/event-pattern";
 import { Controller, Logger } from "@nestjs/common";
-import { Ctx, EventPattern, KafkaContext, Payload } from "@nestjs/microservices";
+import { Ctx, EventPattern, Payload, RmqContext } from "@nestjs/microservices";
 import { IDeadLetterMessage } from "@shared/dtos/dead-letter-queue.dto";
 
 
@@ -14,7 +14,10 @@ export class UserPointConsumerController {
   ) { }
 
   @EventPattern(USER_POINT_EVENT_PATTERN.USER_POINT_CHANGE)
-  async handleUserPointChangeEvent(@Payload() data: IUserPointChangeEvent, @Ctx() context: KafkaContext) {
+  async handleUserPointChangeEvent(@Payload() data: IUserPointChangeEvent, @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
     try {
       await this.userPointConsumerService.handleUserPointChangeEvent(context, data)
     } catch (error) {
@@ -31,22 +34,16 @@ export class UserPointConsumerController {
       // Send to dead letter queue
       await this.userPointConsumerService.handleUserPointChangeEventDeadLetter(context, deadLetterMessage);
     }
+    await channel.ack(originalMsg);
 
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    const consumer = context.getConsumer();
-    await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
   }
 
   @EventPattern(USER_POINT_EVENT_PATTERN.DEAD_LETTER.USER_POINT_CHANGE)
   async handleUserPointChangeEventDeadLetter(
     @Payload() message: IDeadLetterMessage<IUserPointChangeEvent>,
-    @Ctx() context: KafkaContext) {
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    const consumer = context.getConsumer();
+    @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
     try {
       await this.userPointConsumerService.handleUserPointChangeEventDeadLetterRetry(context, message);
     } catch (error) {
@@ -56,6 +53,6 @@ export class UserPointConsumerController {
       message.retryCount++
       await this.userPointConsumerService.handleUserPointChangeEventDeadLetterRetry(context, message);
     }
-    await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
+    await channel.ack(originalMsg);
   }
 }

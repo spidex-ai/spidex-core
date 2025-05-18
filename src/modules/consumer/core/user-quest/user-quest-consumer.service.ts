@@ -1,12 +1,10 @@
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { UserQuestService } from "@modules/user-quest/services/user-quest.service";
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { ClientProxy, KafkaContext } from "@nestjs/microservices";
+import { Injectable, Logger } from "@nestjs/common";
+import { KafkaContext } from "@nestjs/microservices";
 import { IDeadLetterMessage } from "@shared/dtos/dead-letter-queue.dto";
-import { heartbeatWrapped } from "@shared/modules/kafka/kafka.config";
-import { CORE_MICROSERVICE } from "@shared/modules/kafka/kafka.constant";
-import { firstValueFrom } from "rxjs";
+import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
 
 
 @Injectable()
@@ -15,24 +13,19 @@ export class UserQuestConsumerService {
 
   constructor(
     private readonly userQuestService: UserQuestService,
-    @Inject(CORE_MICROSERVICE)
-    private readonly coreMicroservice: ClientProxy,
+    private readonly rabbitMQService: RabbitMQService,
   ) { }
 
-  async handleQuestRelatedToTradeEvent(context: KafkaContext, data: IQuestRelatedToTradeEvent) {
-    await heartbeatWrapped(context, this.logger, 'handleQuestRelatedToTradeEvent', async () => {
-      await this.userQuestService.handleQuestRelatedToTradeEvent(data);
-    });
+  async handleQuestRelatedToTradeEvent(_: KafkaContext, data: IQuestRelatedToTradeEvent) {
+    await this.userQuestService.handleQuestRelatedToTradeEvent(data);
   }
 
   async handleQuestRelatedToTradeEventDeadLetter(_: KafkaContext, message: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
     this.logger.error(message);
-    await firstValueFrom(this.coreMicroservice.emit<IDeadLetterMessage<IQuestRelatedToTradeEvent>>(
+    await this.rabbitMQService.emitToCore<IDeadLetterMessage<IQuestRelatedToTradeEvent>>(
       USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_TRADE,
-      {
-        key: message.key,
-        value: message
-      }));
+      message
+    );
   }
 
   async handleQuestRelatedToTradeEventDeadLetterRetry(context: KafkaContext, deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {

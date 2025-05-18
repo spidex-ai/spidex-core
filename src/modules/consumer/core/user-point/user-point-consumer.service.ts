@@ -1,12 +1,10 @@
 import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
 import { USER_POINT_EVENT_PATTERN } from "@modules/user-point/interfaces/event-pattern";
 import { UserPointService } from "@modules/user-point/services/user-point.service";
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { ClientProxy, KafkaContext } from "@nestjs/microservices";
+import { Injectable, Logger } from "@nestjs/common";
+import { KafkaContext, RmqContext } from "@nestjs/microservices";
 import { IDeadLetterMessage } from "@shared/dtos/dead-letter-queue.dto";
-import { heartbeatWrapped } from "@shared/modules/kafka/kafka.config";
-import { CORE_MICROSERVICE } from "@shared/modules/kafka/kafka.constant";
-import { firstValueFrom } from "rxjs";
+import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
 
 
 @Injectable()
@@ -15,27 +13,22 @@ export class UserPointConsumerService {
 
   constructor(
     private readonly userPointService: UserPointService,
-    @Inject(CORE_MICROSERVICE)
-    private readonly coreMicroservice: ClientProxy,
+    private readonly rabbitMQService: RabbitMQService,
   ) { }
 
-  async handleUserPointChangeEvent(context: KafkaContext, data: IUserPointChangeEvent) {
-    await heartbeatWrapped(context, this.logger, 'handleUserPointChangeEvent', async () => {
-      await this.userPointService.handleUserPointChangeEvent(data);
-    });
+  async handleUserPointChangeEvent(context: RmqContext, data: IUserPointChangeEvent) {
+    await this.userPointService.handleUserPointChangeEvent(data);
   }
 
-  async handleUserPointChangeEventDeadLetter(_: KafkaContext, message: IDeadLetterMessage<IUserPointChangeEvent>) {
+  async handleUserPointChangeEventDeadLetter(_: RmqContext, message: IDeadLetterMessage<IUserPointChangeEvent>) {
     this.logger.error(message);
-    await firstValueFrom(this.coreMicroservice.emit<IDeadLetterMessage<IUserPointChangeEvent>>(
+    await this.rabbitMQService.emitToCore<IDeadLetterMessage<IUserPointChangeEvent>>(
       USER_POINT_EVENT_PATTERN.DEAD_LETTER.USER_POINT_CHANGE,
-      {
-        key: message.key,
-        value: message
-      }));
+      message
+    );
   }
 
-  async handleUserPointChangeEventDeadLetterRetry(context: KafkaContext, deadLetterMessage: IDeadLetterMessage<IUserPointChangeEvent>) {
+  async handleUserPointChangeEventDeadLetterRetry(context: RmqContext, deadLetterMessage: IDeadLetterMessage<IUserPointChangeEvent>) {
     const MAX_RETRY = 5;
     if (deadLetterMessage.retryCount > MAX_RETRY) {
       // TODO: send alert to telegram
