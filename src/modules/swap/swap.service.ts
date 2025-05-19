@@ -1,7 +1,9 @@
+import { EEnvKey } from '@constants/env.constant';
 import { EError } from '@constants/error.constant';
 import { SwapAction, SwapExchange, SwapStatus, SwapTransactionEntity } from '@database/entities/swap-transaction.entity';
 import { EUserPointLogType } from '@database/entities/user-point-log.entity';
 import { SwapTransactionRepository } from '@database/repositories/swap-transaction.repository';
+import { Blockfrost, Lucid, LucidEvolution } from "@lucid-evolution/lucid";
 import { BuildSwapRequest, EstimateSwapRequest, GetPoolStatsRequest, SubmitSwapRequest } from '@modules/swap/dtos/swap-request.dto';
 import { EstimateSwapResponse } from '@modules/swap/dtos/swap-response.dto';
 import { SystemConfigService } from '@modules/system-config/system-config.service';
@@ -11,6 +13,7 @@ import { UserPointService } from '@modules/user-point/services/user-point.servic
 import { EUserPointType } from '@modules/user-point/user-point.constant';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
 import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@shared/exception';
 import { getTxHashFromCbor } from '@shared/utils/cardano';
 import Decimal from 'decimal.js';
@@ -18,9 +21,6 @@ import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
 import { TaptoolsService } from 'external/taptools/taptools.service';
 import { Transactional } from 'typeorm-transactional';
-import { Blockfrost, Lucid, LucidEvolution, paymentCredentialOf } from "@lucid-evolution/lucid";
-import { ConfigService } from '@nestjs/config';
-import { EEnvKey } from '@constants/env.constant';
 
 
 @Injectable()
@@ -137,7 +137,7 @@ export class SwapService implements OnModuleInit {
 
             return response;
         } catch (error) {
-            this.logger.error(`Failed to build swap: ${error}`);
+            this.logger.error(`Failed to build swap: ${error}`, error.stack);
             throw new BadRequestException({
                 message: 'Failed to build swap',
                 data: error.response.data,

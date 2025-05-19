@@ -70,9 +70,16 @@ export class DexhunterService {
     }
 
     async swapWallet(payload: SwapWalletPayload): Promise<void> {
-        console.log(payload);
-        const response = await firstValueFrom(this.client.post<void>('swap/wallet', payload));
-        return response.data;
+        try {
+            const response = await firstValueFrom(this.client.post<void>('swap/wallet', payload));
+            return response.data;
+        } catch (error) {
+            throw new BadRequestException({
+                message: 'Swap wallet failed',
+                validatorErrors: EError.DEXHUNTER_SWAP_WALLET_FAILED,
+                data: error
+            });
+        }
     }
 
     async buildSwap(payload: SwapPayload): Promise<BuildSwapResponse> {

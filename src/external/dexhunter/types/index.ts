@@ -44,7 +44,6 @@ export interface SwapPayload {
     amount_in: number;
     tx_optimization: boolean;
     blacklisted_dexes: string[];
-    inputs?: string[];
 }
 
 
