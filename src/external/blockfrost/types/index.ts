@@ -92,3 +92,7 @@ export interface OutputAmount {
     unit: string
     quantity: string
 }
+
+export interface BlockfrostTransactionCbor {
+    cbor: string
+}

@@ -44,6 +44,7 @@ export interface SwapPayload {
     amount_in: number;
     tx_optimization: boolean;
     blacklisted_dexes: string[];
+    inputs?: string[];
 }
 
 
@@ -116,3 +117,8 @@ export interface PoolStatsResponse {
     token_1_amount: number
     token_2_amount: number
 }
+
+export interface SwapWalletPayload {
+    addresses: string[]
+}
+

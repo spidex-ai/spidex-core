@@ -1,6 +1,6 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { BlockfrostAddressDetail, BlockfrostTokenDetail, BlockfrostTransaction, BlockfrostTransactionDetail } from "external/blockfrost/types";
+import { BlockfrostAddressDetail, BlockfrostTokenDetail, BlockfrostTransaction, BlockfrostTransactionCbor, BlockfrostTransactionDetail } from "external/blockfrost/types";
 import { firstValueFrom } from "rxjs";
 import { BadRequestException } from "@shared/exception";
 import { EError } from "@constants/error.constant";
@@ -72,4 +72,18 @@ export class BlockfrostService {
             });
         }
     }
+
+    async getTransactionCbor(txHash: string) {
+        try {
+            const response = await firstValueFrom(this.client.get<BlockfrostTransactionCbor>(`txs/${txHash}/cbor`));
+            return response?.data?.cbor;
+        } catch (error) {
+            throw new BadRequestException({
+                message: 'Get transaction cbor failed',
+                validatorErrors: EError.BLOCKFROST_GET_TRANSACTION_CBOR_FAILED,
+                data: error
+            });
+        }
+    }
+
 }

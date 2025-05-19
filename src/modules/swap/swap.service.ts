@@ -10,7 +10,7 @@ import { TokenPriceService } from '@modules/token-price/token-price.service';
 import { UserPointService } from '@modules/user-point/services/user-point.service';
 import { EUserPointType } from '@modules/user-point/user-point.constant';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
 import { getTxHashFromCbor } from '@shared/utils/cardano';
 import Decimal from 'decimal.js';
@@ -18,10 +18,15 @@ import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
 import { TaptoolsService } from 'external/taptools/taptools.service';
 import { Transactional } from 'typeorm-transactional';
+import { Blockfrost, Lucid, LucidEvolution, paymentCredentialOf } from "@lucid-evolution/lucid";
+import { ConfigService } from '@nestjs/config';
+import { EEnvKey } from '@constants/env.constant';
+
 
 @Injectable()
-export class SwapService {
+export class SwapService implements OnModuleInit {
     private readonly logger = new Logger(SwapService.name);
+    private lucid: LucidEvolution;
     constructor(
         private readonly dexhunterService: DexhunterService,
         private readonly blockfrostService: BlockfrostService,
@@ -32,8 +37,15 @@ export class SwapService {
         private readonly tokenMetaService: TokenMetaService,
         @Inject(forwardRef(() => UserPointService))
         private readonly userPointService: UserPointService,
-        private readonly userQuestService: UserQuestService
+        private readonly userQuestService: UserQuestService,
+        private readonly configService: ConfigService
     ) { }
+    async onModuleInit() {
+        this.lucid = await Lucid(
+            new Blockfrost(this.configService.get(EEnvKey.BLOCKFROST_API_URL), this.configService.get(EEnvKey.BLOCKFROST_API_KEY)),
+            'Mainnet'
+        );
+    }
 
     async buildSwap(userId: number, payload: BuildSwapRequest) {
         try {
@@ -67,6 +79,11 @@ export class SwapService {
                 tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
             }
 
+
+            await this.dexhunterService.swapWallet({
+                addresses: [payload.buyerAddress]
+            });
+
             const response = await this.dexhunterService.buildSwap({
                 buyer_address: payload.buyerAddress,
                 token_in: tokenIn.unit,
@@ -76,6 +93,7 @@ export class SwapService {
                 tx_optimization: payload.txOptimization || true,
                 blacklisted_dexes: payload.blacklistedDexes || [],
             });
+
 
             const txHash = getTxHashFromCbor(response.cbor);
 

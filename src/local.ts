@@ -13,4 +13,5 @@ const txBodyCbor = encode(txBody);
 // Hash it with blake2b-256
 const txHash = blake2b(txBodyCbor, null, 32);
 
+
 console.log(Buffer.from(txHash).toString('hex'))
