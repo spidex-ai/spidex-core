@@ -11,7 +11,7 @@ import { EUserPointType } from "@modules/user-point/user-point.constant";
 import { EUserQuestStatus, GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
-import { IQuestRelatedToReferralOptions, IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
+import { IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
 import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
@@ -159,6 +159,7 @@ export class UserQuestService {
 
   @Transactional()
   async completeQuest(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<void> {
+    const referral = await this.userReferralService.getReferralByUserId(userId);
     const userQuest = this.userQuestRepository.create({
       userId,
       questId: quest.id,
@@ -170,9 +171,8 @@ export class UserQuestService {
     const shouldAddToReferralPoint = true
 
     let referralId = null
-    if (shouldAddToReferralPoint) {
-      const referralOptions = options as IQuestRelatedToReferralOptions
-      referralId = referralOptions.referralId
+    if (shouldAddToReferralPoint && referral) {
+      referralId = referral.id
     }
     const userPointChangeEvent: IUserPointChangeEvent = {
       userId,
