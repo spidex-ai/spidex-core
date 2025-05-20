@@ -24,7 +24,6 @@ import { RedisLockService } from "@shared/modules/redis/redis-lock.service";
 import { LOCK_KEY_USER_POINT } from "@shared/modules/redis/redis.constant";
 import { plainToInstanceCustom } from "@shared/utils/class-transform";
 import BigNumber from "bignumber.js";
-import { firstValueFrom } from "rxjs";
 import { Transactional } from "typeorm-transactional";
 
 
@@ -66,6 +65,8 @@ export class UserPointService {
     const { type, userId, amount } = data;
     switch (type) {
       case EUserPointType.CORE:
+      case EUserPointType.QUEST:
+        await this.increasePoint(data);
         const referral = await this.userReferralService.getReferralByUserId(userId);
         if (referral) {
           const referralRate = await this.systemConfigService.getReferralPointRate();
@@ -89,14 +90,9 @@ export class UserPointService {
               referralId: referral.id,
             }),
           ])
-
         }
-        await this.increasePoint(data);
         break;
       case EUserPointType.REFERRAL:
-        await this.increasePoint(data);
-        break;
-      case EUserPointType.QUEST:
         await this.increasePoint(data);
         break;
     }

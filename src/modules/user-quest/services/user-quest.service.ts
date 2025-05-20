@@ -167,9 +167,7 @@ export class UserQuestService {
 
     await this.userQuestRepository.save(userQuest);
 
-    const shouldAddToReferralPoint = [
-      EQuestType.REFER_FRIEND,
-    ].includes(quest.type)
+    const shouldAddToReferralPoint = true
 
     let referralId = null
     if (shouldAddToReferralPoint) {
