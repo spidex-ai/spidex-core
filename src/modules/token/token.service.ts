@@ -42,7 +42,7 @@ export class TokenService {
             return cachedData;
         }
 
-        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT)) {
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
             const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
             return {
                 policy: CARDANO_POLICY,
