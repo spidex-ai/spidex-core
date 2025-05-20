@@ -265,8 +265,9 @@ export class TokenService {
 
     async searchTokens(request: TokenSearchRequest) {
         const { query, verified, limit, page } = request;
-        console.log({ query })
+
         const data = await this.dexHunterService.searchToken(query, verified, page, limit);
+
         const tokenIds = map(data, 'token_id');
         const [tokenDetails, adaPrice, tokenPrices] = await Promise.all([
             this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'ticker', 'name']),
@@ -283,6 +284,23 @@ export class TokenService {
             price: tokenPrices[token.token_id],
             usdPrice: tokenPrices[token.token_id] * adaPrice,
         }));
+
+        if (query.match(/^(ada|ad|a)$/i)) {
+            tokensWithDetails.unshift({
+                token_id: CARDANO_UNIT,
+                token_decimals: CARDANO_DECIMALS,
+                token_policy: CARDANO_POLICY,
+                token_ascii: CARDANO_TICKER,
+                ticker: CARDANO_TICKER,
+                is_verified: true,
+                supply: CARDANO_TOTAL_SUPPLY,
+                creation_date: new Date().toISOString(),
+                price: 1,
+                logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
+                unit: CARDANO_UNIT,
+                usdPrice: adaPrice
+            })
+        }
         return tokensWithDetails;
     }
 
