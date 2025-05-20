@@ -177,15 +177,39 @@ export class TokenService {
         if (cachedData) {
             return cachedData;
         }
+        const usdPrice = await this.tokenPriceService.getAdaPriceInUSD();
+
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+            return {
+                price: 1,
+                usdPrice: usdPrice,
+                "24h": {
+                    buyers: 0,
+                    buys: 0,
+                    sellVolume: 0,
+                    sellers: 0,
+                    buyVolume: 0,
+                    sells: 0,
+                },
+                holders: 0,
+                mcap: {
+                    circSupply: 0,
+                    fdv: 0,
+                    mcap: 0,
+                    price: 1,
+                    ticker: CARDANO_TICKER,
+                    totalSupply: CARDANO_TOTAL_SUPPLY,
+                }
+            }
+        }
 
         const [
-            usdPrice,
+
             mcap,
             holders,
             tradingStats,
             pools
         ] = await Promise.all([
-            this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTokenMcap(tokenId),
             this.taptoolsService.getTokenHolders(tokenId),
             this.taptoolsService.getTokenTradingStats(tokenId, '24H'),
@@ -215,6 +239,10 @@ export class TokenService {
             return cachedData;
         }
 
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+            return [];
+        }
+
         const [data, usdPrice] = await Promise.all([
             this.taptoolsService.getTokenTrades(tokenId, timeFrame, page, limit),
             this.tokenPriceService.getAdaPriceInUSD()
@@ -232,6 +260,11 @@ export class TokenService {
 
     async getTopTraders(tokenId: string, request: TokenTopTradersRequest) {
         const { timeFrame, limit, page } = request;
+
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+            return [];
+        }
+
         const data = await this.swapService.getTopTraders(tokenId, timeFrame, limit, page);
         return data;
     }
@@ -242,6 +275,10 @@ export class TokenService {
         if (cachedData) {
             console.log("🚀 ~ TokenService ~ getTopHolders ~ cachedData:", cachedData)
             return cachedData;
+        }
+
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+            return [];
         }
 
         const [tokenDetail, tokenPrice, usdPrice, topHolders] = await Promise.all([
@@ -305,6 +342,10 @@ export class TokenService {
     }
 
     async getTokenOHLCV(tokenId: string, quote: string, request: TokenOHLCVRequest) {
+        if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+            return [];
+        }
+
         const { interval, numIntervals } = request;
         const data = await this.taptoolsService.getTokenOHLCV(tokenId, interval, numIntervals, quote);
         return data;
