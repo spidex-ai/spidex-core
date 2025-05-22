@@ -1,12 +1,13 @@
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class BuildSwapRequest {
-    @IsString()
-    @IsNotEmpty()
-    buyerAddress: string;
-
+    @IsArray()
     @IsOptional()
+    @IsString({ each: true })
+    addresses: string[];
+
     @IsString()
+    @IsOptional()
     tokenIn: string;
 
     @IsString()

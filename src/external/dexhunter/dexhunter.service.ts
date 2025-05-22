@@ -33,7 +33,7 @@ export class DexhunterService {
             throw new BadRequestException({
                 message: 'Search token failed',
                 validatorErrors: EError.DEXHUNTER_SEARCH_TOKEN_FAILED,
-                data: error
+                data: error.response.data
             });
         }
     }
@@ -46,7 +46,7 @@ export class DexhunterService {
             throw new BadRequestException({
                 message: 'Get token detail failed',
                 validatorErrors: EError.DEXHUNTER_GET_TOKEN_DETAIL_FAILED,
-                data: error
+                data: error.response.data
             });
         }
     }
@@ -59,7 +59,7 @@ export class DexhunterService {
             throw new BadRequestException({
                 message: 'Get pool stats failed',
                 validatorErrors: EError.DEXHUNTER_GET_POOL_STATS_FAILED,
-                data: error
+                data: error.response.data
             });
         }
     }
@@ -72,12 +72,13 @@ export class DexhunterService {
             throw new BadRequestException({
                 message: 'Estimate swap failed',
                 validatorErrors: EError.DEXHUNTER_ESTIMATE_SWAP_FAILED,
-                data: error
+                data: error.response.data
             });
         }
     }
 
     async swapWallet(payload: SwapWalletPayload): Promise<void> {
+        console.log(payload);
         try {
             const response = await firstValueFrom(this.client.post<void>('swap/wallet', payload));
             return response.data;
@@ -85,7 +86,7 @@ export class DexhunterService {
             throw new BadRequestException({
                 message: 'Swap wallet failed',
                 validatorErrors: EError.DEXHUNTER_SWAP_WALLET_FAILED,
-                data: error
+                data: error.response.data
             });
         }
     }

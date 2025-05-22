@@ -19,6 +19,7 @@ import { getTxHashFromCbor } from '@shared/utils/cardano';
 import Decimal from 'decimal.js';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
+import { DHAPIService } from 'external/dhapi/dhapi.service';
 import { TaptoolsService } from 'external/taptools/taptools.service';
 import { Transactional } from 'typeorm-transactional';
 
@@ -38,7 +39,8 @@ export class SwapService implements OnModuleInit {
         @Inject(forwardRef(() => UserPointService))
         private readonly userPointService: UserPointService,
         private readonly userQuestService: UserQuestService,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private readonly dhapiService: DHAPIService
     ) { }
     async onModuleInit() {
         this.lucid = await Lucid(
@@ -79,13 +81,16 @@ export class SwapService implements OnModuleInit {
                 tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
             }
 
+            const mainAddress = payload.addresses[0]
 
-            await this.dexhunterService.swapWallet({
-                addresses: [payload.buyerAddress]
+            await this.dhapiService.swapWallet({
+                addresses: payload.addresses
             });
 
+
+
             const response = await this.dexhunterService.buildSwap({
-                buyer_address: payload.buyerAddress,
+                buyer_address: mainAddress,
                 token_in: tokenIn.unit,
                 token_out: tokenOut.unit,
                 amount_in: payload.amountIn,
@@ -99,7 +104,7 @@ export class SwapService implements OnModuleInit {
 
             const swapSellTx = this.swapTransactionRepository.create({
                 userId: userId,
-                address: payload.buyerAddress,
+                address: mainAddress,
                 tokenA: tokenIn.unit,
                 tokenAName: tokenIn.name,
                 tokenB: tokenOut.unit,
@@ -117,7 +122,7 @@ export class SwapService implements OnModuleInit {
 
             const swapBuyTx = this.swapTransactionRepository.create({
                 userId: userId,
-                address: payload.buyerAddress,
+                address: mainAddress,
                 tokenA: tokenOut.unit,
                 tokenAName: tokenOut.name,
                 tokenB: tokenIn.unit,

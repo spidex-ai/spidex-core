@@ -9,6 +9,7 @@ import { QuestModule } from "@modules/user-quest/quest.module";
 import { Module, forwardRef } from "@nestjs/common";
 import { BlockfrostModule } from "external/blockfrost/blockfrost.module";
 import { DexhunterModule } from "external/dexhunter/dexhunter.module";
+import { DHAPIModule } from "external/dhapi/dhapi.module";
 import { TaptoolsModule } from "external/taptools/taptools.module";
 import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
 
@@ -21,6 +22,7 @@ import { CustomRepositoryModule } from "nestjs-typeorm-custom-repository";
         TokenPriceModule,
         TaptoolsModule,
         TokenMetaModule,
+        DHAPIModule,
         forwardRef(() => UserPointModule),
         forwardRef(() => QuestModule),
     ],
