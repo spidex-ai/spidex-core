@@ -17,7 +17,7 @@ export class DHAPIService {
             throw new BadRequestException({
                 message: 'Swap wallet failed',
                 validatorErrors: EError.DEXHUNTER_SWAP_WALLET_FAILED,
-                data: error.response
+                data: error.message
             });
         }
     }
