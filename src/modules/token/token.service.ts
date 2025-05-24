@@ -287,7 +287,7 @@ export class TokenService {
             this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTopTokenHolders(tokenId, page, limit)
         ]);
-        const totalSupply = new Decimal(tokenDetail.quantity).div(10 ** (tokenDetail.onchain_metadata.decimals || 0)).toNumber();
+        const totalSupply = new Decimal(tokenDetail.quantity).div(10 ** (tokenDetail?.onchain_metadata?.decimals || tokenDetail?.metadata?.decimals || 0)).toNumber();
         const data: TokenTopHoldersResponse[] = topHolders.map((holder) => ({
             address: holder.address,
             amount: holder.amount,
