@@ -2,7 +2,7 @@ import { UserQuestConsumerService } from "@modules/consumer/core/user-quest/user
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { Controller, Logger } from "@nestjs/common";
-import { Ctx, EventPattern, KafkaContext, Payload } from "@nestjs/microservices";
+import { Ctx, EventPattern, Payload, RmqContext } from "@nestjs/microservices";
 import { IDeadLetterMessage } from "@shared/dtos/dead-letter-queue.dto";
 
 
@@ -14,7 +14,9 @@ export class UserQuestConsumerController {
   ) { }
 
   @EventPattern(USER_QUEST_EVENT_PATTERN.QUEST_RELATED_TO_TRADE)
-  async handleQuestRelatedToTradeEvent(@Payload() data: IQuestRelatedToTradeEvent, @Ctx() context: KafkaContext) {
+  async handleQuestRelatedToTradeEvent(@Payload() data: IQuestRelatedToTradeEvent, @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
     try {
       await this.userQuestConsumerService.handleQuestRelatedToTradeEvent(context, data)
     } catch (error) {
@@ -32,21 +34,15 @@ export class UserQuestConsumerController {
       await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetter(context, deadLetterMessage);
     }
 
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    const consumer = context.getConsumer();
-    await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
+    await channel.ack(originalMsg);
   }
 
   @EventPattern(USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_TRADE)
   async handleQuestRelatedToTradeEventDeadLetter(
     @Payload() message: IDeadLetterMessage<IQuestRelatedToTradeEvent>,
-    @Ctx() context: KafkaContext) {
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    const consumer = context.getConsumer();
+    @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
     try {
       await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetterRetry(context, message);
     } catch (error) {
@@ -56,7 +52,7 @@ export class UserQuestConsumerController {
       message.retryCount++
       await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetterRetry(context, message);
     }
-    await consumer.commitOffsets([{ topic, partition, offset: `${Number(offset) + 1}` }]);
+    await channel.ack(originalMsg);
   }
 
 }

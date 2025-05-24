@@ -2,7 +2,7 @@ import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
 import { UserQuestService } from "@modules/user-quest/services/user-quest.service";
 import { Injectable, Logger } from "@nestjs/common";
-import { KafkaContext } from "@nestjs/microservices";
+import { RmqContext } from "@nestjs/microservices";
 import { IDeadLetterMessage } from "@shared/dtos/dead-letter-queue.dto";
 import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
 
@@ -16,11 +16,11 @@ export class UserQuestConsumerService {
     private readonly rabbitMQService: RabbitMQService,
   ) { }
 
-  async handleQuestRelatedToTradeEvent(_: KafkaContext, data: IQuestRelatedToTradeEvent) {
+  async handleQuestRelatedToTradeEvent(_: RmqContext, data: IQuestRelatedToTradeEvent) {
     await this.userQuestService.handleQuestRelatedToTradeEvent(data);
   }
 
-  async handleQuestRelatedToTradeEventDeadLetter(_: KafkaContext, message: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
+  async handleQuestRelatedToTradeEventDeadLetter(_: RmqContext, message: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
     this.logger.error(message);
     await this.rabbitMQService.emitToCore<IDeadLetterMessage<IQuestRelatedToTradeEvent>>(
       USER_QUEST_EVENT_PATTERN.DEAD_LETTER.QUEST_RELATED_TO_TRADE,
@@ -28,7 +28,7 @@ export class UserQuestConsumerService {
     );
   }
 
-  async handleQuestRelatedToTradeEventDeadLetterRetry(context: KafkaContext, deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
+  async handleQuestRelatedToTradeEventDeadLetterRetry(context: RmqContext, deadLetterMessage: IDeadLetterMessage<IQuestRelatedToTradeEvent>) {
     const MAX_RETRY = 5;
     if (deadLetterMessage.retryCount > MAX_RETRY) {
       // TODO: send alert to telegram
