@@ -50,7 +50,7 @@ export class UserQuestConsumerController {
       message.deadLetterReason = (error as Error).message
       message.stack = (error as Error).stack
       message.retryCount++
-      await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetterRetry(context, message);
+      await this.userQuestConsumerService.handleQuestRelatedToTradeEventDeadLetter(context, message);
     }
     await channel.ack(originalMsg);
   }
