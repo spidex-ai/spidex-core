@@ -1,8 +1,11 @@
+import { TokenMetadataProperties } from "@database/entities/token-metadata.entity";
 import { TokenMetadataRepository } from "@database/repositories/token-metadata.repository";
 import { Injectable } from "@nestjs/common";
 import { S3Service } from "external/aws/s3/s3.service";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
+import { BlockfrostTokenDetail } from "external/blockfrost/types";
 import { TokenCardanoService } from "external/token-cardano/cardano-token.service";
+import { TokenCardanoInfo } from "external/token-cardano/types";
 import { pick } from "lodash";
 import { In } from "typeorm";
 @Injectable()
@@ -14,7 +17,7 @@ export class TokenMetaService {
         private readonly blockfrostService: BlockfrostService
     ) { }
 
-    async getTokenMetadata(unit: string, properties: string[]) {
+    async getTokenMetadata(unit: string, properties: TokenMetadataProperties[]) {
         const pickProperties = ['unit'].concat(properties);
         let tokenMetadata = await this.tokenMetadataRepository.findOne({ where: { unit } });
         if (!tokenMetadata) {
@@ -22,10 +25,13 @@ export class TokenMetaService {
             if (!token && !blockfrostToken) {
                 return null;
             }
-
-            let logo
+            let logo: string;
             if (token.logo?.value) {
                 logo = await this.uploadTokenLogo(token.subject, token.logo.value);
+            } else if (blockfrostToken?.metadata?.logo) {
+                logo = await this.uploadTokenLogo(token.subject, blockfrostToken?.metadata?.logo);
+            } else if (blockfrostToken?.onchain_metadata?.image) {
+                logo = blockfrostToken?.onchain_metadata?.image;
             }
 
             tokenMetadata = this.tokenMetadataRepository.create({
@@ -40,6 +46,49 @@ export class TokenMetaService {
             });
 
             await this.tokenMetadataRepository.save(tokenMetadata);
+        }
+
+        let blockfrostToken: BlockfrostTokenDetail;
+        let cardanoToken: TokenCardanoInfo;
+        for (const property of pickProperties) {
+            if (!tokenMetadata[property]) {
+                if (!blockfrostToken) {
+                    blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
+                }
+                if (!cardanoToken) {
+                    cardanoToken = await this.tokenCardanoService.tokenInfo(unit);
+                }
+                switch (property) {
+                    case 'logo':
+                        if (cardanoToken?.logo?.value) {
+                            tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken?.logo?.value);
+                        } else if (blockfrostToken?.metadata?.logo) {
+                            tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
+                        } else if (blockfrostToken?.onchain_metadata?.image) {
+                            tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
+                        }
+                        break;
+                    case 'name':
+                        tokenMetadata.name = cardanoToken?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name;
+                        break;
+                    case 'ticker':
+                        tokenMetadata.ticker = cardanoToken?.ticker?.value || blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker;
+                        break;
+                    case 'description':
+                        tokenMetadata.description = cardanoToken?.description?.value || blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description;
+                        break;
+                    case 'url':
+                        tokenMetadata.url = cardanoToken?.url?.value || blockfrostToken?.metadata?.url;
+                        break;
+                    case 'decimals':
+                        tokenMetadata.decimals = cardanoToken?.decimals?.value || blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0;
+                        break;
+                    default:
+                        break;
+                }
+
+                await this.tokenMetadataRepository.save(tokenMetadata);
+            }
         }
 
         return pick(tokenMetadata, pickProperties);

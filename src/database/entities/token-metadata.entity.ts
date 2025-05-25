@@ -1,6 +1,8 @@
 import { BaseExcludeDeletedAtEntity } from "@database/common/base.entity";
 import { Column, Entity, Index } from "typeorm";
 
+export type TokenMetadataProperties = 'unit' | 'name' | 'policy' | 'description' | 'url' | 'ticker' | 'decimals' | 'logo';
+
 @Entity('token_metadata')
 export class TokenMetadataEntity extends BaseExcludeDeletedAtEntity {
     @Index({ unique: true })
