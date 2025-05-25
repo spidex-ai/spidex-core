@@ -69,7 +69,7 @@ export class TokenService {
             adaPrice,
             tokenPrice
         ] = await Promise.all([
-            this.tokenMetaService.getTokenMetadata(tokenId, ['unit', 'logo', 'name', 'ticker']),
+            this.tokenMetaService.getTokenMetadata(tokenId, ['logo', 'name', 'ticker']),
             this.tokenPriceService.getAdaPriceInUSD(),
             this.taptoolsService.getTokenPrices([tokenId])
         ]);

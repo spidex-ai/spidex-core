@@ -66,7 +66,7 @@ export class SwapService implements OnModuleInit {
                 }
             } else {
                 const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit]);
-                tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name', 'unit']);
+                tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
                 tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
             }
             if (payload.tokenOut === 'ADA') {
@@ -77,7 +77,7 @@ export class SwapService implements OnModuleInit {
                 }
             } else {
                 const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit]);
-                tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name', 'unit']);
+                tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
                 tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
             }
 

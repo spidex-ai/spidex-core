@@ -97,74 +97,128 @@ export class TokenMetaService {
     async getTokensMetadata(units: string[], properties: string[]) {
         try {
             const pickProperties = ['unit'].concat(properties);
-            const tokenMetadata = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
-            const missingUnits = units.filter(unit => !tokenMetadata.some(tokenMetadata => tokenMetadata.unit === unit));
-            let savedTokenMetadataV1
-            let savedTokenMetadataV2
+            // 1. Fetch all existing metadata in one query
+            const tokenMetadataList = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
+            const tokenMetadataMap = new Map(tokenMetadataList.map(t => [t.unit, t]));
+            // 2. Identify missing units
+            const missingUnits = units.filter(unit => !tokenMetadataMap.has(unit));
+            // 3. Batch fetch from Cardano
+            const cardanoBatchMap = new Map();
             if (missingUnits.length > 0) {
-                const missingTokenMetadata = await this.tokenCardanoService.batchTokenInfo(missingUnits);
-                if (missingTokenMetadata?.subjects?.length > 0) {
-                    savedTokenMetadataV1 = await this.tokenMetadataRepository.save(await Promise.all(missingTokenMetadata.subjects.map(async (tokenMetadata) => {
-
-                        let logo
-                        if (tokenMetadata.logo?.value) {
-                            logo = await this.uploadTokenLogo(tokenMetadata.subject, tokenMetadata.logo.value);
+                const cardanoBatch = await this.tokenCardanoService.batchTokenInfo(missingUnits);
+                if (cardanoBatch?.subjects?.length) {
+                    for (const subject of cardanoBatch.subjects) {
+                        cardanoBatchMap.set(subject.subject, subject);
+                    }
+                }
+            }
+            // 4. For units still missing after Cardano, fetch from Blockfrost in parallel
+            const cardanoFoundUnits = Array.from(cardanoBatchMap.keys());
+            const stillMissingUnits = missingUnits.filter(unit => !cardanoFoundUnits.includes(unit));
+            const blockfrostMap = new Map();
+            if (stillMissingUnits.length > 0) {
+                const blockfrostResults = await Promise.all(stillMissingUnits.map(unit => this.blockfrostService.getTokenDetail(unit)));
+                blockfrostResults.forEach((result, idx) => {
+                    if (result) blockfrostMap.set(stillMissingUnits[idx], result);
+                });
+            }
+            // 5. Create and save new metadata for missing units
+            for (const unit of missingUnits) {
+                let token;
+                let logo;
+                if (cardanoBatchMap.has(unit)) {
+                    token = cardanoBatchMap.get(unit);
+                    if (token.logo?.value) {
+                        logo = await this.uploadTokenLogo(token.subject, token.logo.value);
+                    }
+                    const entity = this.tokenMetadataRepository.create({
+                        unit: token.subject,
+                        name: token.name?.value,
+                        logo,
+                        ticker: token.ticker?.value,
+                        policy: token.policy,
+                        description: token.description?.value,
+                        url: token.url?.value,
+                        decimals: token.decimals?.value || 0,
+                    });
+                    await this.tokenMetadataRepository.save(entity);
+                    tokenMetadataMap.set(unit, entity);
+                } else if (blockfrostMap.has(unit)) {
+                    const blockfrostToken = blockfrostMap.get(unit);
+                    logo = blockfrostToken?.metadata?.logo || blockfrostToken?.onchain_metadata?.image;
+                    const entity = this.tokenMetadataRepository.create({
+                        unit,
+                        name: blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
+                        logo,
+                        ticker: blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
+                        policy: blockfrostToken?.policy_id,
+                        description: blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
+                        url: blockfrostToken?.metadata?.url,
+                        decimals: blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0,
+                    });
+                    await this.tokenMetadataRepository.save(entity);
+                    tokenMetadataMap.set(unit, entity);
+                } else {
+                    tokenMetadataMap.set(unit, null);
+                }
+            }
+            // 6. Ensure all requested properties are present for each token
+            const results = [];
+            for (const unit of units) {
+                const tokenMetadata = tokenMetadataMap.get(unit);
+                if (!tokenMetadata) {
+                    results.push(null);
+                    continue;
+                }
+                let blockfrostToken;
+                let cardanoToken;
+                for (const property of pickProperties) {
+                    if (!tokenMetadata[property]) {
+                        if (!blockfrostToken) {
+                            blockfrostToken = blockfrostMap.get(unit) || await this.blockfrostService.getTokenDetail(unit);
                         }
-
-
-                        const token = this.tokenMetadataRepository.create({
-                            unit: tokenMetadata.subject,
-                            name: tokenMetadata.name?.value,
-                            logo,
-                            ticker: tokenMetadata.ticker?.value,
-                            policy: tokenMetadata.policy,
-                            description: tokenMetadata.description?.value,
-                            url: tokenMetadata.url?.value,
-                            decimals: tokenMetadata.decimals?.value || 0,
-                        });
-
-                        return token;
-                    })));
+                        if (!cardanoToken) {
+                            cardanoToken = cardanoBatchMap.get(unit) || await this.tokenCardanoService.tokenInfo(unit);
+                        }
+                        switch (property) {
+                            case 'logo':
+                                if (cardanoToken?.logo?.value) {
+                                    tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken?.logo?.value);
+                                } else if (blockfrostToken?.metadata?.logo) {
+                                    tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
+                                } else if (blockfrostToken?.onchain_metadata?.image) {
+                                    tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
+                                }
+                                break;
+                            case 'name':
+                                tokenMetadata.name = cardanoToken?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name;
+                                break;
+                            case 'ticker':
+                                tokenMetadata.ticker = cardanoToken?.ticker?.value || blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker;
+                                break;
+                            case 'description':
+                                tokenMetadata.description = cardanoToken?.description?.value || blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description;
+                                break;
+                            case 'url':
+                                tokenMetadata.url = cardanoToken?.url?.value || blockfrostToken?.metadata?.url;
+                                break;
+                            case 'decimals':
+                                tokenMetadata.decimals = cardanoToken?.decimals?.value || blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0;
+                                break;
+                            default:
+                                break;
+                        }
+                        await this.tokenMetadataRepository.save(tokenMetadata);
+                    }
                 }
-
-                if (missingTokenMetadata?.subjects?.length < missingUnits.length) {
-                    const missingIds = missingUnits.filter(unit => !missingTokenMetadata?.subjects?.some(tokenMetadata => tokenMetadata.subject === unit));
-                    const missingTokenMetadataV2 = await Promise.all(missingIds.map(async (unit) => {
-                        const blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
-                        return this.tokenMetadataRepository.create({
-                            unit,
-                            name: blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
-                            logo: blockfrostToken?.metadata?.logo || blockfrostToken?.onchain_metadata?.image,
-                            ticker: blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
-                            policy: blockfrostToken?.policy_id,
-                            description: blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
-                            url: blockfrostToken?.metadata?.url,
-                            decimals: blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0,
-                        });
-                    }));
-                    savedTokenMetadataV2 = await this.tokenMetadataRepository.save(missingTokenMetadataV2);
-                }
-
+                results.push(pick(tokenMetadata, pickProperties));
             }
-            if (savedTokenMetadataV1) {
-                tokenMetadata.push(...savedTokenMetadataV1);
-            }
-
-            if (savedTokenMetadataV2) {
-                tokenMetadata.push(...savedTokenMetadataV2);
-            }
-
-            return tokenMetadata.map(tokenMetadata => {
-                if (properties.length === 0) {
-                    return tokenMetadata;
-                }
-
-                return pick(tokenMetadata, pickProperties);
-            });
+            return results;
         } catch (error) {
-            console.log({ error });
-            return [];
+            console.log({ error })
+            return []
         }
+
     }
 
     async uploadTokenLogo(unit: string, logo: string) {
