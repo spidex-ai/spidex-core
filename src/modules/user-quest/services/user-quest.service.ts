@@ -203,8 +203,7 @@ export class UserQuestService {
       return false
     }
 
-    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
-    return canComplete
+    return true
   }
 
   async canCompleteDailyQuest(userId: number, questId: number, options?: TQuestOptions): Promise<boolean> {
@@ -221,9 +220,7 @@ export class UserQuestService {
       return false
     }
 
-
-    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
-    return canComplete
+    return true
   }
 
   async canCompleteMultiTimeQuest(userId: number, questId: number, options?: TQuestOptions): Promise<boolean> {
@@ -246,8 +243,7 @@ export class UserQuestService {
       }
     }
 
-    const canComplete = await this.canCompleteQuestByType(userId, quest, options)
-    return canComplete
+    return true
   }
 
   async canCompleteQuestByType(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<boolean> {
@@ -262,14 +258,10 @@ export class UserQuestService {
 
 
   async canCompleteDailyTradeQuest(userId: number, quest: QuestEntity,): Promise<boolean> {
-    console.log({
-      userId,
-      questId: quest.id,
-    })
-    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
-    console.log({
-      userQuest,
-    })
+    const startOfDay = getStartOfDay(new Date());
+    const endOfDay = getEndOfDay(new Date());
+    const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, createdAt: And(LessThanOrEqual(endOfDay), MoreThanOrEqual(startOfDay)), deletedAt: IsNull() } })
+
 
     if (userQuest) {
       return false
