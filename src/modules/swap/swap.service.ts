@@ -242,6 +242,7 @@ export class SwapService implements OnModuleInit {
             const response = await this.dexhunterService.submitSwap(payload);
 
             const MIN_POINT = 0.01;
+            console.log({ point })
             if (new Decimal(point).toNumber() >= MIN_POINT) {
                 await this.userPointService.emitUserPointChangeEvent({
                     userId: userId,
