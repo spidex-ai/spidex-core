@@ -262,7 +262,15 @@ export class UserQuestService {
 
 
   async canCompleteDailyTradeQuest(userId: number, quest: QuestEntity,): Promise<boolean> {
+    console.log({
+      userId,
+      questId: quest.id,
+    })
     const userQuest = await this.userQuestRepository.findOne({ where: { userId, questId: quest.id, deletedAt: IsNull() } })
+    console.log({
+      userQuest,
+    })
+
     if (userQuest) {
       return false
     }
