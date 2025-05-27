@@ -116,11 +116,13 @@ export class UserPointService {
           amount,
           pointType,
           logType,
-          userQuestId,
-          referralId,
         });
-
-
+        if (userQuestId) {
+          pointLog.userQuestId = userQuestId;
+        }
+        if (referralId) {
+          pointLog.referralId = referralId;
+        }
 
         await Promise.all([
           this.userPointRepository.save(point),
