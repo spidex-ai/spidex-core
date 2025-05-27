@@ -183,6 +183,10 @@ export class UserQuestService {
       referralId: referralId,
       plusToReferral: shouldAddToReferralPoint,
     };
+
+    console.log({
+      userPointChangeEvent,
+    })
     await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
   }
 
@@ -435,6 +439,11 @@ export class UserQuestService {
     const options = {
       txHash: data.txHash,
     }
+
+    console.log({
+      quests,
+      options,
+    })
 
     await Promise.all(quests.map(async (quest) => {
       switch (quest.category) {
