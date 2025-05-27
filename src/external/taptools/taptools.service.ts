@@ -37,17 +37,20 @@ export class TaptoolsService {
      * @param unit - Token unit (policy + hex name)
      * @returns Promise with token price changes
      */
-    async getTokenPriceChanges(unit: string): Promise<TokenPriceChange> {
+    async getTokenPriceChanges(unit: string, timeframes: string[]): Promise<TokenPriceChange> {
         try {
-            const response = await firstValueFrom(this.client.get<TokenPriceChange>('token/price-changes', { params: { unit } }));
+            const response = await firstValueFrom(this.client.get<TokenPriceChange>('token/prices/chg', { params: { unit, timeframes: timeframes.join(',') } }));
             return response.data;
         } catch (error) {
             console.error('TaptoolsService::getTokenPriceChanges error:', error);
-            throw new BadRequestException({
-                message: 'Get token price changes failed',
-                validatorErrors: EError.TAPTOOLS_GET_TOKEN_PRICE_CHANGES_FAILED,
-                data: error
-            })
+            return {
+                '5m': 0,
+                '1h': 0,
+                '4h': 0,
+                '24h': 0,
+                '7d': 0,
+                '30d': 0
+            }
         }
     }
 

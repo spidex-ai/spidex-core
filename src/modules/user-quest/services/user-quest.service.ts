@@ -357,7 +357,11 @@ export class UserQuestService {
         case EQuestCategory.MULTI_TIME:
           const userQuests = groupedUserQuests[key]
           if (userQuests && userQuests.length >= quest.limit) {
-            status = EUserQuestStatus.COMPLETED
+            if (quest.limit === QUEST_UNLIMITED) {
+              status = EUserQuestStatus.NOT_COMPLETED
+            } else {
+              status = EUserQuestStatus.COMPLETED
+            }
             progress.current = userQuests.length
             progress.target = quest.limit
           }

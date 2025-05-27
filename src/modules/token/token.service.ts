@@ -17,7 +17,7 @@ import Decimal from "decimal.js";
 import { BlockfrostService } from "external/blockfrost/blockfrost.service";
 import { DexhunterService } from "external/dexhunter/dexhunter.service";
 import { TaptoolsService } from "external/taptools/taptools.service";
-import { TopToken, TopTokenMcap } from "external/taptools/types";
+import { TokenPriceChange, TopTokenByVolume, TopTokenMcap } from "external/taptools/types";
 import { keyBy, map } from "lodash";
 
 @Injectable()
@@ -106,19 +106,24 @@ export class TokenService {
             const data = await this.taptoolsService.getTopTokensByMcap(page, limit);
             const tokenIds = data.map((token) => token.unit);
 
-            const [tokenDetails, tokenPrice] = await Promise.all([
+            const priceTimeframe = '24h';
+            const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
                 this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
-                this.tokenPriceService.getAdaPriceInUSD()
+                this.tokenPriceService.getAdaPriceInUSD(),
+                this.getTokenPriceChange(tokenIds, [priceTimeframe])
             ]);
 
             const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
 
+            const priceChangesMap = keyBy<TokenPriceChange>(priceChanges, 'unit');
+
             const response = data.map((token) => ({
                 ...token,
-                usdPrice: token.price * tokenPrice,
+                usdPrice: token.price * adaPrice,
                 logo: tokenDetailsMap[token.unit]?.logo,
                 name: tokenDetailsMap[token.unit]?.name,
-                ticker: tokenDetailsMap[token.unit]?.ticker
+                ticker: tokenDetailsMap[token.unit]?.ticker,
+                price24hChg: priceChangesMap[token.unit]?.priceChanges?.[priceTimeframe]
             }));
 
             await this.cache.set(cacheKey, response, TOP_MCAP_TOKENS_CACHE_TTL);
@@ -132,11 +137,11 @@ export class TokenService {
         }
     }
 
-    async getTopVolumeTokens(request: TokenTopVolumeRequest): Promise<TopToken[]> {
+    async getTopVolumeTokens(request: TokenTopVolumeRequest): Promise<TopTokenByVolume[]> {
         try {
             const { timeframe, limit, page } = request;
             const cacheKey = TOP_VOLUME_TOKENS_CACHE_KEY(timeframe, limit, page);
-            const cachedData = await this.cache.get<TopToken[]>(cacheKey);
+            const cachedData = await this.cache.get<TopTokenByVolume[]>(cacheKey);
             if (cachedData) {
                 return cachedData;
             }
@@ -144,19 +149,24 @@ export class TokenService {
             const data = await this.taptoolsService.getTopTokensByVolume(timeframe, page, limit);
             const tokenIds = data.map((token) => token.unit);
 
-            const [tokenDetails, tokenPrice] = await Promise.all([
+            const priceTimeframe = '24h';
+            const [tokenDetails, tokenPrice, priceChanges] = await Promise.all([
                 this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
-                this.tokenPriceService.getAdaPriceInUSD()
+                this.tokenPriceService.getAdaPriceInUSD(),
+                this.getTokenPriceChange(tokenIds, [priceTimeframe])
             ]);
 
             const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
+
+            const priceChangesMap = keyBy<TokenPriceChange>(priceChanges, 'unit');
 
             const response = data.map((token) => ({
                 ...token,
                 usdPrice: token.price * tokenPrice,
                 logo: tokenDetailsMap[token.unit]?.logo,
                 name: tokenDetailsMap[token.unit]?.name,
-                ticker: tokenDetailsMap[token.unit]?.ticker
+                ticker: tokenDetailsMap[token.unit]?.ticker,
+                price24hChg: priceChangesMap[token.unit]?.priceChanges?.[priceTimeframe]
             }));
 
             await this.cache.set(cacheKey, response, TOP_VOLUME_TOKENS_CACHE_TTL);
@@ -349,5 +359,24 @@ export class TokenService {
         const { interval, numIntervals } = request;
         const data = await this.taptoolsService.getTokenOHLCV(tokenId, interval, numIntervals, quote);
         return data;
+    }
+
+    async getTokenPriceChange(tokenIds: string[], timeframes: string[] = ['24h']) {
+        const response = await Promise.all(tokenIds.map(async tokenId => {
+            try {
+                const data = await this.taptoolsService.getTokenPriceChanges(tokenId, timeframes);
+                return {
+                    unit: tokenId,
+                    priceChanges: data
+                }
+            } catch (error) {
+                console.error('TokenService::getTokenPriceChange error:', error);
+                return {
+                    unit: tokenId,
+                    priceChanges: {}
+                }
+            }
+        }));
+        return response;
     }
 }

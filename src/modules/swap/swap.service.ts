@@ -241,12 +241,15 @@ export class SwapService implements OnModuleInit {
 
             const response = await this.dexhunterService.submitSwap(payload);
 
-            await this.userPointService.emitUserPointChangeEvent({
-                userId: userId,
-                logType: EUserPointLogType.FROM_CORE,
-                amount: point,
-                type: EUserPointType.CORE,
-            })
+            const MIN_POINT = 0.01;
+            if (new Decimal(point).toNumber() >= MIN_POINT) {
+                await this.userPointService.emitUserPointChangeEvent({
+                    userId: userId,
+                    logType: EUserPointLogType.FROM_CORE,
+                    amount: point,
+                    type: EUserPointType.CORE,
+                })
+            }
 
             await this.userQuestService.emitUserQuestRelatedTradeEvent({
                 userId: userId,
