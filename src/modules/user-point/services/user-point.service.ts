@@ -124,6 +124,11 @@ export class UserPointService {
           pointLog.referralId = referralId;
         }
 
+        console.log({
+          point,
+          pointLog,
+        })
+
         await Promise.all([
           this.userPointRepository.save(point),
           this.userPointLogRepository.save(pointLog),
