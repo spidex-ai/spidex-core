@@ -174,4 +174,7 @@ export class TokenDetailsResponse {
 
     @ApiProperty()
     description: string
+
+    @ApiProperty()
+    token_ascii: string
 }

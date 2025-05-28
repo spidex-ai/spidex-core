@@ -47,6 +47,7 @@ export class TokenService {
             return {
                 policy: CARDANO_POLICY,
                 ticker: CARDANO_TICKER,
+                token_ascii: CARDANO_TICKER,
                 is_verified: true,
                 creation_date: new Date().toISOString(),
                 logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
@@ -88,6 +89,7 @@ export class TokenService {
             usdPrice: tokenPrice[tokenId] * adaPrice,
             name: tokenMetadata.name,
             description: tokenMetadata.description,
+            token_ascii: tokenMetadata?.ticker,
         };
 
         await this.cache.set(cacheKey, tokensWithDetails, TOKEN_DETAILS_CACHE_TTL);
