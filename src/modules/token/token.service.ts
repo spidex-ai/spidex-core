@@ -119,6 +119,7 @@ export class TokenService {
 
             const response = data.map((token) => ({
                 ...token,
+                mcap: token.mcap * adaPrice,
                 usdPrice: token.price * adaPrice,
                 logo: tokenDetailsMap[token.unit]?.logo,
                 name: tokenDetailsMap[token.unit]?.name,
@@ -150,7 +151,7 @@ export class TokenService {
             const tokenIds = data.map((token) => token.unit);
 
             const priceTimeframe = '24h';
-            const [tokenDetails, tokenPrice, priceChanges] = await Promise.all([
+            const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
                 this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
                 this.tokenPriceService.getAdaPriceInUSD(),
                 this.getTokenPriceChange(tokenIds, [priceTimeframe])
@@ -162,7 +163,8 @@ export class TokenService {
 
             const response = data.map((token) => ({
                 ...token,
-                usdPrice: token.price * tokenPrice,
+                volume: token.volume * adaPrice,
+                usdPrice: token.price * adaPrice,
                 logo: tokenDetailsMap[token.unit]?.logo,
                 name: tokenDetailsMap[token.unit]?.name,
                 ticker: tokenDetailsMap[token.unit]?.ticker,
@@ -187,12 +189,12 @@ export class TokenService {
         if (cachedData) {
             return cachedData;
         }
-        const usdPrice = await this.tokenPriceService.getAdaPriceInUSD();
+        const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
         if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
             return {
                 price: 1,
-                usdPrice: usdPrice,
+                usdPrice: adaPrice,
                 "24h": {
                     buyers: 0,
                     buys: 0,
@@ -226,16 +228,23 @@ export class TokenService {
             this.taptoolsService.getTokenPools(tokenId, true)
         ]);
 
-        const usdPriceToken = new Decimal(mcap.price).mul(usdPrice).toNumber();
-        const liquidity = pools.reduce((acc, pool) => acc + (pool.tokenALocked * usdPriceToken) + (pool.tokenBLocked * usdPrice), 0);
+        const usdPriceToken = new Decimal(mcap.price).mul(adaPrice).toNumber();
+        const liquidity = pools.reduce((acc, pool) => acc + (pool.tokenALocked * usdPriceToken) + (pool.tokenBLocked * adaPrice), 0);
 
         const tokenStats = {
             price: mcap.price,
             usdPrice: usdPriceToken,
-            mcap,
+            mcap: {
+                circSupply: mcap.circSupply,
+                fdv: mcap.fdv,
+                mcap: mcap.mcap * adaPrice,
+                price: mcap.price,
+                ticker: mcap.ticker,
+                totalSupply: mcap.totalSupply,
+            },
             holders: holders.holders,
             "24h": tradingStats,
-            liquidity
+            liquidity: liquidity,
         }
 
         await this.cache.set(cacheKey, tokenStats, TOKEN_STATS_CACHE_TTL);
