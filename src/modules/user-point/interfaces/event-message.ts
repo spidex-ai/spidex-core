@@ -7,6 +7,7 @@ export interface IUserPointChangeEvent {
     type: EUserPointType;
     logType: EUserPointLogType;
     userQuestId?: number;
-    referralId?: number;
+    myReferralId?: number;
+    referralIdOfReferee?: number;
     plusToReferral?: boolean;
 }

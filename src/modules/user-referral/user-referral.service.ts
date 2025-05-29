@@ -36,19 +36,25 @@ export class UserReferralService {
                 case EQuestCategory.ONE_TIME:
                     const canCompleteOneTime = await this.userQuestService.canCompleteOneTimeQuest(savedReferral.referredBy, quest.id,);
                     if (canCompleteOneTime) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, {
+                            referralId: savedReferral.id
+                        });
                     }
                     break;
                 case EQuestCategory.DAILY:
                     const canCompleteDaily = await this.userQuestService.canCompleteDailyQuest(savedReferral.referredBy, quest.id,);
                     if (canCompleteDaily) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, {
+                            referralId: savedReferral.id
+                        });
                     }
                     break;
                 case EQuestCategory.MULTI_TIME:
                     const canCompleteMultiTime = await this.userQuestService.canCompleteMultiTimeQuest(savedReferral.referredBy, quest.id);
                     if (canCompleteMultiTime) {
-                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest);
+                        await this.userQuestService.completeQuest(savedReferral.referredBy, quest, {
+                            referralId: savedReferral.id
+                        });
                     }
                     break;
             }

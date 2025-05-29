@@ -78,7 +78,7 @@ export class UserPointService {
               type: EUserPointType.REFERRAL,
               amount: bonusPoint.toString(),
               userId: referral.referredBy,
-              referralId: referral.id,
+              myReferralId: referral.id,
               plusToReferral: true,
             }),
 
@@ -87,7 +87,7 @@ export class UserPointService {
               type: EUserPointType.REFERRAL,
               amount: bonusPoint.toString(),
               userId: userId,
-              referralId: referral.id,
+              myReferralId: referral.id,
             }),
           ])
         }
@@ -104,7 +104,7 @@ export class UserPointService {
   ): Promise<{ point: UserPointEntity, pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.increasePoint.name} was called`);
 
-    const { userId, amount, type: pointType, logType, userQuestId, referralId, plusToReferral } = data;
+    const { userId, amount, type: pointType, logType, userQuestId, myReferralId: referralId, plusToReferral, referralIdOfReferee } = data;
     return this.redisLockService.withLock(
       LOCK_KEY_USER_POINT(userId, pointType),
       async () => {
@@ -124,10 +124,7 @@ export class UserPointService {
           pointLog.referralId = referralId;
         }
 
-        console.log({
-          point,
-          pointLog,
-        })
+
 
         await Promise.all([
           this.userPointRepository.save(point),
@@ -136,6 +133,10 @@ export class UserPointService {
 
         if (referralId && plusToReferral) {
           await this.userReferralService.addPoints(referralId, amount);
+        }
+
+        if (referralIdOfReferee && plusToReferral) {
+          await this.userReferralService.addPoints(referralIdOfReferee, amount);
         }
 
         await this.achievementService.checkAndUnlockAchievements(userId);
@@ -153,7 +154,7 @@ export class UserPointService {
     data: IUserPointChangeEvent,
   ): Promise<{ point: UserPointEntity, pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.decreasePoint.name} was called`);
-    const { userId, amount, type: pointType, logType, userQuestId, referralId } = data;
+    const { userId, amount, type: pointType, logType, userQuestId, myReferralId: referralId } = data;
 
     return this.redisLockService.withLock(
       LOCK_KEY_USER_POINT(userId, pointType),

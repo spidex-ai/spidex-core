@@ -11,7 +11,7 @@ import { EUserPointType } from "@modules/user-point/user-point.constant";
 import { EUserQuestStatus, GetCheckInListFilterDto, TriggerAgentQuestQueryDto, UserQuestFilterDto, UserQuestInfoOutput } from "@modules/user-quest/dtos/user-quest.dto";
 import { IQuestRelatedToTradeEvent } from "@modules/user-quest/interfaces/event-message";
 import { USER_QUEST_EVENT_PATTERN } from "@modules/user-quest/interfaces/event-pattern";
-import { IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
+import { IQuestRelatedToReferralOptions, IQuestRelatedToTradeOptions, TQuestOptions } from "@modules/user-quest/interfaces/type";
 import { QuestService } from "@modules/user-quest/services/quest.service";
 import { UserReferralService } from "@modules/user-referral/user-referral.service";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
@@ -26,6 +26,7 @@ import Decimal from "decimal.js";
 import { flattenDeep, groupBy, orderBy } from "lodash";
 import { And, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { Transactional } from "typeorm-transactional";
+import { get } from "lodash";
 
 
 
@@ -180,13 +181,13 @@ export class UserQuestService {
       type: EUserPointType.QUEST,
       logType: EUserPointLogType.FROM_QUEST,
       userQuestId: userQuest.id,
-      referralId: referralId,
+      myReferralId: referralId,
+      referralIdOfReferee: get<IQuestRelatedToReferralOptions>(options, 'referralId', null),
       plusToReferral: shouldAddToReferralPoint,
     };
 
-    console.log({
-      userPointChangeEvent,
-    })
+
+
     await this.userPointService.emitUserPointChangeEvent(userPointChangeEvent);
   }
 
