@@ -1,0 +1,28 @@
+name: Deploy production
+run-name: ${{ github.actor }} is deploying production branch🚀
+on:
+  push:
+    branches:
+      - 'production'
+jobs:
+  Deploy:
+    runs-on: [spidex-core-prod-runner]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Decode service account file
+        run: |
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATH }}" | base64 -d > ./service-account.json
+
+      - name: Use Node.js 22.11
+        uses: actions/setup-node@v2
+        with:
+          node-version: 22.11
+
+      - name: Copy environment based on branch    
+        run: |
+           cp .env.docker .env
+
+      - name: Setup docker 
+        run: |
+          docker compose up -d --build
