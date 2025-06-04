@@ -1,31 +1,33 @@
-import { EUserPointLogType, UserPointLogEntity } from "@database/entities/user-point-log.entity";
-import { UserPointEntity } from "@database/entities/user-point.entity";
-import { UserPointLogRepository } from "@database/repositories/user-point-log.repository";
-import { UserPointRepository } from "@database/repositories/user-point.repository";
-import { AchievementService } from "@modules/achivement/services/achievement.service";
-import { SwapService } from "@modules/swap/swap.service";
-import { SystemConfigService } from "@modules/system-config/system-config.service";
-import { UserPointHistoryOutputDto, UserPointHistoryParamsDto } from "@modules/user-point/dtos/user-point-history.dto";
-import { LeaderboardStatsOutputDto, LeaderboardUserOutputDto } from "@modules/user-point/dtos/user-point-leaderboard.dto";
-import { UserPointInfoOutput, UserPointOutput } from "@modules/user-point/dtos/user-point-output.dto";
-import { IUserPointChangeEvent } from "@modules/user-point/interfaces/event-message";
-import { USER_POINT_EVENT_PATTERN } from "@modules/user-point/interfaces/event-pattern";
-import { EUserPointType } from "@modules/user-point/user-point.constant";
-import { UserReferralService } from "@modules/user-referral/user-referral.service";
-import { UserService } from "@modules/user/user.service";
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { PageMetaDto, PaginationDto } from "@shared/dtos/page-meta.dto";
-import { PageOptionsDto } from "@shared/dtos/page-option.dto";
-import { PageDto } from "@shared/dtos/page.dto";
-import { BusinessException } from "@shared/exception";
-import { LoggerService } from "@shared/modules/loggers/logger.service";
-import { RabbitMQService } from "@shared/modules/rabbitmq/rabbitmq.service";
-import { RedisLockService } from "@shared/modules/redis/redis-lock.service";
-import { LOCK_KEY_USER_POINT } from "@shared/modules/redis/redis.constant";
-import { plainToInstanceCustom } from "@shared/utils/class-transform";
-import BigNumber from "bignumber.js";
-import { Transactional } from "typeorm-transactional";
-
+import { EUserPointLogType, UserPointLogEntity } from '@database/entities/user-point-log.entity';
+import { UserPointEntity } from '@database/entities/user-point.entity';
+import { UserPointLogRepository } from '@database/repositories/user-point-log.repository';
+import { UserPointRepository } from '@database/repositories/user-point.repository';
+import { AchievementService } from '@modules/achivement/services/achievement.service';
+import { SwapService } from '@modules/swap/swap.service';
+import { SystemConfigService } from '@modules/system-config/system-config.service';
+import { UserPointHistoryOutputDto, UserPointHistoryParamsDto } from '@modules/user-point/dtos/user-point-history.dto';
+import {
+  LeaderboardStatsOutputDto,
+  LeaderboardUserOutputDto,
+} from '@modules/user-point/dtos/user-point-leaderboard.dto';
+import { UserPointInfoOutput, UserPointOutput } from '@modules/user-point/dtos/user-point-output.dto';
+import { IUserPointChangeEvent } from '@modules/user-point/interfaces/event-message';
+import { USER_POINT_EVENT_PATTERN } from '@modules/user-point/interfaces/event-pattern';
+import { EUserPointType } from '@modules/user-point/user-point.constant';
+import { UserReferralService } from '@modules/user-referral/user-referral.service';
+import { UserService } from '@modules/user/user.service';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { PageMetaDto, PaginationDto } from '@shared/dtos/page-meta.dto';
+import { PageOptionsDto } from '@shared/dtos/page-option.dto';
+import { PageDto } from '@shared/dtos/page.dto';
+import { BusinessException } from '@shared/exception';
+import { LoggerService } from '@shared/modules/loggers/logger.service';
+import { RabbitMQService } from '@shared/modules/rabbitmq/rabbitmq.service';
+import { RedisLockService } from '@shared/modules/redis/redis-lock.service';
+import { LOCK_KEY_USER_POINT } from '@shared/modules/redis/redis.constant';
+import { plainToInstanceCustom } from '@shared/utils/class-transform';
+import BigNumber from 'bignumber.js';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class UserPointService {
@@ -50,27 +52,33 @@ export class UserPointService {
     @Inject(forwardRef(() => SwapService))
     private readonly swapService: SwapService,
     private readonly systemConfigService: SystemConfigService,
-  ) {
-
-  }
+  ) {}
 
   async emitUserPointChangeEvent(event: IUserPointChangeEvent) {
-    console.time('emitUserPointChangeEvent')
+    console.time('emitUserPointChangeEvent');
     await this.rabbitMQService.emitToCore(USER_POINT_EVENT_PATTERN.USER_POINT_CHANGE, event);
-    console.timeEnd('emitUserPointChangeEvent')
+    console.timeEnd('emitUserPointChangeEvent');
   }
 
   @Transactional()
   async handleUserPointChangeEvent(data: IUserPointChangeEvent) {
-    const { type, userId, amount } = data;
+    const { type, userId, amount, logType, userQuestId, plusToReferral, referralIdOfReferee, myReferralId } = data;
     switch (type) {
       case EUserPointType.CORE:
       case EUserPointType.QUEST:
-        await this.increasePoint(data);
-        const referral = await this.userReferralService.getReferralByUserId(userId);
-        if (referral) {
+        await this.increasePoint({
+          type,
+          userId,
+          amount,
+          logType,
+          userQuestId,
+          referralIdOfReferee,
+          plusToReferral,
+        });
+        if (myReferralId) {
+          const referral = await this.userReferralService.getById(myReferralId);
           const referralRate = await this.systemConfigService.getReferralPointRate();
-          const bonusPoint = new BigNumber(amount).multipliedBy(referralRate)
+          const bonusPoint = new BigNumber(amount).multipliedBy(referralRate);
 
           await Promise.all([
             this.emitUserPointChangeEvent({
@@ -89,7 +97,7 @@ export class UserPointService {
               userId: userId,
               myReferralId: referral.id,
             }),
-          ])
+          ]);
         }
         break;
       case EUserPointType.REFERRAL:
@@ -99,102 +107,89 @@ export class UserPointService {
   }
 
   @Transactional()
-  async increasePoint(
-    data: IUserPointChangeEvent,
-  ): Promise<{ point: UserPointEntity, pointLog: UserPointLogEntity }> {
+  async increasePoint(data: IUserPointChangeEvent): Promise<{ point: UserPointEntity; pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.increasePoint.name} was called`);
 
-    const { userId, amount, type: pointType, logType, userQuestId, myReferralId: referralId, plusToReferral, referralIdOfReferee } = data;
-    return this.redisLockService.withLock(
-      LOCK_KEY_USER_POINT(userId, pointType),
-      async () => {
-        const point = await this.getOrCreatePoint(userId);
-        const newAmount = new BigNumber(point.amount).plus(amount);
-        point.amount = newAmount.toString();
-        const pointLog = this.userPointLogRepository.create({
-          userId,
-          amount,
-          pointType,
-          logType,
-        });
-        if (userQuestId) {
-          pointLog.userQuestId = userQuestId;
-        }
-        if (referralId) {
-          pointLog.referralId = referralId;
-        }
+    const {
+      userId,
+      amount,
+      type: pointType,
+      logType,
+      userQuestId,
+      myReferralId: referralId,
+      plusToReferral,
+      referralIdOfReferee,
+    } = data;
+    return this.redisLockService.withLock(LOCK_KEY_USER_POINT(userId, pointType), async () => {
+      const point = await this.getOrCreatePoint(userId);
+      const newAmount = new BigNumber(point.amount).plus(amount);
+      point.amount = newAmount.toString();
+      const pointLog = this.userPointLogRepository.create({
+        userId,
+        amount,
+        pointType,
+        logType,
+      });
+      if (userQuestId) {
+        pointLog.userQuestId = userQuestId;
+      }
+      if (referralId) {
+        pointLog.referralId = referralId;
+      }
 
+      await Promise.all([this.userPointRepository.save(point), this.userPointLogRepository.save(pointLog)]);
 
+      if (referralId && plusToReferral) {
+        await this.userReferralService.addPoints(referralId, amount);
+      }
 
-        await Promise.all([
-          this.userPointRepository.save(point),
-          this.userPointLogRepository.save(pointLog),
-        ]);
+      if (referralIdOfReferee && plusToReferral) {
+        await this.userReferralService.addPoints(referralIdOfReferee, amount);
+      }
 
-        if (referralId && plusToReferral) {
-          await this.userReferralService.addPoints(referralId, amount);
-        }
+      await this.achievementService.checkAndUnlockAchievements(userId);
 
-        if (referralIdOfReferee && plusToReferral) {
-          await this.userReferralService.addPoints(referralIdOfReferee, amount);
-        }
-
-        await this.achievementService.checkAndUnlockAchievements(userId);
-
-        return {
-          point,
-          pointLog,
-        };
-      },
-    );
+      return {
+        point,
+        pointLog,
+      };
+    });
   }
 
   @Transactional()
-  async decreasePoint(
-    data: IUserPointChangeEvent,
-  ): Promise<{ point: UserPointEntity, pointLog: UserPointLogEntity }> {
+  async decreasePoint(data: IUserPointChangeEvent): Promise<{ point: UserPointEntity; pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.decreasePoint.name} was called`);
     const { userId, amount, type: pointType, logType, userQuestId, myReferralId: referralId } = data;
 
-    return this.redisLockService.withLock(
-      LOCK_KEY_USER_POINT(userId, pointType),
-      async () => {
-        const point = await this.getOrCreatePoint(userId);
-        const newAmount = new BigNumber(point.amount).minus(amount);
+    return this.redisLockService.withLock(LOCK_KEY_USER_POINT(userId, pointType), async () => {
+      const point = await this.getOrCreatePoint(userId);
+      const newAmount = new BigNumber(point.amount).minus(amount);
 
-        if (newAmount.isLessThan(0)) {
-          throw new BusinessException({
-            message: 'Insufficient reward',
-          });
-        }
-        point.amount = newAmount.toString();
-        const pointLog = this.userPointLogRepository.create({
-          userId,
-          amount: new BigNumber(amount).negated().toString(),
-          pointType,
-          logType,
-          userQuestId,
-          referralId,
+      if (newAmount.isLessThan(0)) {
+        throw new BusinessException({
+          message: 'Insufficient reward',
         });
+      }
+      point.amount = newAmount.toString();
+      const pointLog = this.userPointLogRepository.create({
+        userId,
+        amount: new BigNumber(amount).negated().toString(),
+        pointType,
+        logType,
+        userQuestId,
+        referralId,
+      });
 
-        await Promise.all([
-          this.userPointRepository.save(point),
-          this.userPointLogRepository.save(pointLog),
-        ]);
-        return {
-          point,
-          pointLog,
-        }
-      },
-    );
+      await Promise.all([this.userPointRepository.save(point), this.userPointLogRepository.save(pointLog)]);
+      return {
+        point,
+        pointLog,
+      };
+    });
   }
 
-
-  async getOrCreatePoint(
-    userId: number,
-  ): Promise<UserPointEntity> {
-    let point = await this.userPointRepository
-      .findOneBy({ userId });
+  async getOrCreatePoint(userId: number): Promise<UserPointEntity> {
+    let point = await this.userPointRepository.findOneBy({ userId });
 
     if (!point) {
       point = this.userPointRepository.create({
@@ -208,7 +203,6 @@ export class UserPointService {
     return point;
   }
 
-
   async getMyInfo(userId: number): Promise<UserPointInfoOutput> {
     const [point, referralInfo, achievements, nextAchievement, tradingVolume] = await Promise.all([
       this.getOrCreatePoint(userId),
@@ -217,8 +211,6 @@ export class UserPointService {
       this.achievementService.getNextAchievement(userId),
       this.swapService.getTradingVolume(userId),
     ]);
-
-
 
     return {
       point: plainToInstanceCustom(UserPointOutput, point),
@@ -233,19 +225,19 @@ export class UserPointService {
     const { page, limit } = query;
     const { pointLogs, total } = await this.userPointLogRepository.getMyHistory(userId, page, limit);
     const result: UserPointHistoryOutputDto[] = pointLogs.map(e => {
-      let questName
+      let questName;
       switch (e.pointType) {
         case EUserPointType.QUEST:
-          questName = e.userQuest?.quest?.name
-          break
+          questName = e.userQuest?.quest?.name;
+          break;
         case EUserPointType.REFERRAL:
-          questName = "From referral"
-          break
+          questName = 'From referral';
+          break;
         case EUserPointType.CORE:
-          questName = "From trading"
-          break
+          questName = 'From trading';
+          break;
         default:
-          questName = "Unknown"
+          questName = 'Unknown';
       }
 
       return {
@@ -253,8 +245,8 @@ export class UserPointService {
         amount: e.amount,
         createdAt: e.createdAt,
         questName: questName,
-      }
-    })
+      };
+    });
 
     return new PageDto(result, new PageMetaDto(total, new PageOptionsDto(page, limit)));
   }
@@ -280,7 +272,7 @@ export class UserPointService {
         fullName: user.fullName,
       },
       totalPoint: result.amount,
-    }
+    };
   }
 
   async getLeadboardStats(): Promise<LeaderboardStatsOutputDto> {
@@ -288,7 +280,17 @@ export class UserPointService {
     return result;
   }
 
-  async getPointLogsByReferralIds(userId: number, referralIds: number[], page: number, limit: number): Promise<[UserPointLogEntity[], number]> {
-    return this.userPointLogRepository.findAndCount({ where: { userId, pointType: EUserPointType.REFERRAL }, relations: ['referral', 'referral.user', 'referral.referredByUser'], skip: (page - 1) * limit, take: limit });
+  async getPointLogsByReferralIds(
+    userId: number,
+    referralIds: number[],
+    page: number,
+    limit: number,
+  ): Promise<[UserPointLogEntity[], number]> {
+    return this.userPointLogRepository.findAndCount({
+      where: { userId, pointType: EUserPointType.REFERRAL },
+      relations: ['referral', 'referral.user', 'referral.referredByUser'],
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 }
