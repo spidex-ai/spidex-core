@@ -1,39 +1,31 @@
-import { EQuestCategory, EQuestType, TQuestRequirement } from "@database/entities/quest.entity";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { PaginationDto } from "@shared/dtos/page-meta.dto";
-import { Expose, Transform } from "class-transformer";
-import { IsDateString, IsEnum, IsOptional } from "class-validator";
-
-
-
-export enum EUserQuestStatus {
-  COMPLETED = 1,
-  NOT_COMPLETED = 0,
-}
+import { EQuestCategory, EQuestType, TQuestRequirement } from '@database/entities/quest.entity';
+import { EUserQuestStatus } from '@database/entities/user-quest.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationDto } from '@shared/dtos/page-meta.dto';
+import { Expose, Transform } from 'class-transformer';
+import { IsDateString, IsEnum, IsOptional } from 'class-validator';
 
 export class GetCheckInListFilterDto {
   @Expose()
   @ApiProperty({
     type: Date,
     example: new Date().toISOString(),
-    default: new Date()
+    default: new Date(),
   })
   @IsDateString()
-  startDate: Date
+  startDate: Date;
 
   @Expose()
   @ApiProperty({
     type: Date,
     example: new Date().toISOString(),
-    default: new Date()
+    default: new Date(),
   })
   @IsDateString()
-  endDate: Date
+  endDate: Date;
 }
 
-export class UserQuestFilterDto extends PaginationDto {
-
-}
+export class UserQuestFilterDto extends PaginationDto {}
 
 export class UserQuestProgress {
   @Expose()
@@ -71,31 +63,30 @@ export class UserQuestInfoOutput {
 
   @Expose()
   @ApiProperty()
-  requirements: TQuestRequirement
+  requirements: TQuestRequirement;
 
   @Expose()
   @ApiProperty()
-  point: number
+  point: number;
 
   @Expose()
   @ApiProperty()
-  progress: UserQuestProgress
+  progress: UserQuestProgress;
 
   @Expose()
   @ApiProperty()
-  status: EUserQuestStatus
+  status: EUserQuestStatus;
 }
 
 export class UserQuestOutput {
   @Expose()
   @ApiProperty()
-  quests: UserQuestInfoOutput[]
+  quests: UserQuestInfoOutput[];
 
   @Expose()
   @ApiProperty()
-  resetAt: Date
+  resetAt: Date;
 }
-
 
 export enum EAgentType {
   TRADING = 1,
@@ -109,10 +100,10 @@ export class TriggerAgentQuestQueryDto {
   @Expose()
   @ApiPropertyOptional({
     enum: EAgentType,
-    example: EAgentType.TRADING
+    example: EAgentType.TRADING,
   })
   @IsOptional()
   @IsEnum(EAgentType)
-  @Transform(({ value }) => value ? +value : undefined)
-  agentType?: EAgentType
+  @Transform(({ value }) => (value ? +value : undefined))
+  agentType?: EAgentType;
 }
