@@ -32,7 +32,7 @@
     "category": 0,
     "type": 3,
     "requirements": {
-      "url": "https://x.com/your-handle"
+      "url": "https://twitter.com/intent/user?screen_name=Spidex_ag"
     },
     "points": 10,
     "status": 1,
@@ -44,7 +44,7 @@
     "category": 0,
     "type": 0,
     "requirements": {
-      "url": "https://x.com/Spidex_ag/status/1905328929457799445"
+      "url": "https://twitter.com/intent/retweet?tweet_id=1905328929457799445"
     },
     "points": 10,
     "status": 1,
@@ -56,7 +56,7 @@
     "category": 0,
     "type": 1,
     "requirements": {
-      "url": "https://discord.gg/your-community"
+      "url": "https://discord.com/invite/xxxrzcwNfB"
     },
     "points": 10,
     "status": 1,
@@ -68,7 +68,7 @@
     "category": 0,
     "type": 2,
     "requirements": {
-      "url": "https://t.me/your-community"
+      "url": "https://t.me/SpidexAI"
     },
     "points": 10,
     "status": 1,
