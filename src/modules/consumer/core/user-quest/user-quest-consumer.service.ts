@@ -43,8 +43,8 @@ export class UserQuestConsumerService {
   }
 
   async handleSocialQuestVerifyEvent(_: RmqContext, data: ISocialQuestVerifyEvent) {
-    // Simulate 1-2 minute verification delay using setTimeout
-    const delayMs = Math.floor(Math.random() * 60000) + 60000; // Random delay between 1-2 minutes
+    // Simulate 10-20 seconds verification delay
+    const delayMs = Math.floor(Math.random() * 10000) + 10000; // Random delay between 10-20 seconds
 
     this.logger.log(
       `Social quest verification started for user ${data.userId}, quest ${data.questId}. Will complete in ${delayMs}ms`,

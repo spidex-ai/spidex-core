@@ -39,8 +39,13 @@ export class DiscordVerificationService {
         return;
       }
 
+      this.logger.log('Logging in to Discord...');
+
       await this.client.login(token);
+
+      this.logger.log('Discord client initialized');
     } catch (error) {
+      console.error(error);
       this.logger.error('Failed to initialize Discord client:', error);
     }
   }
