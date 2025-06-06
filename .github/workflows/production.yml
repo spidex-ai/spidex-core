@@ -217,10 +217,3 @@ jobs:
 
           echo "🐳 Docker system info:"
           docker system df
-
-      - name: 🧹 Cleanup on failure
-        if: failure()
-        run: |
-          echo "❌ Deployment failed - showing logs and cleaning up..."
-          docker compose logs --tail=100
-          docker compose down || true
