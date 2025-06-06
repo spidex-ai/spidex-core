@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Decode service account file
         run: |
             echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATH }}" | base64 -d > ./service-account.json
@@ -23,6 +24,11 @@ jobs:
       - name: Copy environment based on branch    
         run: |
            cp .env.docker .env
+
+      - name: re-run docker service
+        run: |
+          docker compose down -v 
+          docker compose up -d
 
       - name: Setup docker 
         run: |
