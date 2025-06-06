@@ -34,7 +34,9 @@
     "core:consumer": "ts-node -r tsconfig-paths/register src/core-consumer.ts",
     "local": "ts-node -r tsconfig-paths/register src/local.ts",
     "upload-secrets": "node scripts/upload-env-to-github-secrets.js",
-    "upload-secrets:dry-run": "node scripts/upload-env-to-github-secrets.js --dry-run"
+    "upload-secrets:dry-run": "node scripts/upload-env-to-github-secrets.js --dry-run",
+    "upload-secrets:docker": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker",
+    "upload-secrets:docker:dry-run": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker --dry-run"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",

@@ -142,7 +142,7 @@ let errorCount = 0;
 // Upload each environment variable as a secret
 for (const [key, value] of Object.entries(envVars)) {
   try {
-    console.log(`📤 Uploading ${key}...`);
+    console.log(`📤 Uploading ${key}: ${value}`);
 
     // Use GitHub CLI to set the secret
     execSync(`gh secret set ${key} --body "${value.replace(/"/g, '\\"')}"`, {
