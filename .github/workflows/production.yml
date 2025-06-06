@@ -44,6 +44,7 @@ jobs:
       - name: 🌍 Setup environment file
         run: |
           # Create production environment file from secrets
+          rm -f .env
           echo "NODE_ENV=production" > .env
           echo "APP_NAME=${{ secrets.APP_NAME || 'Spidex Core' }}" >> .env
           echo "APP_DESCRIPTION=${{ secrets.APP_DESCRIPTION || 'Spidex Core API' }}" >> .env
