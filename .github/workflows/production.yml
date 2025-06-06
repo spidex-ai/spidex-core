@@ -14,7 +14,7 @@ jobs:
 
       - name: Decode service account file
         run: |
-            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATH }}" | base64 -d > ./service-account.json
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > ./service-account.json
 
       - name: Use Node.js 22.11
         uses: actions/setup-node@v2
