@@ -1,6 +1,7 @@
 name: Deploy production
 run-name: ${{ github.actor }} is deploying production branch🚀
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'production'
