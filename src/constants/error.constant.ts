@@ -1,5 +1,6 @@
 export enum EError {
   // Bad request
+  BAD_REQUEST = 40000,
   // Bad request User: 401xx
   USER_DEACTIVATED = 40100,
   USER_EXIST = 40101,

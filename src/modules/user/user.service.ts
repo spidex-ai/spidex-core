@@ -18,7 +18,7 @@ import { plainToInstanceCustom } from '@shared/utils/class-transform';
 import { getRandomUserName, isNullOrUndefined } from '@shared/utils/util';
 import { Not } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
-import { UpdateProfileDto } from './dtos/user-request.dto';
+import { CheckExistingUserDto, UpdateProfileDto } from './dtos/user-request.dto';
 
 @Injectable()
 export class UserService {
@@ -449,5 +449,41 @@ export class UserService {
 
   private generateReferralCode(): string {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  async checkExistingUser(checkExistingUserDto: CheckExistingUserDto) {
+    const { walletAddress, xId } = checkExistingUserDto;
+
+    if (!walletAddress && !xId) {
+      throw new BadRequestException({
+        validatorErrors: EError.BAD_REQUEST,
+        message: `Wallet address or X id is required`,
+      });
+    }
+
+    console.log({
+      walletAddress,
+      xId,
+    });
+    const result = {
+      walletAddress: false,
+      xId: false,
+    };
+
+    if (walletAddress) {
+      const user = await this.userRepository.findOne({ where: { walletAddress } });
+
+      console.log('walletAddress', user);
+      result.walletAddress = user ? true : false;
+    }
+
+    if (xId) {
+      const user = await this.userRepository.findOne({ where: { xId } });
+      console.log('xId', user);
+
+      result.xId = user ? true : false;
+    }
+
+    return result;
   }
 }

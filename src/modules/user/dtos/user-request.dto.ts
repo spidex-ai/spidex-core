@@ -2,8 +2,8 @@ import { EFollowUser, EUserStatus } from '@constants/user.constant';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EnumFieldOptional } from '@shared/decorators/field.decorator';
 import { PageOptionsWithSearchDto } from '@shared/dtos/page-option-with-search.dto';
-import { Expose, Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEthereumAddress, IsNumber, IsOptional, isString, IsString, Matches } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEthereumAddress, IsNumber, IsOptional, isString, IsString } from 'class-validator';
 import { toChecksumAddress } from 'web3-utils';
 
 export class UpdateProfileDto {
@@ -66,7 +66,7 @@ export class GetFollowingDto extends PageOptionsWithSearchDto {
   viewerId: number;
 }
 
-export class GetFollowerDto extends GetFollowingDto { }
+export class GetFollowerDto extends GetFollowingDto {}
 
 export class GetMyRepliesDto extends PageOptionsWithSearchDto {
   @ApiPropertyOptional()
@@ -188,4 +188,18 @@ export class UpdateRainTokenAddressDto {
     return isString(value) ? toChecksumAddress(value) : value;
   })
   tokenAddress: string;
+}
+
+export class CheckExistingUserDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => String)
+  @IsString()
+  walletAddress: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => String)
+  @IsString()
+  xId: string;
 }

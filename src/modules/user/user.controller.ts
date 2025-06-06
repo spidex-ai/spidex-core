@@ -1,22 +1,20 @@
-import { Body, Controller, Get, HttpStatus, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
 import { AuthUserGuard, GuardPublic } from '@shared/decorators/auth.decorator';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
-import {
-  UpdateProfileDto
-} from './dtos/user-request.dto';
+import { CheckExistingUserDto, UpdateProfileDto } from './dtos/user-request.dto';
 import {
   GetLoginManagementResponseDto,
   GetProfileResponseDto,
-  UpdateProfileResponseDto
+  UpdateProfileResponseDto,
 } from './dtos/user-response.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @Put('profile')
   @AuthUserGuard()
@@ -63,5 +61,16 @@ export class UserController {
   })
   getProfile(@Param('walletAddress') walletAddress: string) {
     return this.userService.getProfile(walletAddress);
+  }
+
+  @GuardPublic()
+  @Get('existing')
+  @ApiResponse({
+    type: String,
+    status: HttpStatus.OK,
+    description: 'Successful',
+  })
+  checkExistingUser(@Query() checkExistingUserDto: CheckExistingUserDto) {
+    return this.userService.checkExistingUser(checkExistingUserDto);
   }
 }
