@@ -6,6 +6,5 @@ export interface IQuestRelatedToTradeEvent {
 export interface ISocialQuestVerifyEvent {
   userId: number;
   questId: number;
-  userQuestId: number;
   triggeredAt: Date;
 }

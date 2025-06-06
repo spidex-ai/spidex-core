@@ -9,15 +9,19 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestException, Unauthorized } from '@shared/exception/exception.resolver';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import {
+  ConnectDiscordRequestDto,
   ConnectGoogleRequestDto,
+  ConnectTelegramRequestDto,
   ConnectWalletRequestDto,
   ConnectXRequestDto,
-  RefreshTokenRequestDto
+  RefreshTokenRequestDto,
 } from './dtos/auth-request.dto';
 
 import verifyDataSignature from '@cardano-foundation/cardano-verify-datasignature';
 import { AuthResponseOutputDto } from '@modules/auth/dtos/auth-response.dto';
+import { DiscordOAuthService } from 'external/discord/discord-oauth.service';
 import { FirebaseAuthervice } from 'external/firebase/firebase-auth.service';
+import { TelegramOAuthService } from 'external/telegram/telegram-oauth.service';
 import { XApiHttpService } from 'external/x/x-api.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -29,10 +33,21 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly xClient: XApiHttpService,
     private readonly firebaseAuthService: FirebaseAuthervice,
-  ) { }
+    private readonly discordOAuthService: DiscordOAuthService,
+    private readonly telegramOAuthService: TelegramOAuthService,
+  ) {}
 
   getConnectWalletSignMessage() {
     return this.configService.get<string>(EEnvKey.WALLET_SIGN_MESSAGE);
+  }
+
+  getDiscordAuthUrl(redirectUri: string, state?: string) {
+    const authUrl = this.discordOAuthService.generateAuthUrl(redirectUri, state);
+    return { authUrl };
+  }
+
+  getTelegramWidgetConfig() {
+    return this.telegramOAuthService.getLoginWidgetConfig();
   }
 
   async me(userId: number) {
@@ -120,7 +135,6 @@ export class AuthService {
     }
   };
 
-
   async connectX(body: ConnectXRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
     const { code, redirectUri, referralCode } = body;
 
@@ -194,7 +208,6 @@ export class AuthService {
       });
     }
 
-
     const user = await this.usersService.connectGoogle({ email, referralCode }, userId);
 
     const payload = { userId: user.id };
@@ -207,4 +220,57 @@ export class AuthService {
     };
   }
 
+  async connectDiscord(body: ConnectDiscordRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
+    const { code, redirectUri, referralCode } = body;
+
+    // Verify Discord OAuth2 and get user information
+    const discordVerification = await this.discordOAuthService.verifyDiscordUser(code, redirectUri);
+
+    const { user: discordUser } = discordVerification;
+
+    // Connect Discord account to user
+    const user = await this.usersService.connectDiscord(
+      {
+        id: discordUser.id,
+        username: discordUser.username,
+        referralCode,
+      },
+      userId,
+    );
+
+    const payload = { userId: user.id };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+    };
+  }
+
+  async connectTelegram(body: ConnectTelegramRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
+    // Verify Telegram Login Widget data
+    const telegramUser = this.telegramOAuthService.verifyTelegramAuth(body);
+
+    // Connect Telegram account to user
+    const user = await this.usersService.connectTelegram(
+      {
+        id: telegramUser.id.toString(),
+        username:
+          telegramUser.username ||
+          `${telegramUser.firstName}${telegramUser.lastName ? '_' + telegramUser.lastName : ''}`,
+        referralCode: body.referralCode,
+      },
+      userId,
+    );
+
+    const payload = { userId: user.id };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+    };
+  }
 }

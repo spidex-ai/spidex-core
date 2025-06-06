@@ -3,9 +3,11 @@ import { EUserStatus } from '@constants/user.constant';
 import { UserEntity } from '@database/entities/user.entity';
 import { UserRepository } from '@database/repositories/user.repository';
 import {
+  ConnectDiscordBodyDto,
   ConnectGoogleBodyDto,
+  ConnectTelegramBodyDto,
   ConnectWalletRequestDto,
-  ConnectXBodyDto
+  ConnectXBodyDto,
 } from '@modules/auth/dtos/auth-request.dto';
 import { UserReferralService } from '@modules/user-referral/user-referral.service';
 import { GetLoginManagementResponseDto, UserProfileResponseDto } from '@modules/user/dtos/user-response.dto';
@@ -16,9 +18,7 @@ import { plainToInstanceCustom } from '@shared/utils/class-transform';
 import { getRandomUserName, isNullOrUndefined } from '@shared/utils/util';
 import { Not } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
-import {
-  UpdateProfileDto
-} from './dtos/user-request.dto';
+import { UpdateProfileDto } from './dtos/user-request.dto';
 
 @Injectable()
 export class UserService {
@@ -27,7 +27,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => UserReferralService))
     private readonly userReferralService: UserReferralService,
-  ) { }
+  ) {}
 
   async getUserById(id: number, throwError = true) {
     const user = await this.userRepository.findOne({
@@ -135,7 +135,6 @@ export class UserService {
       user.xUsername = username;
       await this.userRepository.save(user);
       return user;
-
     } else {
       const user = await this.userRepository.findOne({
         where: {
@@ -231,6 +230,134 @@ export class UserService {
     }
   }
 
+  async connectDiscord(connectDiscordInput: ConnectDiscordBodyDto, userId?: number) {
+    const { id, username } = connectDiscordInput;
+    if (userId) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new BadRequestException({
+          validatorErrors: EError.USER_NOT_EXIST,
+          message: `User is not found`,
+        });
+      }
+
+      if (user.discordId) {
+        throw new BadRequestException({
+          validatorErrors: EError.ALREADY_CONNECTED_DISCORD,
+          message: `User is already connected to Discord`,
+        });
+      }
+
+      const existingUser = await this.userRepository.findOne({ where: { discordId: id } });
+      if (existingUser) {
+        throw new BadRequestException({
+          validatorErrors: EError.DISCORD_ID_USED,
+          message: `Discord ID is already used`,
+        });
+      }
+
+      user.discordId = id;
+      user.discordUsername = username;
+      await this.userRepository.save(user);
+      return user;
+    } else {
+      const user = await this.userRepository.findOne({
+        where: {
+          discordId: id,
+        },
+      });
+
+      if (user) {
+        if (user.status != EUserStatus.ACTIVE) {
+          throw new BadRequestException({
+            validatorErrors: EError.USER_DEACTIVATED,
+            message: `User is deactivated`,
+          });
+        }
+
+        return user;
+      }
+
+      const newUser = await this.userRepository.create({
+        status: EUserStatus.ACTIVE,
+        username: getRandomUserName(),
+        discordId: id,
+        discordUsername: username,
+        referralCode: this.generateReferralCode(),
+      });
+
+      await this.createUser(newUser, {
+        referralCode: connectDiscordInput.referralCode,
+      });
+
+      return newUser;
+    }
+  }
+
+  async connectTelegram(connectTelegramInput: ConnectTelegramBodyDto, userId?: number) {
+    const { id, username } = connectTelegramInput;
+    if (userId) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new BadRequestException({
+          validatorErrors: EError.USER_NOT_EXIST,
+          message: `User is not found`,
+        });
+      }
+
+      if (user.telegramId) {
+        throw new BadRequestException({
+          validatorErrors: EError.ALREADY_CONNECTED_TELEGRAM,
+          message: `User is already connected to Telegram`,
+        });
+      }
+
+      const existingUser = await this.userRepository.findOne({ where: { telegramId: id } });
+      if (existingUser) {
+        throw new BadRequestException({
+          validatorErrors: EError.TELEGRAM_ID_USED,
+          message: `Telegram ID is already used`,
+        });
+      }
+
+      user.telegramId = id;
+      user.telegramUsername = username;
+      await this.userRepository.save(user);
+      return user;
+    } else {
+      const user = await this.userRepository.findOne({
+        where: {
+          telegramId: id,
+        },
+      });
+
+      if (user) {
+        if (user.status != EUserStatus.ACTIVE) {
+          throw new BadRequestException({
+            validatorErrors: EError.USER_DEACTIVATED,
+            message: `User is deactivated`,
+          });
+        }
+
+        return user;
+      }
+
+      const newUser = await this.userRepository.create({
+        status: EUserStatus.ACTIVE,
+        username: getRandomUserName(),
+        telegramId: id,
+        telegramUsername: username,
+        referralCode: this.generateReferralCode(),
+      });
+
+      await this.createUser(newUser, {
+        referralCode: connectTelegramInput.referralCode,
+      });
+
+      return newUser;
+    }
+  }
+
   @Transactional()
   async createUser(user: UserEntity, { referralCode }: { referralCode?: string }) {
     const savedUser = await this.userRepository.save(user);
@@ -242,7 +369,6 @@ export class UserService {
           message: `Referral code is not found`,
         });
       }
-
 
       await this.userReferralService.create({
         userId: savedUser.id,
@@ -260,12 +386,18 @@ export class UserService {
     if (updateProfileDto.username) {
       const usernameRegex = /^[a-zA-Z0-9]{6,20}$/;
       if (!usernameRegex.test(updateProfileDto.username)) {
-        throw new BadRequestException({ validatorErrors: EError.INVALID_USERNAME, message: `Username ${updateProfileDto.username} is invalid` });
+        throw new BadRequestException({
+          validatorErrors: EError.INVALID_USERNAME,
+          message: `Username ${updateProfileDto.username} is invalid`,
+        });
       }
 
       const user = await this.userRepository.findOneBy({ username: updateProfileDto.username, id: Not(userId) });
       if (user) {
-        throw new BadRequestException({ validatorErrors: EError.USERNAME_ALREADY_EXISTS, message: `Username ${updateProfileDto.username} already exists` });
+        throw new BadRequestException({
+          validatorErrors: EError.USERNAME_ALREADY_EXISTS,
+          message: `Username ${updateProfileDto.username} already exists`,
+        });
       }
     }
 
@@ -273,7 +405,10 @@ export class UserService {
     if (updateProfileDto.avatar) {
       const avatarRegex = /^https?:\/\/[^\s]+$/;
       if (!avatarRegex.test(updateProfileDto.avatar)) {
-        throw new BadRequestException({ validatorErrors: EError.INVALID_AVATAR, message: `Avatar ${updateProfileDto.avatar} is invalid` });
+        throw new BadRequestException({
+          validatorErrors: EError.INVALID_AVATAR,
+          message: `Avatar ${updateProfileDto.avatar} is invalid`,
+        });
       }
     }
 
