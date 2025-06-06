@@ -27,6 +27,20 @@ export class UserEntity extends BaseExcludeDeletedAtEntity {
   @Column({ name: 'x_username', nullable: true, default: null })
   xUsername: string;
 
+  @Index({ unique: true, where: 'discord_id IS NOT NULL' })
+  @Column({ name: 'discord_id', nullable: true, default: null })
+  discordId: string;
+
+  @Column({ name: 'discord_username', nullable: true, default: null })
+  discordUsername: string;
+
+  @Index({ unique: true, where: 'telegram_id IS NOT NULL' })
+  @Column({ name: 'telegram_id', nullable: true, default: null })
+  telegramId: string;
+
+  @Column({ name: 'telegram_username', nullable: true, default: null })
+  telegramUsername: string;
+
   @Index({ unique: true, where: 'email IS NOT NULL' })
   @Column({ name: 'email', nullable: true, default: null })
   email: string;

@@ -63,8 +63,7 @@ export class UserPointService {
 
   @Transactional()
   async handleUserPointChangeEvent(data: IUserPointChangeEvent) {
-    console.log('handleUserPointChangeEvent', { data });
-    const { type, userId, amount, logType, userQuestId, plusToReferral, referralIdOfReferee, myReferralId } = data;
+    const { type, userId, amount, logType, userQuestId, myReferralId } = data;
     switch (type) {
       case EUserPointType.CORE:
       case EUserPointType.QUEST:
@@ -74,8 +73,6 @@ export class UserPointService {
           amount,
           logType,
           userQuestId,
-          referralIdOfReferee,
-          plusToReferral,
         });
         if (myReferralId) {
           const referral = await this.userReferralService.getById(myReferralId);

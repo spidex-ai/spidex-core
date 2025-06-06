@@ -7,9 +7,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '@shared/strategy/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { DiscordModule } from 'external/discord/discord.module';
 import { FirebaseModule } from 'external/firebase/firebase.module';
+import { TelegramModule } from 'external/telegram/telegram.module';
 import { XApiModule } from 'external/x/x-api.module';
-
 
 @Module({
   imports: [
@@ -26,10 +27,12 @@ import { XApiModule } from 'external/x/x-api.module';
       inject: [ConfigService],
     }),
     UserModule,
+    DiscordModule,
+    TelegramModule,
     FirebaseModule,
     XApiModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
 })
-export class AuthModule { }
+export class AuthModule {}

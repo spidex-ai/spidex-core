@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsJWT, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsJWT, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class ConnectWalletRequestDto {
   @IsNotEmpty()
@@ -57,8 +57,6 @@ export class SignMessageRequestDto {
   privateKey: string;
 }
 
-
-
 export class ConnectXRequestDto {
   @ApiProperty()
   @IsNotEmpty()
@@ -101,12 +99,117 @@ export class ConnectGoogleRequestDto {
   referralCode?: string;
 }
 
-
 export class ConnectGoogleBodyDto {
   @ApiProperty({ description: 'Google email', example: 'google-email' })
   @Expose()
   @IsNotEmpty()
   email: string;
+
+  @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
+  @Expose()
+  @IsOptional()
+  referralCode?: string;
+}
+
+export class ConnectDiscordRequestDto {
+  @ApiProperty({ description: 'Discord OAuth2 authorization code', example: 'discord_oauth2_code' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  code: string;
+
+  @ApiProperty({ description: 'Discord OAuth2 redirect URI', example: 'http://localhost:3000/auth/discord/callback' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  redirectUri: string;
+
+  @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
+  @Expose()
+  @IsOptional()
+  referralCode?: string;
+}
+
+export class ConnectDiscordBodyDto {
+  @ApiProperty({ description: 'Discord user ID', example: '123456789012345678' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @ApiProperty({ description: 'Discord username', example: 'username' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
+  @Expose()
+  @IsOptional()
+  referralCode?: string;
+}
+
+export class ConnectTelegramRequestDto {
+  @ApiProperty({ description: 'Telegram user ID', example: 123456789 })
+  @Expose()
+  @IsNotEmpty()
+  @IsNumber()
+  id: number;
+
+  @ApiProperty({ description: 'Telegram first name', example: 'John' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  first_name: string;
+
+  @ApiPropertyOptional({ description: 'Telegram last name', example: 'Doe' })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  last_name?: string;
+
+  @ApiPropertyOptional({ description: 'Telegram username', example: 'johndoe' })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @ApiPropertyOptional({ description: 'Telegram photo URL', example: 'https://...' })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  photo_url?: string;
+
+  @ApiProperty({ description: 'Telegram auth date (Unix timestamp)', example: 1640995200 })
+  @Expose()
+  @IsNotEmpty()
+  @IsNumber()
+  auth_date: number;
+
+  @ApiProperty({ description: 'Telegram auth hash', example: 'abc123...' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  hash: string;
+
+  @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
+  @Expose()
+  @IsOptional()
+  referralCode?: string;
+}
+
+export class ConnectTelegramBodyDto {
+  @ApiProperty({ description: 'Telegram user ID', example: '123456789' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @ApiProperty({ description: 'Telegram username', example: 'username' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
 
   @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
   @Expose()

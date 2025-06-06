@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
@@ -6,21 +6,20 @@ import { AuthUserGuard, GuardPublic, GuardPublicOrAuth } from '@shared/decorator
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import { AuthService } from './auth.service';
 import {
+  ConnectDiscordRequestDto,
   ConnectGoogleRequestDto,
+  ConnectTelegramRequestDto,
   ConnectWalletRequestDto,
   ConnectXRequestDto,
-  RefreshTokenRequestDto
+  RefreshTokenRequestDto,
 } from './dtos/auth-request.dto';
-import {
-  AuthResponseOutputDto,
-  RefreshTokenResponseDto
-} from './dtos/auth-response.dto';
+import { AuthResponseOutputDto, RefreshTokenResponseDto } from './dtos/auth-response.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
 @ApiBearerAuth()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Get('connect-wallet/sign-message')
   @GuardPublicOrAuth()
@@ -61,7 +60,6 @@ export class AuthController {
     return this.authService.refreshToken(refreshTokenInput);
   }
 
-
   @Post('/connect/x')
   @ApiOperation({
     summary: 'Connect X',
@@ -76,9 +74,52 @@ export class AuthController {
     summary: 'Connect Google',
   })
   @GuardPublicOrAuth()
-  async connectGoogle(@AuthUser() user: IJwtPayload, @Body() body: ConnectGoogleRequestDto): Promise<AuthResponseOutputDto> {
+  async connectGoogle(
+    @AuthUser() user: IJwtPayload,
+    @Body() body: ConnectGoogleRequestDto,
+  ): Promise<AuthResponseOutputDto> {
     return await this.authService.connectGoogle(body, user?.userId);
   }
 
-  
+  @Get('discord/auth-url')
+  @ApiOperation({
+    summary: 'Get Discord OAuth2 authorization URL',
+  })
+  @GuardPublic()
+  getDiscordAuthUrl(@Query('redirectUri') redirectUri: string, @Query('state') state?: string) {
+    return this.authService.getDiscordAuthUrl(redirectUri, state);
+  }
+
+  @Post('connect/discord')
+  @ApiOperation({
+    summary: 'Connect Discord',
+  })
+  @GuardPublicOrAuth()
+  async connectDiscord(
+    @AuthUser() user: IJwtPayload,
+    @Body() body: ConnectDiscordRequestDto,
+  ): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectDiscord(body, user?.userId);
+  }
+
+  @Get('telegram/widget-config')
+  @ApiOperation({
+    summary: 'Get Telegram Login Widget configuration',
+  })
+  @GuardPublic()
+  getTelegramWidgetConfig() {
+    return this.authService.getTelegramWidgetConfig();
+  }
+
+  @Post('connect/telegram')
+  @ApiOperation({
+    summary: 'Connect Telegram',
+  })
+  @GuardPublicOrAuth()
+  async connectTelegram(
+    @AuthUser() user: IJwtPayload,
+    @Body() body: ConnectTelegramRequestDto,
+  ): Promise<AuthResponseOutputDto> {
+    return await this.authService.connectTelegram(body, user?.userId);
+  }
 }
