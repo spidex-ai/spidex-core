@@ -189,7 +189,7 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "🔍 Health check attempt $attempt/$max_attempts..."
 
-            if curl -f -s "http://localhost:${{ secrets.APP_PORT || '8000' }}/api/health" > /dev/null; then
+            if curl -f -s "http://localhost:${{ secrets.APP_PORT || '8000' }}/api/heath-check" > /dev/null; then
               echo "✅ API is healthy!"
               break
             fi
