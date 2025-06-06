@@ -1,9 +1,13 @@
 export interface IQuestRelatedToReferralOptions {
-    referralId: number;
+  referralId: number;
 }
 
 export interface IQuestRelatedToTradeOptions {
-    txHash: string;
+  txHash: string;
 }
 
-export type TQuestOptions = IQuestRelatedToTradeOptions | IQuestRelatedToReferralOptions;
+export interface IQuestRelatedToSocialOptions {
+  userQuestId: number;
+}
+
+export type TQuestOptions = IQuestRelatedToTradeOptions | IQuestRelatedToReferralOptions | IQuestRelatedToSocialOptions;
