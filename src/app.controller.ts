@@ -7,7 +7,7 @@ import { Request } from 'express';
 @Controller('')
 @ApiTags('App')
 export class AppController {
-  constructor(private readonly appService: AppService) { }
+  constructor(private readonly appService: AppService) {}
 
   @Get('heath-check')
   @ApiOperation({ summary: 'Check health' })
@@ -22,5 +22,11 @@ export class AppController {
   async chatWithAgent(@Req() request: Request) {
     const subdomain = request.headers.host.split('.')[0];
     return `Welcome to the app: ${subdomain}`;
+  }
+
+  @Get('version')
+  @GuardPublic()
+  async version() {
+    return '1.0.0';
   }
 }
