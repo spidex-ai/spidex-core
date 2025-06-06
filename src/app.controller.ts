@@ -9,7 +9,7 @@ import { Request } from 'express';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('heath-check')
+  @Get('health-check')
   @ApiOperation({ summary: 'Check health' })
   @ApiResponse({ status: 200, description: 'Health check' })
   @GuardPublic()

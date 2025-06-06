@@ -74,7 +74,7 @@ jobs:
           DB_LOG="${{ secrets.DB_LOG || 'false' }}"
           DB_RETRY_ATTEMPT="${{ secrets.DB_RETRY_ATTEMPT || '3' }}"
           DB_RETRY_DELAY="${{ secrets.DB_RETRY_DELAY || '5000' }}"
-          DB_EXTRA="${{ secrets.DB_EXTRA || '{"connectionLimit":20}' }}"
+          DB_EXTRA='${{ secrets.DB_EXTRA || "{\"connectionLimit\":20}" }}'
           DB_MAX_CONNECTIONS="${{ secrets.DB_MAX_CONNECTIONS || '100' }}"
           DB_SSL_ENABLED="${{ secrets.DB_SSL_ENABLED || 'false' }}"
           DB_REJECT_UNAUTHORIZED="${{ secrets.DB_REJECT_UNAUTHORIZED || 'false' }}"
@@ -189,7 +189,7 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "🔍 Health check attempt $attempt/$max_attempts..."
 
-            if curl -f -s "http://localhost:${{ secrets.APP_PORT || '8000' }}/api/heath-check" > /dev/null; then
+            if curl -f -s "http://localhost:${{ secrets.APP_PORT || '8000' }}/api/health-check" > /dev/null; then
               echo "✅ API is healthy!"
               break
             fi
@@ -217,3 +217,9 @@ jobs:
 
           echo "🐳 Docker system info:"
           docker system df
+
+      - name: 🧹 Cleanup on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed - showing logs"
+          docker compose logs --tail=100
