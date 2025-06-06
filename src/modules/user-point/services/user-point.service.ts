@@ -27,6 +27,7 @@ import { RedisLockService } from '@shared/modules/redis/redis-lock.service';
 import { LOCK_KEY_USER_POINT } from '@shared/modules/redis/redis.constant';
 import { plainToInstanceCustom } from '@shared/utils/class-transform';
 import BigNumber from 'bignumber.js';
+import { IsNull, Not } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
@@ -62,6 +63,7 @@ export class UserPointService {
 
   @Transactional()
   async handleUserPointChangeEvent(data: IUserPointChangeEvent) {
+    console.log('handleUserPointChangeEvent', { data });
     const { type, userId, amount, logType, userQuestId, plusToReferral, referralIdOfReferee, myReferralId } = data;
     switch (type) {
       case EUserPointType.CORE:
@@ -109,7 +111,6 @@ export class UserPointService {
   @Transactional()
   async increasePoint(data: IUserPointChangeEvent): Promise<{ point: UserPointEntity; pointLog: UserPointLogEntity }> {
     this.logger.log(`${this.increasePoint.name} was called`);
-
     const {
       userId,
       amount,
@@ -120,6 +121,8 @@ export class UserPointService {
       plusToReferral,
       referralIdOfReferee,
     } = data;
+
+    console.log('increasePoint', { data });
     return this.redisLockService.withLock(LOCK_KEY_USER_POINT(userId, pointType), async () => {
       const point = await this.getOrCreatePoint(userId);
       const newAmount = new BigNumber(point.amount).plus(amount);
@@ -135,6 +138,10 @@ export class UserPointService {
       }
       if (referralId) {
         pointLog.referralId = referralId;
+      }
+
+      if (referralIdOfReferee) {
+        pointLog.referralId = referralIdOfReferee;
       }
 
       await Promise.all([this.userPointRepository.save(point), this.userPointLogRepository.save(pointLog)]);
@@ -286,8 +293,18 @@ export class UserPointService {
     page: number,
     limit: number,
   ): Promise<[UserPointLogEntity[], number]> {
+    // pointType: EUserPointType.REFERRAL or referralId: Not(IsNull())
     return this.userPointLogRepository.findAndCount({
-      where: { userId, pointType: EUserPointType.REFERRAL },
+      where: [
+        {
+          userId,
+          pointType: EUserPointType.REFERRAL,
+        },
+        {
+          userId,
+          referralId: Not(IsNull()),
+        },
+      ],
       relations: ['referral', 'referral.user', 'referral.referredByUser'],
       skip: (page - 1) * limit,
       take: limit,
