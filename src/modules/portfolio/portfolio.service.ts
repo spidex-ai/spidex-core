@@ -25,7 +25,7 @@ export class PortfolioService {
     const [tokenPrices, adaPrice, tokenDetails] = await Promise.all([
       this.taptoolsService.getTokenPrices(tokenIds),
       this.tokenPriceService.getAdaPriceInUSD(),
-      this.tokenMetaService.getTokensMetadata(tokenIds, ['name', 'logo', 'ticker', 'decimals']),
+      this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['name', 'logo', 'ticker', 'decimals'])),
     ]);
 
     const tokenDetailsMap = keyBy(tokenDetails, 'unit');
@@ -89,7 +89,6 @@ export class PortfolioService {
     query: GetPortfolioTransactionsQuery,
   ): Promise<PortfolioTransactionResponse[]> {
     const transactions = await this.taptoolsService.getWalletTokenTrades(address, '', query.page, query.count);
-    console.log({ transactions });
     const uniqueTokenIds = Array.from(
       new Set(
         transactions
@@ -106,7 +105,10 @@ export class PortfolioService {
           .flat(),
       ),
     );
-    const tokenDetails = await this.tokenMetaService.getTokensMetadata(uniqueTokenIds, ['logo', 'ticker', 'name']);
+    const tokenDetails = await this.tokenMetaService.getTokensMetadata(
+      new Set(uniqueTokenIds),
+      new Set(['logo', 'ticker', 'name']),
+    );
     const tokenDetailsMap = keyBy(tokenDetails, 'unit');
     return transactions.map(transaction => {
       const tokenAIcon =

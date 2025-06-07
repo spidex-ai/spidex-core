@@ -461,10 +461,6 @@ export class UserService {
       });
     }
 
-    console.log({
-      walletAddress,
-      xId,
-    });
     const result = {
       walletAddress: false,
       xId: false,

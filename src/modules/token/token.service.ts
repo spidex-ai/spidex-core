@@ -92,7 +92,6 @@ export class TokenService {
     }
 
     const data = await this.dexHunterService.getTokenDetail(tokenId);
-    console.log({ data });
     const [tokenMetadata, adaPrice, tokenPrice] = await Promise.all([
       this.tokenMetaService.getTokenMetadata(tokenId, ['logo', 'name', 'ticker']),
       this.tokenPriceService.getAdaPriceInUSD(),
@@ -133,7 +132,7 @@ export class TokenService {
 
       const priceTimeframe = '24h';
       const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
-        this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
+        this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['logo', 'name', 'ticker'])),
         this.tokenPriceService.getAdaPriceInUSD(),
         this.getTokenPriceChange(tokenIds, [priceTimeframe]),
       ]);
@@ -177,7 +176,7 @@ export class TokenService {
 
       const priceTimeframe = '24h';
       const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
-        this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'name', 'ticker']),
+        this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['logo', 'name', 'ticker'])),
         this.tokenPriceService.getAdaPriceInUSD(),
         this.getTokenPriceChange(tokenIds, [priceTimeframe]),
       ]);
@@ -354,10 +353,11 @@ export class TokenService {
 
     const tokenIds = map(data, 'token_id');
     const [tokenDetails, adaPrice, tokenPrices] = await Promise.all([
-      this.tokenMetaService.getTokensMetadata(tokenIds, ['logo', 'ticker', 'name']),
+      this.tokenMetaService.getTokensMetadata(tokenIds, new Set(['logo', 'ticker', 'name'])),
       this.tokenPriceService.getAdaPriceInUSD(),
       this.taptoolsService.getTokenPrices(tokenIds),
     ]);
+
     const mapTokenWithDetails = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
     const tokensWithDetails = map(data, token => ({
       ...token,

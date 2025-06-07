@@ -115,14 +115,16 @@ export class TokenMetaService {
     return pick(tokenMetadata, pickProperties);
   }
 
-  async getTokensMetadata(units: string[], properties: string[]) {
+  async getTokensMetadata(units: Set<string>, properties: Set<string>) {
     try {
-      const pickProperties = ['unit'].concat(properties);
+      const unitsArray = Array.from(units);
+      const propertiesArray = Array.from(properties);
+      const pickProperties = ['unit'].concat(propertiesArray);
       // 1. Fetch all existing metadata in one query
-      const tokenMetadataList = await this.tokenMetadataRepository.find({ where: { unit: In(units) } });
+      const tokenMetadataList = await this.tokenMetadataRepository.find({ where: { unit: In(unitsArray) } });
       const tokenMetadataMap = new Map(tokenMetadataList.map(t => [t.unit, t]));
       // 2. Identify missing units
-      const missingUnits = units.filter(unit => !tokenMetadataMap.has(unit));
+      const missingUnits = unitsArray.filter(unit => !tokenMetadataMap.has(unit));
       // 3. Batch fetch from Cardano
       const cardanoBatchMap = new Map();
       if (missingUnits.length > 0) {
@@ -138,11 +140,13 @@ export class TokenMetaService {
       const stillMissingUnits = missingUnits.filter(unit => !cardanoFoundUnits.includes(unit));
       const blockfrostMap = new Map();
       if (stillMissingUnits.length > 0) {
-        const blockfrostResults = await Promise.all(
+        const blockfrostResults = await Promise.allSettled(
           stillMissingUnits.map(unit => this.blockfrostService.getTokenDetail(unit)),
         );
         blockfrostResults.forEach((result, idx) => {
-          if (result) blockfrostMap.set(stillMissingUnits[idx], result);
+          if (result.status === 'fulfilled') {
+            blockfrostMap.set(stillMissingUnits[idx], result.value);
+          }
         });
       }
       // 5. Create and save new metadata for missing units
