@@ -493,10 +493,16 @@ export class UserQuestService {
       const key = `${quest.id}-${quest.category}`;
       switch (quest.category) {
         case EQuestCategory.ONE_TIME:
-          status = groupedUserQuests[key] ? EUserQuestStatus.COMPLETED : EUserQuestStatus.TODO;
+          if (groupedUserQuests[key]) {
+            const userQuest = groupedUserQuests[key][0];
+            status = userQuest.status ? userQuest.status : EUserQuestStatus.TODO;
+          }
           break;
         case EQuestCategory.DAILY:
-          status = groupedUserQuests[key] ? EUserQuestStatus.COMPLETED : EUserQuestStatus.TODO;
+          if (groupedUserQuests[key]) {
+            const userQuest = groupedUserQuests[key][0];
+            status = userQuest.status ? userQuest.status : EUserQuestStatus.TODO;
+          }
           break;
         case EQuestCategory.MULTI_TIME:
           const userQuests = groupedUserQuests[key];
