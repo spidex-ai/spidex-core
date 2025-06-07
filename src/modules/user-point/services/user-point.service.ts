@@ -73,6 +73,8 @@ export class UserPointService {
           amount,
           logType,
           userQuestId,
+          referralIdOfReferee: data.referralIdOfReferee,
+          plusToReferral: data.plusToReferral,
         });
         if (myReferralId) {
           const referral = await this.userReferralService.getById(myReferralId);
