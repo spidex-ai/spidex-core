@@ -25,7 +25,7 @@ export class PageMetaDto {
 
   constructor(itemCount: number, pageOptionsDto: PageOptionsDto) {
     this.total = +itemCount;
-    this.perPage = Math.ceil(this.total / pageOptionsDto.limit);
+    this.perPage = pageOptionsDto.limit;
     this.currentPage = pageOptionsDto.page;
     this.hasPreviousPage = pageOptionsDto.page > 1;
     this.hasNextPage = pageOptionsDto.page < this.perPage;
