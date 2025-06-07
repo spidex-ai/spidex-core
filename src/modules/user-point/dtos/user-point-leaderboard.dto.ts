@@ -1,7 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { PaginationDto } from "@shared/dtos/page-meta.dto";
-import { Expose, Type } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationDto } from '@shared/dtos/page-meta.dto';
+import { Expose, Type } from 'class-transformer';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export enum EUserPointLeaderboardPeriod {
   DAILY = 'daily',
@@ -11,9 +11,8 @@ export class UserPointLeaderboardParamsDto extends PaginationDto {
   @ApiPropertyOptional({ enum: EUserPointLeaderboardPeriod })
   @IsOptional()
   @IsEnum(EUserPointLeaderboardPeriod)
-  period?: EUserPointLeaderboardPeriod
+  period?: EUserPointLeaderboardPeriod;
 }
-
 
 export class LeaderBoardUserDetailOutputDto {
   @ApiProperty()
@@ -80,7 +79,6 @@ export class LeaderboardOutputDto {
   @Expose()
   leaderboard: LeaderboardUserOutputDto[];
 }
-
 
 export class LeaderboardStatsOutputDto {
   @ApiProperty()

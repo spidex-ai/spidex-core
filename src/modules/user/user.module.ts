@@ -6,14 +6,9 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-  imports: [
-    CustomRepositoryModule.forFeature([
-      UserRepository,
-    ]),
-    forwardRef(() => UserReferralModule),
-  ],
+  imports: [CustomRepositoryModule.forFeature([UserRepository]), forwardRef(() => UserReferralModule)],
   providers: [UserService],
   controllers: [UserController],
   exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

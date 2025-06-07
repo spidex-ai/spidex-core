@@ -89,16 +89,14 @@ export class SignMessageRequestDto {
   @ApiProperty({
     type: String,
     description: 'private key',
-    example:
-      '8ee765ec2c235ad904ec55948e51f901aac0c77ca987355f1c781ef862c7ff82',
+    example: '8ee765ec2c235ad904ec55948e51f901aac0c77ca987355f1c781ef862c7ff82',
   })
   privateKey: string;
 
   @ApiPropertyOptional({
     type: String,
     description: 'pub key',
-    example:
-      '0xfb68891B8505b91f74c1568FBfe55368BfD98b72',
+    example: '0xfb68891B8505b91f74c1568FBfe55368BfD98b72',
   })
   pubKey?: string;
 }

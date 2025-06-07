@@ -4,9 +4,7 @@ import mime from 'mime-types';
 
 @Injectable()
 export class MediasService {
-  constructor(
-    private awsService: S3Service,
-  ) { }
+  constructor(private awsService: S3Service) {}
 
   async upload({ file }: { file: any }) {
     const url = await this.awsService.uploadS3(

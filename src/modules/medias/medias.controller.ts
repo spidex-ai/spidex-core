@@ -10,7 +10,7 @@ import { MediasService } from './medias.service';
 @ApiBearerAuth()
 @ApiTags('Uploads')
 export class MediasController {
-  constructor(private readonly mediaService: MediasService) { }
+  constructor(private readonly mediaService: MediasService) {}
 
   @Post('image')
   @AuthUserGuard()

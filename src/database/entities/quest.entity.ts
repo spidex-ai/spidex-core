@@ -1,7 +1,6 @@
-
-import { BaseEntity } from "@database/common/base.entity";
-import { UserQuestEntity } from "@database/entities/user-quest.entity";
-import { Column, Entity, OneToMany } from "typeorm";
+import { BaseEntity } from '@database/common/base.entity';
+import { UserQuestEntity } from '@database/entities/user-quest.entity';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 export enum EQuestCategory {
   ONE_TIME = 0,
@@ -86,6 +85,6 @@ export class QuestEntity extends BaseEntity {
   @Column({ name: 'end_date', type: 'timestamp', nullable: true })
   endDate: Date;
 
-  @OneToMany(() => UserQuestEntity, (userQuest) => userQuest.quest)
+  @OneToMany(() => UserQuestEntity, userQuest => userQuest.quest)
   userQuests: UserQuestEntity[];
 }

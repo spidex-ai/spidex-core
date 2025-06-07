@@ -11,7 +11,7 @@ export interface AIJobInterface {
   assistantId?: string;
   userId?: number;
   errorCodeIfErrorOccurred?: number;
-  isJsonResponse?: boolean
+  isJsonResponse?: boolean;
 }
 
 export interface TelegramAndDiscordJobInterface {

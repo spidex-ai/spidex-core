@@ -1,15 +1,14 @@
+import { openai } from '@ai-sdk/openai';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
 import { CrawlDocsEntity } from '@database/entities/crawl-docs.entity';
-import { WorkerHost } from '@nestjs/bullmq';
-import { Processor } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
-import type { Job } from 'bullmq';
-import FirecrawlApp, { FirecrawlDocument } from '@mendable/firecrawl-js';
-import { openai } from '@ai-sdk/openai';
-import { embed, generateText } from 'ai';
-import { KnowledgeInput } from './types';
-import { addKnowledge } from 'external/cosmos-db/services';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
+import FirecrawlApp, { FirecrawlDocument } from '@mendable/firecrawl-js';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { embed, generateText } from 'ai';
+import type { Job } from 'bullmq';
+import { addKnowledge } from 'external/cosmos-db/services';
+import { KnowledgeInput } from './types';
 
 @Injectable()
 @Processor(CRAWL_DOCS_QUEUE_NAME)
@@ -76,7 +75,7 @@ export class AdminConsumer extends WorkerHost {
         });
         return null;
       }
-      const knowledge = await Promise.all(
+      await Promise.all(
         docs.map(async doc => {
           if (!doc.markdown) {
             return;
@@ -116,7 +115,7 @@ export class AdminConsumer extends WorkerHost {
 
       return null;
     } catch (error) {
-      console.log("🚀 ~ AdminConsumer ~ process ~ error:", error)
+      console.log('🚀 ~ AdminConsumer ~ process ~ error:', error);
       this.logger.error(error);
       await this.crawlDocsRepository.update(id, {
         status: 'failed',

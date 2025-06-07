@@ -1,3 +1,3 @@
-import { HttpService } from '@nestjs/axios'
+import { HttpService } from '@nestjs/axios';
 
-export abstract class XApiHttpService extends HttpService { }
+export abstract class XApiHttpService extends HttpService {}

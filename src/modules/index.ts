@@ -1,4 +1,3 @@
-
 import { UserPointModule } from '@modules/user-point/user-point.module';
 import { UserReferralModule } from '@modules/user-referral/user-referral.module';
 import { RateLimiterModule } from '@shared/modules/rate-limiter/rate-limiter.module';
@@ -21,5 +20,5 @@ export const MODULES = [
   TokenModule,
   PortfolioModule,
   MediasModule,
-  AdminModule
+  AdminModule,
 ];

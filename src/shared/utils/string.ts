@@ -4,5 +4,5 @@ export function createSubParagraphWithTheGivenNumberOfCharacters(paragraph: stri
     if (totalCharCount >= charCount) return result;
     totalCharCount++;
     return result + char;
-  }, "");
+  }, '');
 }

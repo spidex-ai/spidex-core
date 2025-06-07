@@ -8,12 +8,12 @@ export interface TwitterUserInformationInterface {
 }
 
 export interface TwitterReplyInterface {
-  id?: string
+  id?: string;
   media?: TwitterMediaInterface[];
-  context?: string
+  context?: string;
 }
 
 export interface TwitterMediaInterface {
   url: string;
-  type: ETwitterMediaType
+  type: ETwitterMediaType;
 }

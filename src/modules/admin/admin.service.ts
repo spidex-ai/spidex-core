@@ -1,22 +1,19 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AdminEntity, EAdminRole } from '@database/entities/admin.entity';
-import { Like, Repository } from 'typeorm';
-import { AdminRepository } from '@database/repositories/admin.repository';
-import { PasswordEncoder } from '@shared/modules/password-encoder/password-encoder';
-import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
-import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
-import { JwtService } from '@nestjs/jwt';
 import { EEnvKey } from '@constants/env.constant';
-import { ConfigService } from '@nestjs/config';
-import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
-import { v4 as uuidv4 } from 'uuid';
-import { InjectQueue } from '@nestjs/bullmq';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
-import { Queue } from 'bull';
-import { plainToInstancesCustom } from '@shared/utils/class-transform';
-import { CrawlDocsEntity } from '@database/entities/crawl-docs.entity';
-import { PageOptionsDto } from '@shared/dtos/page-option.dto';
+import { AdminEntity, EAdminRole } from '@database/entities/admin.entity';
+import { AdminRepository } from '@database/repositories/admin.repository';
+import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { PageMetaDto } from '@shared/dtos/page-meta.dto';
+import { PageOptionsDto } from '@shared/dtos/page-option.dto';
+import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
+import { PasswordEncoder } from '@shared/modules/password-encoder/password-encoder';
+import { Queue } from 'bull';
+import { v4 as uuidv4 } from 'uuid';
+import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
 @Injectable()
 export class AdminService {
   constructor(
@@ -70,10 +67,10 @@ export class AdminService {
       secret: this.configService.get(EEnvKey.JWT_REFRESH_TOKEN_SECRET),
       expiresIn: 1209600000,
     });
-    return { accessToken, refreshToken }; 
+    return { accessToken, refreshToken };
   }
 
-  async crawlDocs(crawlDocsDto: CrawlDocsDto) { 
+  async crawlDocs(crawlDocsDto: CrawlDocsDto) {
     const { urls, name, category } = crawlDocsDto;
     for (const url of urls) {
       const crawlDocs = this.crawlDocsRepository.create({
@@ -97,9 +94,9 @@ export class AdminService {
 
   async getCrawlDocs(getCrawlDocsDto: GetCrawlDocsDto) {
     const { keyword, page, limit } = getCrawlDocsDto;
-    const crawlDocs = this.crawlDocsRepository.createQueryBuilder('crawl_docs')
+    const crawlDocs = this.crawlDocsRepository.createQueryBuilder('crawl_docs');
 
-    if (keyword) {  
+    if (keyword) {
       crawlDocs.andWhere('crawl_docs.name LIKE :keyword OR crawl_docs.url LIKE :keyword', { keyword: `%${keyword}%` });
     }
 
@@ -109,11 +106,8 @@ export class AdminService {
 
     const [result, total] = await crawlDocs.getManyAndCount();
     return {
-        data: result,
-        meta: new PageMetaDto(total, new PageOptionsDto(
-            page,
-            limit
-        ))
+      data: result,
+      meta: new PageMetaDto(total, new PageOptionsDto(page, limit)),
     };
   }
 }

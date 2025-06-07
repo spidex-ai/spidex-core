@@ -5,7 +5,6 @@ import { FirebaseAuthervice } from 'external/firebase/firebase-auth.service';
 import { FIREBASE_ADMIN } from 'external/firebase/firebase.constant';
 import * as admin from 'firebase-admin';
 
-
 @Global()
 @Module({
   imports: [],
@@ -25,4 +24,4 @@ import * as admin from 'firebase-admin';
   ],
   exports: [FIREBASE_ADMIN, FirebaseAuthervice],
 })
-export class FirebaseModule { }
+export class FirebaseModule {}

@@ -23,17 +23,17 @@ import { AdminConsumer } from './admin.consumer';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-          secret: configService.get(EEnvKey.JWT_ACCESS_TOKEN_SECRET),
-          signOptions: {
-              expiresIn: configService.get(EEnvKey.JWT_ACCESS_TOKEN_EXPIRATION_TIME),
-          },
+        secret: configService.get(EEnvKey.JWT_ACCESS_TOKEN_SECRET),
+        signOptions: {
+          expiresIn: configService.get(EEnvKey.JWT_ACCESS_TOKEN_EXPIRATION_TIME),
+        },
       }),
       inject: [ConfigService],
-  }),
-  ConfigModule,
+    }),
+    ConfigModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminConsumer],
-  exports: [AdminService]
+  exports: [AdminService],
 })
 export class AdminModule {}

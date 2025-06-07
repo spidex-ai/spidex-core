@@ -14,7 +14,7 @@ export class SocketEmitterService implements OnModuleInit {
     @Inject('REDIS')
     private readonly redisClient: RedisClientType,
     private loggerService: LoggerService,
-  ) { }
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.initEmitter();
@@ -27,5 +27,4 @@ export class SocketEmitterService implements OnModuleInit {
   get emitter(): Emitter {
     return this.__emitter;
   }
-
 }

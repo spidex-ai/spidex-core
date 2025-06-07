@@ -1,74 +1,74 @@
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class BuildSwapRequest {
-    @IsArray()
-    @IsOptional()
-    @IsString({ each: true })
-    addresses: string[];
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  addresses: string[];
 
-    @IsString()
-    @IsOptional()
-    tokenIn: string;
+  @IsString()
+  @IsOptional()
+  tokenIn: string;
 
-    @IsString()
-    @IsOptional()
-    tokenOut: string;
+  @IsString()
+  @IsOptional()
+  tokenOut: string;
 
-    @IsNumber()
-    @IsOptional()
-    slippage: number;
+  @IsNumber()
+  @IsOptional()
+  slippage: number;
 
-    @IsNumber()
-    @IsNotEmpty()
-    amountIn: number;
+  @IsNumber()
+  @IsNotEmpty()
+  amountIn: number;
 
-    @IsBoolean()
-    @IsOptional()
-    txOptimization: boolean;
+  @IsBoolean()
+  @IsOptional()
+  txOptimization: boolean;
 
-    @IsArray()
-    @IsOptional()
-    blacklistedDexes: string[];
+  @IsArray()
+  @IsOptional()
+  blacklistedDexes: string[];
 }
 
 export class EstimateSwapRequest {
-    @IsString()
-    @IsOptional()
-    tokenIn: string;
+  @IsString()
+  @IsOptional()
+  tokenIn: string;
 
-    @IsString()
-    @IsOptional()
-    tokenOut: string;
+  @IsString()
+  @IsOptional()
+  tokenOut: string;
 
-    @IsNumber()
-    @IsOptional()
-    slippage: number;
+  @IsNumber()
+  @IsOptional()
+  slippage: number;
 
-    @IsNumber()
-    @IsOptional()
-    amountIn: number;
+  @IsNumber()
+  @IsOptional()
+  amountIn: number;
 
-    @IsArray()
-    @IsOptional()
-    blacklistedDexes: string[];
+  @IsArray()
+  @IsOptional()
+  blacklistedDexes: string[];
 }
 
 export class SubmitSwapRequest {
-    @IsString()
-    @IsNotEmpty()
-    txCbor: string
+  @IsString()
+  @IsNotEmpty()
+  txCbor: string;
 
-    @IsString()
-    @IsNotEmpty()
-    signatures: string
+  @IsString()
+  @IsNotEmpty()
+  signatures: string;
 }
 
 export class GetPoolStatsRequest {
-    @IsString()
-    @IsNotEmpty()
-    tokenIn: string;
+  @IsString()
+  @IsNotEmpty()
+  tokenIn: string;
 
-    @IsString()
-    @IsNotEmpty()
-    tokenOut: string;
+  @IsString()
+  @IsNotEmpty()
+  tokenOut: string;
 }

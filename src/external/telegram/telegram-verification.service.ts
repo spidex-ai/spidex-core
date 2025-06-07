@@ -27,7 +27,7 @@ export class TelegramVerificationService {
       }
 
       this.bot = new TelegramBot(token, { polling: false });
-      
+
       // Test the bot connection
       const me = await this.bot.getMe();
       this.isReady = true;
@@ -54,7 +54,7 @@ export class TelegramVerificationService {
     try {
       // Use configured chat ID if not provided
       const targetChatId = chatId || this.configService.get<string>('TELEGRAM_CHANNEL_ID');
-      
+
       if (!targetChatId) {
         return {
           isVerified: false,
@@ -64,20 +64,21 @@ export class TelegramVerificationService {
 
       // Get chat member info
       const chatMember = await this.bot.getChatMember(targetChatId, telegramUserId);
-      
+
       // Check if user is a member (not left, kicked, or restricted)
       const validStatuses = ['creator', 'administrator', 'member'];
       const isVerified = validStatuses.includes(chatMember.status);
 
       return {
         isVerified,
-        memberSince: chatMember.status === 'member' && 'until_date' in chatMember 
-          ? new Date(chatMember.until_date * 1000) 
-          : undefined,
+        memberSince:
+          chatMember.status === 'member' && 'until_date' in chatMember
+            ? new Date(chatMember.until_date * 1000)
+            : undefined,
       };
     } catch (error) {
       this.logger.error(`Error verifying Telegram membership for user ${telegramUserId}:`, error);
-      
+
       // Handle specific Telegram API errors
       if (error.code === 400 && error.description?.includes('user not found')) {
         return {
@@ -85,7 +86,7 @@ export class TelegramVerificationService {
           error: 'User not found in channel',
         };
       }
-      
+
       if (error.code === 400 && error.description?.includes('chat not found')) {
         return {
           isVerified: false,
@@ -114,7 +115,7 @@ export class TelegramVerificationService {
       // Note: Telegram Bot API doesn't provide a direct way to search users by username
       // This would require the user to interact with the bot first
       // Alternative: Use Telegram's deep linking or require users to start the bot
-      
+
       this.logger.warn('getUserByUsername not fully implemented - Telegram API limitation');
       return null;
     } catch (error) {

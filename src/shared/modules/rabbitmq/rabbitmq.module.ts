@@ -25,4 +25,4 @@ import { CORE_MICROSERVICE, CORE_QUEUE } from '@shared/modules/rabbitmq/rabbitmq
   providers: [RabbitMQService],
   exports: [RabbitMQService],
 })
-export class RabbitMQModule { }
+export class RabbitMQModule {}

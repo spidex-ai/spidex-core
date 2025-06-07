@@ -2,11 +2,9 @@ import { BaseEntity } from '@database/common/base.entity';
 import { UserEntity } from '@database/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 
-
 @Entity('user_points')
 @Unique(['userId'])
 export class UserPointEntity extends BaseEntity {
-
   @Column({ name: 'user_id', type: 'int' })
   userId: number;
 

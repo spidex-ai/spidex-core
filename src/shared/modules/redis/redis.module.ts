@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisLockService } from '@shared/modules/redis/redis-lock.service';
 import { redisStore } from 'cache-manager-redis-yet';
 
-
 @Global()
 @Module({
   imports: [
@@ -31,4 +30,4 @@ import { redisStore } from 'cache-manager-redis-yet';
   providers: [RedisLockService],
   exports: [RedisLockService],
 })
-export class RedisModule { }
+export class RedisModule {}

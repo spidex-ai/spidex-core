@@ -12,15 +12,14 @@ export class UserRepository extends BaseRepository<UserEntity> {
 
   async getUsers(payload: PageOptionsWithSearchDto) {
     const { keyword, limit, orderBy, direction } = payload;
-    const qb = this.createQueryBuilder('user')
-      .select([
-        'user.id AS id',
-        'user.walletAddress AS wallet_address',
-        'user.username AS username',
-        'user.bio AS bio',
-        'user.avatar AS avatar',
-        'user.status AS status',
-      ]);
+    const qb = this.createQueryBuilder('user').select([
+      'user.id AS id',
+      'user.walletAddress AS wallet_address',
+      'user.username AS username',
+      'user.bio AS bio',
+      'user.avatar AS avatar',
+      'user.status AS status',
+    ]);
 
     if (orderBy) {
       qb.orderBy(`user.${orderBy}`, direction);

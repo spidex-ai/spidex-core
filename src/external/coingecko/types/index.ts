@@ -1,5 +1,5 @@
 export interface CoingeckoTokenPrice {
-    [unit: string]: {
-        [vsCurrency: string]: number;
-    };
+  [unit: string]: {
+    [vsCurrency: string]: number;
+  };
 }

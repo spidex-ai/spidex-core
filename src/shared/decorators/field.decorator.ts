@@ -2,20 +2,20 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
-    IsBoolean,
-    IsEnum,
-    IsInt,
-    IsNotEmpty,
-    isNumber,
-    IsNumber,
-    IsNumberString,
-    IsOptional,
-    IsPositive,
-    IsString,
-    Max,
-    MaxLength,
-    Min,
-    MinLength,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  isNumber,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
 } from 'class-validator';
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
@@ -24,206 +24,206 @@ import { getVariableName } from '@shared/utils/util';
 import { ToArray, ToBoolean, ToLowerCase, ToUpperCase, Trim } from './transform.decorator';
 
 interface IBaseOptions {
-    swagger?: boolean;
-    expose?: boolean;
+  swagger?: boolean;
+  expose?: boolean;
 }
 
 interface IStringFieldOptions extends IBaseOptions {
-    minLength?: number;
-    maxLength?: number;
-    toLowerCase?: boolean;
-    toUpperCase?: boolean;
-    number?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  toLowerCase?: boolean;
+  toUpperCase?: boolean;
+  number?: boolean;
 }
 
 interface INumberFieldOptions extends IBaseOptions {
-    each?: boolean;
-    minimum?: number;
-    maximum?: number;
-    int?: boolean;
-    isPositive?: boolean;
+  each?: boolean;
+  minimum?: number;
+  maximum?: number;
+  int?: boolean;
+  isPositive?: boolean;
 }
 
 export function initDecoratorField(
-    options: ApiPropertyOptions & Partial<{ expose: boolean }>,
-    decorators: PropertyDecorator[],
+  options: ApiPropertyOptions & Partial<{ expose: boolean }>,
+  decorators: PropertyDecorator[],
 ) {
-    if (options?.expose) {
-        decorators.push(Expose());
-    }
+  if (options?.expose) {
+    decorators.push(Expose());
+  }
 
-    if (options?.required === false) {
-        decorators.push(IsOptional());
-    } else {
-        decorators.push(IsNotEmpty());
-    }
+  if (options?.required === false) {
+    decorators.push(IsOptional());
+  } else {
+    decorators.push(IsNotEmpty());
+  }
 
-    return applyDecorators(...decorators);
+  return applyDecorators(...decorators);
 }
 
 export function NumberField(options: Omit<ApiPropertyOptions, 'type'> & INumberFieldOptions = {}): PropertyDecorator {
-    const decorators = [Type(() => Number)];
+  const decorators = [Type(() => Number)];
 
-    const { each, int, minimum, maximum, isPositive, swagger } = options;
+  const { each, int, minimum, maximum, isPositive, swagger } = options;
 
-    if (swagger !== false) {
-        decorators.push(ApiProperty({ type: Number, ...options, example: int ? 1 : 1.2 }));
-    }
+  if (swagger !== false) {
+    decorators.push(ApiProperty({ type: Number, ...options, example: int ? 1 : 1.2 }));
+  }
 
-    if (each) {
-        decorators.push(ToArray());
-    }
+  if (each) {
+    decorators.push(ToArray());
+  }
 
-    if (int) {
-        decorators.push(IsInt({ each }));
-    } else {
-        decorators.push(IsNumber({}, { each }));
-    }
+  if (int) {
+    decorators.push(IsInt({ each }));
+  } else {
+    decorators.push(IsNumber({}, { each }));
+  }
 
-    if (minimum && isNumber(minimum)) {
-        decorators.push(Min(minimum, { each }));
-    }
+  if (minimum && isNumber(minimum)) {
+    decorators.push(Min(minimum, { each }));
+  }
 
-    if (maximum && isNumber(maximum)) {
-        decorators.push(Max(maximum, { each }));
-    }
+  if (maximum && isNumber(maximum)) {
+    decorators.push(Max(maximum, { each }));
+  }
 
-    if (isPositive) {
-        decorators.push(IsPositive({ each }));
-    }
+  if (isPositive) {
+    decorators.push(IsPositive({ each }));
+  }
 
-    return initDecoratorField(options, decorators);
+  return initDecoratorField(options, decorators);
 }
 
 export function NumberFieldOption(
-    options: Omit<ApiPropertyOptions, 'type'> & INumberFieldOptions = {},
+  options: Omit<ApiPropertyOptions, 'type'> & INumberFieldOptions = {},
 ): PropertyDecorator {
-    return NumberField({ ...options, required: false });
+  return NumberField({ ...options, required: false });
 }
 
 export function StringField(options: Omit<ApiPropertyOptions, 'type'> & IStringFieldOptions = {}): PropertyDecorator {
-    const decorators = [IsNotEmpty(), Trim()];
-    const { swagger, minLength, maxLength, toLowerCase, toUpperCase, number } = options;
+  const decorators = [IsNotEmpty(), Trim()];
+  const { swagger, minLength, maxLength, toLowerCase, toUpperCase, number } = options;
 
-    if (swagger !== false) {
-        decorators.push(ApiProperty({ type: String, ...options }));
-    }
+  if (swagger !== false) {
+    decorators.push(ApiProperty({ type: String, ...options }));
+  }
 
-    if (minLength) {
-        decorators.push(MinLength(minLength));
-    }
+  if (minLength) {
+    decorators.push(MinLength(minLength));
+  }
 
-    if (maxLength) {
-        decorators.push(MaxLength(maxLength));
-    }
+  if (maxLength) {
+    decorators.push(MaxLength(maxLength));
+  }
 
-    if (toLowerCase) {
-        decorators.push(ToLowerCase());
-    }
+  if (toLowerCase) {
+    decorators.push(ToLowerCase());
+  }
 
-    if (toUpperCase) {
-        decorators.push(ToUpperCase());
-    }
+  if (toUpperCase) {
+    decorators.push(ToUpperCase());
+  }
 
-    if (number) {
-        decorators.push(IsNumberString());
-    } else {
-        decorators.push(IsString());
-    }
+  if (number) {
+    decorators.push(IsNumberString());
+  } else {
+    decorators.push(IsString());
+  }
 
-    return initDecoratorField(options, decorators);
+  return initDecoratorField(options, decorators);
 }
 
 export function StringFieldOption(
-    options: Omit<ApiPropertyOptions, 'type'> & IStringFieldOptions = {},
+  options: Omit<ApiPropertyOptions, 'type'> & IStringFieldOptions = {},
 ): PropertyDecorator {
-    return StringField({ ...options, required: false });
+  return StringField({ ...options, required: false });
 }
 
 export function BooleanField(
-    options: Omit<ApiPropertyOptions, 'type'> & Partial<{ swagger: boolean }> = {},
+  options: Omit<ApiPropertyOptions, 'type'> & Partial<{ swagger: boolean }> = {},
 ): PropertyDecorator {
-    const decorators = [IsBoolean(), ToBoolean()];
+  const decorators = [IsBoolean(), ToBoolean()];
 
-    if (options?.swagger !== false) {
-        decorators.push(ApiProperty({ type: Boolean, ...options }));
-    }
+  if (options?.swagger !== false) {
+    decorators.push(ApiProperty({ type: Boolean, ...options }));
+  }
 
-    return initDecoratorField(options, decorators);
+  return initDecoratorField(options, decorators);
 }
 
 export function BooleanFieldOption(
-    options: Omit<ApiPropertyOptions, 'type'> & Partial<{ swagger: boolean }> = {},
+  options: Omit<ApiPropertyOptions, 'type'> & Partial<{ swagger: boolean }> = {},
 ): PropertyDecorator {
-    return BooleanField({ ...options, required: false });
+  return BooleanField({ ...options, required: false });
 }
 
 export function EnumField<TEnum>(
-    getEnum: () => TEnum,
-    options: Omit<ApiPropertyOptions, 'type' | 'enum' | 'enumName'> &
-        Partial<{
-            each: boolean;
-            swagger: boolean;
-            enumNumber: boolean;
-        }> = {},
+  getEnum: () => TEnum,
+  options: Omit<ApiPropertyOptions, 'type' | 'enum' | 'enumName'> &
+    Partial<{
+      each: boolean;
+      swagger: boolean;
+      enumNumber: boolean;
+    }> = {},
 ): PropertyDecorator {
-    const enumValue = getEnum() as any;
-    const decorators = [IsEnum(enumValue)];
-    let description = '';
+  const enumValue = getEnum() as any;
+  const decorators = [IsEnum(enumValue)];
+  let description = '';
 
-    if (options?.enumNumber) {
-        const enumObject = Object.values(enumValue).filter(x => typeof x === 'string');
-        description = Object.keys(enumObject)
-            .map(key => enumObject[key] + ': ' + enumValue[enumObject[key]])
-            .join(', ');
-        decorators.push(Type(() => Number));
-    } else {
-        description = Object.values(enumValue)
-            .map(key => key)
-            .join(', ');
-    }
+  if (options?.enumNumber) {
+    const enumObject = Object.values(enumValue).filter(x => typeof x === 'string');
+    description = Object.keys(enumObject)
+      .map(key => enumObject[key] + ': ' + enumValue[enumObject[key]])
+      .join(', ');
+    decorators.push(Type(() => Number));
+  } else {
+    description = Object.values(enumValue)
+      .map(key => key)
+      .join(', ');
+  }
 
-    if (options?.swagger !== false) {
-        options = { ...options, description };
-        decorators.push(
-            ApiProperty({
-                enumName: getVariableName(getEnum),
-                ...options,
-            }),
-        );
-    }
+  if (options?.swagger !== false) {
+    options = { ...options, description };
+    decorators.push(
+      ApiProperty({
+        enumName: getVariableName(getEnum),
+        ...options,
+      }),
+    );
+  }
 
-    if (options.each) {
-        decorators.push(ToArray());
-    }
+  if (options.each) {
+    decorators.push(ToArray());
+  }
 
-    return initDecoratorField(options, decorators);
+  return initDecoratorField(options, decorators);
 }
 
 export function EnumFieldOptional<TEnum>(
-    getEnum: () => TEnum,
-    options: Omit<ApiPropertyOptions, 'type' | 'required' | 'enum' | 'enumName'> &
-        Partial<{ each: boolean; swagger: boolean; enumNumber: boolean }> = {},
+  getEnum: () => TEnum,
+  options: Omit<ApiPropertyOptions, 'type' | 'required' | 'enum' | 'enumName'> &
+    Partial<{ each: boolean; swagger: boolean; enumNumber: boolean }> = {},
 ): PropertyDecorator {
-    return EnumField(getEnum, { ...options, required: false });
+  return EnumField(getEnum, { ...options, required: false });
 }
 
 export function IsNotHaveSpace(property?: string, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string) {
-        registerDecorator({
-            name: 'IsNotHaveSpace',
-            target: object.constructor,
-            propertyName: propertyName,
-            constraints: [property],
-            options: validationOptions,
-            validator: {
-                validate(value: string) {
-                    return !value.includes(' ');
-                },
-                defaultMessage(args: ValidationArguments) {
-                    return args.property + ' must not have space';
-                },
-            },
-        });
-    };
+  return function (object: any, propertyName: string) {
+    registerDecorator({
+      name: 'IsNotHaveSpace',
+      target: object.constructor,
+      propertyName: propertyName,
+      constraints: [property],
+      options: validationOptions,
+      validator: {
+        validate(value: string) {
+          return !value.includes(' ');
+        },
+        defaultMessage(args: ValidationArguments) {
+          return args.property + ' must not have space';
+        },
+      },
+    });
+  };
 }

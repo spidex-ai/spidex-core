@@ -1,40 +1,37 @@
-import { EQuestCategory, EQuestStatus, EQuestType, QuestEntity } from "@database/entities/quest.entity";
-import { QuestRepository } from "@database/repositories/quest.repository";
-import { Injectable } from "@nestjs/common";
-import { In, IsNull, LessThan, MoreThan } from "typeorm";
-
-
+import { EQuestCategory, EQuestStatus, EQuestType, QuestEntity } from '@database/entities/quest.entity';
+import { QuestRepository } from '@database/repositories/quest.repository';
+import { Injectable } from '@nestjs/common';
+import { In, IsNull, LessThan, MoreThan } from 'typeorm';
 
 @Injectable()
 export class QuestService {
-  constructor(
-    private questRepository: QuestRepository,
-  ) { }
-
+  constructor(private questRepository: QuestRepository) {}
 
   async getQuests(): Promise<QuestEntity[]> {
     const currentDate = new Date();
     return this.questRepository.find({
-      where: [{
-        status: EQuestStatus.ACTIVE,
-        startDate: LessThan(currentDate),
-        endDate: MoreThan(currentDate),
-      },
-      {
-        status: EQuestStatus.ACTIVE,
-        startDate: LessThan(currentDate),
-        endDate: IsNull(),
-      },
-      {
-        status: EQuestStatus.ACTIVE,
-        startDate: IsNull(),
-        endDate: MoreThan(currentDate),
-      },
-      {
-        status: EQuestStatus.ACTIVE,
-        startDate: IsNull(),
-        endDate: IsNull(),
-      },]
+      where: [
+        {
+          status: EQuestStatus.ACTIVE,
+          startDate: LessThan(currentDate),
+          endDate: MoreThan(currentDate),
+        },
+        {
+          status: EQuestStatus.ACTIVE,
+          startDate: LessThan(currentDate),
+          endDate: IsNull(),
+        },
+        {
+          status: EQuestStatus.ACTIVE,
+          startDate: IsNull(),
+          endDate: MoreThan(currentDate),
+        },
+        {
+          status: EQuestStatus.ACTIVE,
+          startDate: IsNull(),
+          endDate: IsNull(),
+        },
+      ],
     });
   }
 
@@ -73,8 +70,6 @@ export class QuestService {
       ],
     });
   }
-
-
 
   async getQuestInType(questTypes: EQuestType[]): Promise<QuestEntity[]> {
     const currentDate = new Date();
@@ -138,11 +133,11 @@ export class QuestService {
         },
       ],
       order: {
-        updatedAt: "DESC",
-        id: 'DESC'
-      }
+        updatedAt: 'DESC',
+        id: 'DESC',
+      },
     });
 
     return quests;
   }
-} 
+}

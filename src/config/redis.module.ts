@@ -25,5 +25,4 @@ import * as process from 'process';
   ],
   exports: ['REDIS'],
 })
-export class CustomizeRedisModule {
-}
+export class CustomizeRedisModule {}

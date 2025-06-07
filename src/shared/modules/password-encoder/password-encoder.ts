@@ -16,14 +16,8 @@ export class PasswordEncoder {
    * @returns {Promise<string>} - The hashed password
    */
   async hashPassword(password: string): Promise<string> {
-    const pepper = this.configService.get<string>(
-      EEnvKey.AUTH_PEPPER,
-      'secretpepper',
-    );
-    const saltRounds = Number(this.configService.get<number>(
-      EEnvKey.AUTH_SALT_ROUNDS,
-      10,
-    ))
+    const pepper = this.configService.get<string>(EEnvKey.AUTH_PEPPER, 'secretpepper');
+    const saltRounds = Number(this.configService.get<number>(EEnvKey.AUTH_SALT_ROUNDS, 10));
 
     const salt = await bcrypt.genSalt(saltRounds);
     const hmac = crypto.createHmac('sha256', pepper);
@@ -41,10 +35,7 @@ export class PasswordEncoder {
    * @returns {Promise<boolean>} - True if the password matches the hashed password, false otherwise
    */
   comparePassword(password: string, hashedPassword: string): Promise<boolean> {
-    const pepper = this.configService.get<string>(
-      EEnvKey.AUTH_PEPPER,
-      'secretpepper',
-    );
+    const pepper = this.configService.get<string>(EEnvKey.AUTH_PEPPER, 'secretpepper');
     const hmac = crypto.createHmac('sha256', pepper);
     hmac.update(password);
     const hashedInputPassword = hmac.digest('hex');

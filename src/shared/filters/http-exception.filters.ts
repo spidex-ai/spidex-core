@@ -7,7 +7,7 @@ import { LoggerService } from '@shared/modules/loggers/logger.service';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(private readonly loggingService: LoggerService) { }
+  constructor(private readonly loggingService: LoggerService) {}
   private logger = this.loggingService.getLogger('http-exception');
 
   catch(exception: HttpException, host: ArgumentsHost) {

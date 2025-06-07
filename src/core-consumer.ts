@@ -7,20 +7,15 @@ import { getRabbitMQConsumerConfig } from '@shared/modules/rabbitmq/rabbitmq.con
 import { CORE_QUEUE } from '@shared/modules/rabbitmq/rabbitmq.constant';
 import { initializeTransactionalContext } from 'typeorm-transactional';
 
-
-
 async function bootstrap() {
-    initializeTransactionalContext();
-    const app = await NestFactory.create(CoreConsumerModule, {
-        logger: new Logger(bootstrap.name)
-    });
-    const config = app.get(ConfigService);
-    app.connectMicroservice<MicroserviceOptions>(getRabbitMQConsumerConfig(CORE_QUEUE, config));
-    await app.startAllMicroservices();
-    await app.init()
+  initializeTransactionalContext();
+  const app = await NestFactory.create(CoreConsumerModule, {
+    logger: new Logger(bootstrap.name),
+  });
+  const config = app.get(ConfigService);
+  app.connectMicroservice<MicroserviceOptions>(getRabbitMQConsumerConfig(CORE_QUEUE, config));
+  await app.startAllMicroservices();
+  await app.init();
 }
 
-
 bootstrap();
-
-

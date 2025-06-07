@@ -1,13 +1,13 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddSwapTransaction1744448901370 implements MigrationInterface {
-    name = 'AddSwapTransaction1744448901370'
+  name = 'AddSwapTransaction1744448901370';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TYPE "public"."swap_transactions_action_enum" AS ENUM('buy', 'sell')
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "swap_transactions" (
                 "id" SERIAL NOT NULL,
                 "created_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -28,24 +28,24 @@ export class AddSwapTransaction1744448901370 implements MigrationInterface {
                 CONSTRAINT "PK_1aa502020ff2dcb5a6628e087cb" PRIMARY KEY ("id")
             )
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TYPE "public"."quests_type_enum"
             RENAME TO "quests_type_enum_old"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TYPE "public"."quests_type_enum" AS ENUM('0', '1', '2', '3', '10', '20', '30')
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "quests"
             ALTER COLUMN "type" TYPE "public"."quests_type_enum" USING "type"::"text"::"public"."quests_type_enum"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TYPE "public"."quests_type_enum_old"
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TYPE "public"."quests_type_enum_old" AS ENUM(
                 '0',
                 '1',
@@ -59,23 +59,22 @@ export class AddSwapTransaction1744448901370 implements MigrationInterface {
                 '21'
             )
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "quests"
             ALTER COLUMN "type" TYPE "public"."quests_type_enum_old" USING "type"::"text"::"public"."quests_type_enum_old"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TYPE "public"."quests_type_enum"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TYPE "public"."quests_type_enum_old"
             RENAME TO "quests_type_enum"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "swap_transactions"
         `);
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TYPE "public"."swap_transactions_action_enum"
         `);
-    }
-
+  }
 }

@@ -12,7 +12,6 @@ export function AuthUserGuard(): MethodDecorator {
   return applyDecorators(UseGuards(UserGuard), ApiBearerAuth('Authorization'));
 }
 
-
 export function VerifyRecaptra(): MethodDecorator {
   return applyDecorators(UseGuards(VerifyRecaptchaGuard));
 }
@@ -20,4 +19,3 @@ export function VerifyRecaptra(): MethodDecorator {
 export function AuthAdminGuard(): MethodDecorator {
   return applyDecorators(UseGuards(AdminGuard), ApiBearerAuth('Authorization'));
 }
-

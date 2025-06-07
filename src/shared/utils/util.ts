@@ -66,7 +66,6 @@ export const getSkip = ({ page, limit }: { page: number; limit: number }) => {
   return (page - 1) * limit;
 };
 
-
 export const getNetAmountEth = ({ ethAmount, fee }: { ethAmount: string; fee: string }) => {
   return new BigNumber(ethAmount).minus(new BigNumber(fee)).toFixed().toString();
 };

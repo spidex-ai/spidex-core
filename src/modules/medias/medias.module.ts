@@ -8,4 +8,4 @@ import { AwsModule } from 'external/aws/aws.module';
   controllers: [MediasController],
   providers: [MediasService],
 })
-export class MediasModule { }
+export class MediasModule {}

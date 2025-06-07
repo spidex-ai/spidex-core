@@ -9,7 +9,7 @@ import { DataSource } from 'typeorm';
 import { AdminEntity } from '@database/entities/admin.entity';
 
 export class UserGuard implements CanActivate {
-  constructor(@Inject(DataSource) private readonly dataSource: DataSource) { }
+  constructor(@Inject(DataSource) private readonly dataSource: DataSource) {}
 
   async canActivate(context: ExecutionContext) {
     const { user } = context.switchToHttp().getRequest() as {
@@ -44,20 +44,19 @@ export class UserGuard implements CanActivate {
   }
 }
 
-
 export class AdminGuard implements CanActivate {
-  constructor(@Inject(DataSource) private readonly dataSource: DataSource) { }
+  constructor(@Inject(DataSource) private readonly dataSource: DataSource) {}
 
   async canActivate(context: ExecutionContext) {
     const { user } = context.switchToHttp().getRequest() as {
       user: IJwtPayloadAdmin;
     };
-    console.log("🚀 ~ AdminGuard ~ const{admin}=context.switchToHttp ~ admin:", user)
+    console.log('🚀 ~ AdminGuard ~ const{admin}=context.switchToHttp ~ admin:', user);
 
     if (!user) {
       throw new Unauthorized({
         validatorErrors: EError.UNAUTHORIZED,
-      }); 
+      });
     }
 
     const checkMember = await this.checkMember(user.adminId);

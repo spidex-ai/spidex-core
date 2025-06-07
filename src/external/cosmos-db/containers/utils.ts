@@ -1,5 +1,3 @@
-
-
 import {
   ComputedProperty,
   IndexingPolicy,
@@ -7,8 +5,8 @@ import {
   VectorEmbeddingDistanceFunction,
   VectorEmbeddingPolicy,
   VectorIndexType,
-} from "@azure/cosmos";
-import { getDatabase } from "../database";
+} from '@azure/cosmos';
+import { getDatabase } from '../database';
 
 export interface VectorSearchOptions<ItemType> {
   embeddingPaths?: (keyof ItemType)[];
@@ -18,7 +16,7 @@ export interface VectorSearchOptions<ItemType> {
 export const getContainer = async <ItemType>(
   containerId: string,
   partitionKey: keyof ItemType,
-  vectorSearchOptions?: VectorSearchOptions<ItemType>
+  vectorSearchOptions?: VectorSearchOptions<ItemType>,
 ) => {
   const database = await getDatabase();
   return (
@@ -26,12 +24,8 @@ export const getContainer = async <ItemType>(
       id: containerId,
       partitionKey: `/${partitionKey as string}`,
       ...(vectorSearchOptions && {
-        vectorEmbeddingPolicy: getVectorEmbeddingPolicy(
-          vectorSearchOptions.embeddingPaths || []
-        ),
-        indexingPolicy: getIndexingPolicy(
-          vectorSearchOptions.embeddingPaths || []
-        ),
+        vectorEmbeddingPolicy: getVectorEmbeddingPolicy(vectorSearchOptions.embeddingPaths || []),
+        indexingPolicy: getIndexingPolicy(vectorSearchOptions.embeddingPaths || []),
       }),
       ...(vectorSearchOptions && {
         computedProperties: vectorSearchOptions.computedProperties,
@@ -40,11 +34,9 @@ export const getContainer = async <ItemType>(
   ).container;
 };
 
-export const getVectorEmbeddingPolicy = <ItemType>(
-  embeddingPaths: (keyof ItemType)[]
-): VectorEmbeddingPolicy => {
+export const getVectorEmbeddingPolicy = <ItemType>(embeddingPaths: (keyof ItemType)[]): VectorEmbeddingPolicy => {
   return {
-    vectorEmbeddings: embeddingPaths.map((embeddingPath) => ({
+    vectorEmbeddings: embeddingPaths.map(embeddingPath => ({
       path: `/${embeddingPath as string}`,
       dimensions: 1536,
       dataType: VectorEmbeddingDataType.Float32,
@@ -53,13 +45,11 @@ export const getVectorEmbeddingPolicy = <ItemType>(
   };
 };
 
-export const getIndexingPolicy = <ItemType>(
-  embeddingPaths: (keyof ItemType)[]
-): IndexingPolicy => {
+export const getIndexingPolicy = <ItemType>(embeddingPaths: (keyof ItemType)[]): IndexingPolicy => {
   return {
-    indexingMode: "consistent",
+    indexingMode: 'consistent',
     automatic: true,
-    vectorIndexes: embeddingPaths.map((embeddingPath) => ({
+    vectorIndexes: embeddingPaths.map(embeddingPath => ({
       path: `/${embeddingPath as string}`,
       type: VectorIndexType.QuantizedFlat,
     })),

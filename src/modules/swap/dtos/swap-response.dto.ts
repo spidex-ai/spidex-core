@@ -1,5 +1,5 @@
-import { DexHunterEsitmateSwapResponse } from "external/dexhunter/types";
+import { DexHunterEsitmateSwapResponse } from 'external/dexhunter/types';
 
 export interface EstimateSwapResponse extends DexHunterEsitmateSwapResponse {
-    estimated_point: string
+  estimated_point: string;
 }

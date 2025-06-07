@@ -11,12 +11,16 @@ export class RateLimiterService {
     private configService: ConfigService,
     private loggerService: LoggerService,
     @InjectRedis() private readonly redis: Redis,
-  ) {
-  }
+  ) {}
   private logger = this.loggerService.getLogger('RateLimiterService');
 
   // Solution 1: Using Lua script
-  async isAllowed(redisKey: string, windowSize: number, maxRequests: number, requestNumber: number = 1): Promise<boolean> {
+  async isAllowed(
+    redisKey: string,
+    windowSize: number,
+    maxRequests: number,
+    requestNumber: number = 1,
+  ): Promise<boolean> {
     const currentTime = Date.now();
     const windowStart = currentTime - windowSize;
 
@@ -50,7 +54,7 @@ export class RateLimiterService {
       maxRequests.toString() as any, // Max allowed requests
       windowSize.toString() as any, // Window size
       requestNumber, // Request number
-      uuidv4() // uuid
+      uuidv4(), // uuid
     );
 
     return result === 1;
@@ -89,7 +93,7 @@ export class RateLimiterService {
     redisKey2: string,
     window2Size: number,
     maxRequests2: number,
-    requestNumber: number = 1
+    requestNumber: number = 1,
   ): Promise<boolean> {
     const currentTime = Date.now();
     const window1Start = currentTime - window1Size;
@@ -147,19 +151,16 @@ export class RateLimiterService {
       maxRequests2.toString() as any, // Max requests for window 2
       window2Size.toString() as any, // Size of window 2
       requestNumber, // Request number
-      uuidv4() // uuid
+      uuidv4(), // uuid
     );
 
     return result === 1;
   }
 
-
   async throwIfRateLimited(redisKey: string, windowSize: number, maxRequests: number) {
     const allowed = await this.isAllowed(redisKey, windowSize, maxRequests);
     if (!allowed) {
-      throw new Error(
-        'Rate limit exceeded',
-      );
+      throw new Error('Rate limit exceeded');
     }
   }
 }

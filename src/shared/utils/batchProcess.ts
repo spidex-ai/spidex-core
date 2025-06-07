@@ -1,9 +1,6 @@
 import { sleep } from '@shared/utils/util';
 
-export async function batchProcess(
-  concurrent: number,
-  callbacks: CallableFunction[],
-) {
+export async function batchProcess(concurrent: number, callbacks: CallableFunction[]) {
   let queue = [];
   for (let i = 0; i < callbacks.length; i++) {
     queue.push(callbacks[i]());

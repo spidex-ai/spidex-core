@@ -4,11 +4,11 @@ import { EntityRepository } from 'nestjs-typeorm-custom-repository';
 
 @EntityRepository(UserAchievementEntity)
 export class UserAchievementRepository extends BaseRepository<UserAchievementEntity> {
-    async findUserAchievements(userId: number): Promise<UserAchievementEntity[]> {
-        return this.createQueryBuilder('userAchievement')
-            .leftJoinAndSelect('userAchievement.achievement', 'achievement')
-            .where('userAchievement.userId = :userId', { userId })
-            .orderBy('achievement.points', 'ASC')
-            .getMany();
-    }
-} 
+  async findUserAchievements(userId: number): Promise<UserAchievementEntity[]> {
+    return this.createQueryBuilder('userAchievement')
+      .leftJoinAndSelect('userAchievement.achievement', 'achievement')
+      .where('userAchievement.userId = :userId', { userId })
+      .orderBy('achievement.points', 'ASC')
+      .getMany();
+  }
+}

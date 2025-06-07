@@ -21,20 +21,19 @@ export class UserPointOutput {
   amount: string;
 }
 
-
 export class UserPointInfoOutput {
   @ApiProperty()
-  point: UserPointOutput
+  point: UserPointOutput;
 
   @ApiProperty()
-  referralInfo: ReferralInfoOutput
+  referralInfo: ReferralInfoOutput;
 
   @ApiProperty()
-  achievements: AchievementOutput[]
+  achievements: AchievementOutput[];
 
   @ApiProperty()
-  nextAchievement: NextAchievementOutput
+  nextAchievement: NextAchievementOutput;
 
   @ApiProperty()
-  tradingVolume: number
+  tradingVolume: number;
 }

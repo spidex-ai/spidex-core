@@ -15,7 +15,6 @@ export class AuthResponseOutputDto {
   userId: number;
 }
 
-
 export class RefreshTokenResponseDto {
   @ApiProperty({
     type: String,

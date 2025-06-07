@@ -1,10 +1,10 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddTokenMetadata1744536327017 implements MigrationInterface {
-    name = 'AddTokenMetadata1744536327017'
+  name = 'AddTokenMetadata1744536327017';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "token_metadata" (
                 "id" SERIAL NOT NULL,
                 "created_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -21,12 +21,11 @@ export class AddTokenMetadata1744536327017 implements MigrationInterface {
                 CONSTRAINT "PK_69858f47995fd449579fa325054" PRIMARY KEY ("id")
             )
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP TABLE "token_metadata"
         `);
-    }
-
+  }
 }

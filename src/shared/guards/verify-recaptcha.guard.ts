@@ -7,7 +7,7 @@ import axios from 'axios';
 
 @Injectable()
 export class VerifyRecaptchaGuard implements CanActivate {
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();

@@ -3,9 +3,7 @@ import { FIREBASE_ADMIN, IFirebaseApp } from 'external/firebase/firebase.constan
 
 @Injectable()
 export class FirebaseAuthervice {
-  constructor(
-    @Inject(FIREBASE_ADMIN) private readonly firebaseAdmin: IFirebaseApp,
-  ) { }
+  constructor(@Inject(FIREBASE_ADMIN) private readonly firebaseAdmin: IFirebaseApp) {}
 
   async verifyIdToken(token: string) {
     return this.firebaseAdmin.auth().verifyIdToken(token);

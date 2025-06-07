@@ -1,10 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  HttpStatus,
-  Injectable,
-  NestInterceptor,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { Response } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -33,22 +27,16 @@ export function createResponse<T>(data: any): IResponse<T> {
   return {
     statusCode: data?.statusCode ? data.statusCode : HttpStatus.OK,
     data: data?.data || data || [],
-    metadata: data?.meta
-      ? { ...data.meta, timestamp: new Date() }
-      : { timestamp: new Date() },
+    metadata: data?.meta ? { ...data.meta, timestamp: new Date() } : { timestamp: new Date() },
     success: true,
     message: data?.message ? data?.message : '',
   };
 }
 @Injectable()
-export class ResponseTransformInterceptor<T>
-  implements NestInterceptor<T, IResponse<T>> {
-  constructor(private readonly loggingService: LoggerService) { }
+export class ResponseTransformInterceptor<T> implements NestInterceptor<T, IResponse<T>> {
+  constructor(private readonly loggingService: LoggerService) {}
   private logger = this.loggingService.getLogger('Request');
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<IResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<IResponse<T>> {
     const request = context.switchToHttp().getRequest();
     const { method, url, headers, query, params } = request;
     //todo: optimize logger body hidden password
@@ -66,22 +54,16 @@ export class ResponseTransformInterceptor<T>
       this.logger.error(`Error: ${e}`);
     }
 
-    this.logger.info(
-      JSON.stringify({ method, url, headers, query, params, body }),
-    );
+    this.logger.info(JSON.stringify({ method, url, headers, query, params, body }));
     // Ignore endpoint apply Interceptor
-    const bypassRoutes = [
-      /^\/events\/metadata\/\d+$/,
-      /^\/events\/metadata\/\d+\/$/,
-      /^\/events\/metadata\/\d+\/\d+$/,
-    ];
+    const bypassRoutes = [/^\/events\/metadata\/\d+$/, /^\/events\/metadata\/\d+\/$/, /^\/events\/metadata\/\d+\/\d+$/];
 
-    if (bypassRoutes.some((regex) => regex.test(request.path))) {
+    if (bypassRoutes.some(regex => regex.test(request.path))) {
       return next.handle();
     }
 
     return next.handle().pipe(
-      map((data) => {
+      map(data => {
         const ctx = context.switchToHttp();
         const response = ctx.getResponse<Response>();
         const responseData = createResponse(data);

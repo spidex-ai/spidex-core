@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Expose } from "class-transformer";
-import { IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
+import { IsString } from 'class-validator';
 
 export class UserReferredInfoOutput {
   @ApiProperty()
@@ -28,7 +28,6 @@ export class UserReferredInfoOutput {
   createdAt: Date;
 }
 
-
 export class ReferralHistoryOutput {
   @ApiProperty()
   @IsString()
@@ -54,4 +53,3 @@ export class ReferralHistoryOutput {
   @Expose()
   createdAt: Date;
 }
-

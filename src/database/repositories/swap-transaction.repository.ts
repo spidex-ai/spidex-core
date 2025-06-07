@@ -3,6 +3,4 @@ import { SwapTransactionEntity } from '@database/entities/swap-transaction.entit
 import { EntityRepository } from 'nestjs-typeorm-custom-repository';
 
 @EntityRepository(SwapTransactionEntity)
-export class SwapTransactionRepository extends BaseRepository<SwapTransactionEntity> {
-
-} 
+export class SwapTransactionRepository extends BaseRepository<SwapTransactionEntity> {}

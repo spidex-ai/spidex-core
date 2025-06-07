@@ -4,23 +4,16 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export const encryptWithAES = (text: string) => {
-  // @ts-ignore
   const b64 = cryptoJs.AES.encrypt(text, process.env.CRYPTO_SECRET_KEY).toString();
-  // @ts-ignore
   const e64 = cryptoJs.enc.Base64.parse(b64);
-  // @ts-ignore
   const eHex = e64.toString(cryptoJs.enc.Hex);
   return eHex;
 };
 
 export const decryptWithAES = (ciphertext: string) => {
-  // @ts-ignore
   const reb64 = cryptoJs.enc.Hex.parse(ciphertext);
-  // @ts-ignore
   const bytes = reb64.toString(cryptoJs.enc.Base64);
-  // @ts-ignore
   const decrypt = cryptoJs.AES.decrypt(bytes, process.env.CRYPTO_SECRET_KEY);
-  // @ts-ignore
   const plain = decrypt.toString(cryptoJs.enc.Utf8);
   return plain;
 };
