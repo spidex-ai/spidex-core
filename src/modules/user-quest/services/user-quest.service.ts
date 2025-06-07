@@ -247,6 +247,11 @@ export class UserQuestService {
 
   @Transactional()
   async completeQuest(userId: number, quest: QuestEntity, options?: TQuestOptions): Promise<void> {
+    console.log('completeQuest', {
+      userId,
+      questId: quest.id,
+      options,
+    });
     const referral = await this.userReferralService.getReferralByUserId(userId);
     let userQuest;
 
