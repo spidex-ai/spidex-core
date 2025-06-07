@@ -692,26 +692,8 @@ export class UserQuestService {
     }
 
     if (isVerified) {
-      // Double-check if user can still complete the quest
-      let canComplete = false;
-      switch (quest.category) {
-        case EQuestCategory.ONE_TIME:
-          canComplete = await this.canCompleteOneTimeQuest(data.userId, quest.id);
-          break;
-        case EQuestCategory.DAILY:
-          canComplete = await this.canCompleteDailyQuest(data.userId, quest.id);
-          break;
-        case EQuestCategory.MULTI_TIME:
-          canComplete = await this.canCompleteMultiTimeQuest(data.userId, quest.id);
-          break;
-      }
-
-      if (canComplete) {
-        await this.completeQuest(data.userId, quest);
-        this.logger.log(`Social quest verification completed for user ${data.userId}, quest ${data.questId}`);
-      } else {
-        this.logger.warn(`User ${data.userId} can no longer complete quest ${data.questId} after verification delay`);
-      }
+      await this.completeQuest(data.userId, quest);
+      this.logger.log(`Social quest verification completed for user ${data.userId}, quest ${data.questId}`);
     } else {
       this.logger.warn(
         `Social quest verification failed for user ${data.userId}, quest ${data.questId}: ${verificationError}`,
