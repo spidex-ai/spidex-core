@@ -651,6 +651,24 @@ export class UserQuestService {
       return;
     }
 
+    const existingUserQuest = await this.userQuestRepository.findOne({
+      where: {
+        userId: data.userId,
+        questId: data.questId,
+        deletedAt: IsNull(),
+      },
+    });
+
+    if (!existingUserQuest) {
+      this.logger.error(`User quest not found during verification: ${data.userId}, ${data.questId}`);
+      return;
+    }
+
+    if (existingUserQuest.status === EUserQuestStatus.COMPLETED) {
+      this.logger.error(`User quest already completed during verification: ${data.userId}, ${data.questId}`);
+      return;
+    }
+
     // Perform actual verification based on quest type
     let isVerified = false;
     let verificationError = '';
@@ -692,7 +710,9 @@ export class UserQuestService {
     }
 
     if (isVerified) {
-      await this.completeQuest(data.userId, quest);
+      await this.completeQuest(data.userId, quest, {
+        userQuestId: existingUserQuest.id,
+      });
       this.logger.log(`Social quest verification completed for user ${data.userId}, quest ${data.questId}`);
     } else {
       this.logger.warn(
