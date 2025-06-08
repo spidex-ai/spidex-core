@@ -307,6 +307,9 @@ export class UserPointService {
       relations: ['referral', 'referral.user', 'referral.referredByUser'],
       skip: (page - 1) * limit,
       take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 }
