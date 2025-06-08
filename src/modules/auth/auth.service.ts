@@ -19,9 +19,9 @@ import {
 
 import verifyDataSignature from '@cardano-foundation/cardano-verify-datasignature';
 import { AuthResponseOutputDto } from '@modules/auth/dtos/auth-response.dto';
-import { DiscordOAuthService } from 'external/discord/discord-oauth.service';
+import { DiscordOAuthService } from 'external/discord/oauth/discord-oauth.service';
 import { FirebaseAuthervice } from 'external/firebase/firebase-auth.service';
-import { TelegramOAuthService } from 'external/telegram/telegram-oauth.service';
+import { TelegramOAuthService } from 'external/telegram/oauth/telegram-oauth.service';
 import { XApiHttpService } from 'external/x/x-api.service';
 import { firstValueFrom } from 'rxjs';
 

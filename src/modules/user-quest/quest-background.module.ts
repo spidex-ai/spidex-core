@@ -5,10 +5,13 @@ import { SwapModule } from '@modules/swap/swap.module';
 import { UserPointModule } from '@modules/user-point/user-point.module';
 import { UserQuestController } from '@modules/user-quest/controllers/user-quest.controller';
 import { QuestService } from '@modules/user-quest/services/quest.service';
+import { UserQuestBackgroundService } from '@modules/user-quest/services/user-quest-background.service';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
 import { UserReferralModule } from '@modules/user-referral/user-referral.module';
 import { UserModule } from '@modules/user/user.module';
 import { forwardRef, Module } from '@nestjs/common';
+import { DiscordVerificationModule } from 'external/discord/verification/discord-verification.module';
+import { TelegramVerificationModule } from 'external/telegram/verification/telegram-verification.module';
 import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
 
 @Module({
@@ -18,9 +21,11 @@ import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
     forwardRef(() => UserReferralModule),
     forwardRef(() => SwapModule),
     forwardRef(() => UserModule),
+    forwardRef(() => DiscordVerificationModule),
+    forwardRef(() => TelegramVerificationModule),
   ],
-  providers: [UserQuestService, QuestService],
+  providers: [UserQuestService, QuestService, UserQuestBackgroundService],
   controllers: [UserQuestController],
-  exports: [QuestService, UserQuestService],
+  exports: [QuestService, UserQuestService, UserQuestBackgroundService],
 })
-export class QuestModule {}
+export class QuestBackgroundModule {}

@@ -1,5 +1,6 @@
 import { IQuestRelatedToTradeEvent, ISocialQuestVerifyEvent } from '@modules/user-quest/interfaces/event-message';
 import { USER_QUEST_EVENT_PATTERN } from '@modules/user-quest/interfaces/event-pattern';
+import { UserQuestBackgroundService } from '@modules/user-quest/services/user-quest-background.service';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { RmqContext } from '@nestjs/microservices';
@@ -13,6 +14,7 @@ export class UserQuestConsumerService {
   constructor(
     private readonly userQuestService: UserQuestService,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly userQuestBackgroundService: UserQuestBackgroundService,
   ) {}
 
   async handleQuestRelatedToTradeEvent(_: RmqContext, data: IQuestRelatedToTradeEvent) {
@@ -53,7 +55,7 @@ export class UserQuestConsumerService {
     // Use setTimeout to simulate the verification delay
     setTimeout(async () => {
       try {
-        await this.userQuestService.handleSocialQuestVerifyEvent(data);
+        await this.userQuestBackgroundService.handleSocialQuestVerifyEvent(data);
       } catch (error) {
         this.logger.error(
           `Error completing social quest verification for user ${data.userId}, quest ${data.questId}:`,

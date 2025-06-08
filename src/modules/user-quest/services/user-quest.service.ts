@@ -41,8 +41,8 @@ import { LoggerService } from '@shared/modules/loggers/logger.service';
 import { RabbitMQService } from '@shared/modules/rabbitmq/rabbitmq.service';
 import { getEndOfDay, getStartOfDay } from '@shared/utils/dayjs';
 import { isNullOrUndefined } from '@shared/utils/util';
-import { DiscordVerificationService } from 'external/discord/discord-verification.service';
-import { TelegramVerificationService } from 'external/telegram/telegram-verification.service';
+import { DiscordVerificationService } from 'external/discord/verification/discord-verification.service';
+import { TelegramVerificationService } from 'external/telegram/verification/telegram-verification.service';
 import { UserService } from '@modules/user/user.service';
 import Decimal from 'decimal.js';
 import { flattenDeep, get, groupBy, orderBy } from 'lodash';
@@ -66,8 +66,6 @@ export class UserQuestService {
     private swapService: SwapService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-    private discordVerificationService: DiscordVerificationService,
-    private telegramVerificationService: TelegramVerificationService,
   ) {}
 
   async checkIn(userId: number): Promise<void> {
@@ -634,91 +632,6 @@ export class UserQuestService {
         }
       }),
     );
-  }
-
-  async handleSocialQuestVerifyEvent(data: ISocialQuestVerifyEvent): Promise<void> {
-    // This method will be called after the delay to verify the social quest
-    const quest = await this.questService.getQuestById(data.questId);
-    if (!quest) {
-      this.logger.error(`Quest not found during verification: ${data.questId}`);
-      return;
-    }
-
-    // Get user info for verification
-    const user = await this.userService.getUserById(data.userId);
-    if (!user) {
-      this.logger.error(`User not found during verification: ${data.userId}`);
-      return;
-    }
-
-    const existingUserQuest = await this.userQuestRepository.findOne({
-      where: {
-        userId: data.userId,
-        questId: data.questId,
-        deletedAt: IsNull(),
-      },
-    });
-
-    if (!existingUserQuest) {
-      this.logger.error(`User quest not found during verification: ${data.userId}, ${data.questId}`);
-      return;
-    }
-
-    if (existingUserQuest.status === EUserQuestStatus.COMPLETED) {
-      this.logger.error(`User quest already completed during verification: ${data.userId}, ${data.questId}`);
-      return;
-    }
-
-    // Perform actual verification based on quest type
-    let isVerified = false;
-    let verificationError = '';
-
-    switch (quest.type) {
-      case EQuestType.JOIN_DISCORD:
-        if (user.discordId) {
-          const discordResult = await this.discordVerificationService.verifyMembership(user.discordId);
-          isVerified = discordResult.isVerified;
-          verificationError = discordResult.error || '';
-          this.logger.log(
-            `Discord verification for user ${data.userId}: ${isVerified ? 'SUCCESS' : 'FAILED'} - ${verificationError}`,
-          );
-        } else {
-          verificationError = 'User has not linked Discord account';
-          this.logger.warn(`Discord verification failed for user ${data.userId}: ${verificationError}`);
-        }
-        break;
-
-      case EQuestType.JOIN_TELEGRAM:
-        if (user.telegramId) {
-          const telegramResult = await this.telegramVerificationService.verifyMembership(parseInt(user.telegramId));
-          isVerified = telegramResult.isVerified;
-          verificationError = telegramResult.error || '';
-          this.logger.log(
-            `Telegram verification for user ${data.userId}: ${isVerified ? 'SUCCESS' : 'FAILED'} - ${verificationError}`,
-          );
-        } else {
-          verificationError = 'User has not linked Telegram account';
-          this.logger.warn(`Telegram verification failed for user ${data.userId}: ${verificationError}`);
-        }
-        break;
-
-      default:
-        // For other social quests (SOCIAL, FOLLOW_X), we'll simulate verification for now
-        isVerified = true;
-        this.logger.log(`Social quest verification simulated for user ${data.userId}, quest ${data.questId}`);
-        break;
-    }
-
-    if (isVerified) {
-      await this.completeQuest(data.userId, quest, {
-        userQuestId: existingUserQuest.id,
-      });
-      this.logger.log(`Social quest verification completed for user ${data.userId}, quest ${data.questId}`);
-    } else {
-      this.logger.warn(
-        `Social quest verification failed for user ${data.userId}, quest ${data.questId}: ${verificationError}`,
-      );
-    }
   }
 
   async triggerAgentQuest(userId: number, _: TriggerAgentQuestQueryDto): Promise<void> {

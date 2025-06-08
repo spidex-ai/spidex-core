@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, GatewayIntentBits, Guild } from 'discord.js';
 
@@ -9,13 +9,15 @@ export interface DiscordVerificationResult {
 }
 
 @Injectable()
-export class DiscordVerificationService {
+export class DiscordVerificationService implements OnModuleInit {
   private readonly logger = new Logger(DiscordVerificationService.name);
   private client: Client;
   private isReady = false;
 
-  constructor(private readonly configService: ConfigService) {
-    this.initializeClient();
+  constructor(private readonly configService: ConfigService) {}
+
+  async onModuleInit() {
+    await this.initializeClient();
   }
 
   private async initializeClient() {
@@ -56,7 +58,7 @@ export class DiscordVerificationService {
    * @param guildId - The Discord server (guild) ID to check membership in
    * @returns Promise<DiscordVerificationResult>
    */
-  async verifyMembership(discordUserId: string, guildId?: string): Promise<DiscordVerificationResult> {
+  async verifyMembership(discordUserId: string): Promise<DiscordVerificationResult> {
     if (!this.isReady || !this.client) {
       return {
         isVerified: false,
@@ -66,7 +68,7 @@ export class DiscordVerificationService {
 
     try {
       // Use configured guild ID if not provided
-      const targetGuildId = guildId || this.configService.get<string>('DISCORD_GUILD_ID');
+      const targetGuildId = this.configService.get<string>('DISCORD_GUILD_ID');
 
       if (!targetGuildId) {
         return {

@@ -7,9 +7,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '@shared/strategy/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { DiscordModule } from 'external/discord/discord.module';
+import { DiscordOAuthModule } from 'external/discord/oauth/discord-oauth.module';
 import { FirebaseModule } from 'external/firebase/firebase.module';
-import { TelegramModule } from 'external/telegram/telegram.module';
+import { TelegramOAuthModule } from 'external/telegram/oauth/telegram-oauth.module';
 import { XApiModule } from 'external/x/x-api.module';
 
 @Module({
@@ -27,8 +27,8 @@ import { XApiModule } from 'external/x/x-api.module';
       inject: [ConfigService],
     }),
     UserModule,
-    DiscordModule,
-    TelegramModule,
+    DiscordOAuthModule,
+    TelegramOAuthModule,
     FirebaseModule,
     XApiModule,
   ],

@@ -43,7 +43,7 @@ export class TelegramVerificationService {
    * @param chatId - The Telegram channel/group ID to check membership in
    * @returns Promise<TelegramVerificationResult>
    */
-  async verifyMembership(telegramUserId: number, chatId?: string): Promise<TelegramVerificationResult> {
+  async verifyMembership(telegramUserId: number): Promise<TelegramVerificationResult> {
     if (!this.isReady || !this.bot) {
       return {
         isVerified: false,
@@ -53,7 +53,7 @@ export class TelegramVerificationService {
 
     try {
       // Use configured chat ID if not provided
-      const targetChatId = chatId || this.configService.get<string>('TELEGRAM_CHANNEL_ID');
+      const targetChatId = this.configService.get<string>('TELEGRAM_CHANNEL_ID');
 
       if (!targetChatId) {
         return {
