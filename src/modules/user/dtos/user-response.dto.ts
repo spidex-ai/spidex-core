@@ -216,6 +216,10 @@ export class GetLoginManagementResponseDto {
   @Expose()
   walletAddress: string;
 
+  @Expose()
+  @ApiProperty()
+  stakeAddress: string;
+
   @ApiProperty()
   @Expose()
   email: string;

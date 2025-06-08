@@ -28,6 +28,14 @@ export class ConnectWalletRequestDto {
   })
   publicKey: string;
 
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Stake address',
+    example: 'stake1uq...',
+  })
+  stakeAddress: string;
+
   @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
   @Expose()
   @IsOptional()

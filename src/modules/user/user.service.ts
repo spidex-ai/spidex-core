@@ -62,7 +62,9 @@ export class UserService {
         });
       }
 
-      const existingUser = await this.userRepository.findOne({ where: { walletAddress: connectWalletInput.address } });
+      const existingUser = await this.userRepository.findOne({
+        where: { stakeAddress: connectWalletInput.stakeAddress },
+      });
       if (existingUser) {
         throw new BadRequestException({
           validatorErrors: EError.WALLET_ADDRESS_USED,
@@ -71,13 +73,14 @@ export class UserService {
       }
 
       user.walletAddress = connectWalletInput.address;
+      user.stakeAddress = connectWalletInput.stakeAddress;
       await this.userRepository.save(user);
       return user;
     } else {
-      const { address: walletAddress } = connectWalletInput;
+      const { address: walletAddress, stakeAddress } = connectWalletInput;
       const user = await this.userRepository.findOne({
         where: {
-          walletAddress,
+          stakeAddress,
         },
       });
       if (user) {
@@ -92,6 +95,7 @@ export class UserService {
 
       const newUser = await this.userRepository.create({
         walletAddress,
+        stakeAddress,
         status: EUserStatus.ACTIVE,
         username: getRandomUserName(),
         referralCode: this.generateReferralCode(),

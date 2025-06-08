@@ -13,6 +13,10 @@ export class UserEntity extends BaseExcludeDeletedAtEntity {
   @Column({ name: 'wallet_address', nullable: true, default: null })
   walletAddress: string;
 
+  @Index({ unique: true, where: 'stake_address IS NOT NULL' })
+  @Column({ name: 'stake_address', nullable: true, default: null })
+  stakeAddress: string;
+
   @Index({ unique: true, where: 'username IS NOT NULL' })
   @Column({ name: 'username', nullable: true, default: null })
   username: string;
