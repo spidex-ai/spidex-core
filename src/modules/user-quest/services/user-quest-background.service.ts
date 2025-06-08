@@ -1,28 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EQuestType } from '@database/entities/quest.entity';
 import { EUserQuestStatus } from '@database/entities/user-quest.entity';
-import { UserPointLogRepository } from '@database/repositories/user-point-log.repository';
 import { UserQuestRepository } from '@database/repositories/user-quest.repository';
-import { SwapService } from '@modules/swap/swap.service';
 import { UserPointService } from '@modules/user-point/services/user-point.service';
 import { ISocialQuestVerifyEvent } from '@modules/user-quest/interfaces/event-message';
 import { QuestService } from '@modules/user-quest/services/quest.service';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
-import { UserReferralService } from '@modules/user-referral/user-referral.service';
 import { UserService } from '@modules/user/user.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { LoggerService } from '@shared/modules/loggers/logger.service';
-import { RabbitMQService } from '@shared/modules/rabbitmq/rabbitmq.service';
 import { DiscordVerificationService } from 'external/discord/verification/discord-verification.service';
 import { TelegramVerificationService } from 'external/telegram/verification/telegram-verification.service';
 import { IsNull } from 'typeorm';
 
 @Injectable()
-export class UserQuestBackgroundService  {
+export class UserQuestBackgroundService {
   private readonly logger = this.loggerService.getLogger(UserQuestBackgroundService.name);
   constructor(
     private userQuestRepository: UserQuestRepository,
-    @Inject(forwardRef(() => UserPointService))
     private questService: QuestService,
     private loggerService: LoggerService,
 
