@@ -26,7 +26,9 @@ export class TelegramVerificationService {
         return;
       }
 
-      this.bot = new TelegramBot(token, { polling: false });
+      this.bot = new TelegramBot(token, {
+        polling: true,
+      });
 
       // Test the bot connection
       const me = await this.bot.getMe();
