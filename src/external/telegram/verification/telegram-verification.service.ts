@@ -49,7 +49,7 @@ export class TelegramVerificationService implements OnModuleDestroy {
 
     // If TELEGRAM_HANDLER_INSTANCE is set, only that instance should handle it
     if (telegramHandler) {
-      const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'api';
+      const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'core-consumer';
       const shouldHandle = currentInstance === telegramHandler;
 
       this.logger.log(
@@ -58,9 +58,9 @@ export class TelegramVerificationService implements OnModuleDestroy {
       return shouldHandle;
     }
 
-    // Default behavior: only 'api' instance handles Telegram (not core-consumer)
-    const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'api';
-    const isApiInstance = currentInstance === 'api' || currentInstance.includes('api');
+    // Default behavior: only 'core-consumer' instance handles Telegram (not core-consumer)
+    const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'core-consumer';
+    const isApiInstance = currentInstance === 'core-consumer' || currentInstance.includes('core-consumer');
 
     this.logger.log(`🔍 Default Telegram handler logic: instance=${currentInstance}, isApiInstance=${isApiInstance}`);
     return isApiInstance;
