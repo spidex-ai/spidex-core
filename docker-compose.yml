@@ -22,7 +22,7 @@ services:
       - DB_HOST=postgres
       - REDIS_HOST=redis
       - INSTANCE_NAME=api
-      - TELEGRAM_HANDLER_INSTANCE=api
+      - TELEGRAM_HANDLER_INSTANCE=core-consumer
     volumes:
       - ./service-account.json:/app/service-account.json
     networks:
@@ -40,7 +40,7 @@ services:
       - .env
     environment:
       - INSTANCE_NAME=core-consumer
-      - TELEGRAM_HANDLER_INSTANCE=api
+      - TELEGRAM_HANDLER_INSTANCE=core-consumer
     depends_on:
       rabbitmq:
         condition: service_healthy
