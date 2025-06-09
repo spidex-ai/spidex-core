@@ -65,7 +65,16 @@ export class TelegramVerificationService implements OnModuleInit {
         return;
       }
 
-      this.bot = new TelegramBot(botToken, { polling: true });
+      this.bot = new TelegramBot(botToken, {
+        polling: true,
+        request: {
+          url: 'https://api.telegram.org',
+          agentOptions: {
+            keepAlive: true,
+            family: 4,
+          },
+        },
+      });
       this.isReady = true;
 
       const botProfile = await this.bot.getMe();
