@@ -11,7 +11,6 @@ import {
 } from '@database/entities/quest.entity';
 import { EUserPointLogType } from '@database/entities/user-point-log.entity';
 import { EUserQuestStatus, UserQuestEntity } from '@database/entities/user-quest.entity';
-import { UserPointLogRepository } from '@database/repositories/user-point-log.repository';
 import { UserQuestRepository } from '@database/repositories/user-quest.repository';
 import { SwapService } from '@modules/swap/swap.service';
 import { IUserPointChangeEvent } from '@modules/user-point/interfaces/event-message';
@@ -41,9 +40,6 @@ import { LoggerService } from '@shared/modules/loggers/logger.service';
 import { RabbitMQService } from '@shared/modules/rabbitmq/rabbitmq.service';
 import { getEndOfDay, getStartOfDay } from '@shared/utils/dayjs';
 import { isNullOrUndefined } from '@shared/utils/util';
-import { DiscordVerificationService } from 'external/discord/verification/discord-verification.service';
-import { TelegramVerificationService } from 'external/telegram/verification/telegram-verification.service';
-import { UserService } from '@modules/user/user.service';
 import Decimal from 'decimal.js';
 import { flattenDeep, get, groupBy, orderBy } from 'lodash';
 import { And, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
@@ -61,11 +57,8 @@ export class UserQuestService {
     private loggerService: LoggerService,
     @Inject(forwardRef(() => UserReferralService))
     private userReferralService: UserReferralService,
-    private userPointLogRepository: UserPointLogRepository,
     @Inject(forwardRef(() => SwapService))
     private swapService: SwapService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
   ) {}
 
   async checkIn(userId: number): Promise<void> {

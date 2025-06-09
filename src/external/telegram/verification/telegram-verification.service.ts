@@ -18,17 +18,52 @@ export class TelegramVerificationService implements OnModuleDestroy {
   private initializationTimeout: NodeJS.Timeout;
 
   constructor(private readonly configService: ConfigService) {
+    // Check if this instance should handle Telegram polling
+    const shouldInitialize = this.shouldInitializeTelegramBot();
+
+    if (!shouldInitialize) {
+      this.logger.warn('🚫 Telegram bot initialization skipped - another instance is handling it');
+      return;
+    }
+
     // In production, delay longer to avoid conflicts with multiple instances
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
-    const delay = isProduction ? 10000 : 2000; // 10 seconds in production
+    const delay = isProduction ? 15000 : 2000; // 15 seconds in production
 
     this.logger.log(
-      `Scheduling Telegram bot initialization in ${delay}ms (${isProduction ? 'production' : 'development'} mode)`,
+      `📱 This instance will handle Telegram bot. Scheduling initialization in ${delay}ms (${isProduction ? 'production' : 'development'} mode)`,
     );
 
     this.initializationTimeout = setTimeout(() => {
       this.initializeBot();
     }, delay);
+  }
+
+  /**
+   * Determine if this instance should initialize the Telegram bot
+   * Only one instance should handle Telegram polling to avoid 409 conflicts
+   */
+  private shouldInitializeTelegramBot(): boolean {
+    // Check environment variable to control which instance handles Telegram
+    const telegramHandler = this.configService.get<string>('TELEGRAM_HANDLER_INSTANCE');
+
+    // If TELEGRAM_HANDLER_INSTANCE is set, only that instance should handle it
+    if (telegramHandler) {
+      const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'api';
+      const shouldHandle = currentInstance === telegramHandler;
+
+      this.logger.log(
+        `🔍 Telegram handler check: current=${currentInstance}, expected=${telegramHandler}, shouldHandle=${shouldHandle}`,
+      );
+      return shouldHandle;
+    }
+
+    // Default behavior: only 'api' instance handles Telegram (not core-consumer)
+    const currentInstance = this.configService.get<string>('INSTANCE_NAME') || 'api';
+    const isApiInstance = currentInstance === 'api' || currentInstance.includes('api');
+
+    this.logger.log(`🔍 Default Telegram handler logic: instance=${currentInstance}, isApiInstance=${isApiInstance}`);
+    return isApiInstance;
   }
 
   async onModuleDestroy() {

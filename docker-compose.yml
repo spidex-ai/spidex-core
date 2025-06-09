@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: 
+    command:
       sh -c "yarn db:migration:run && yarn start:prod"
     restart: always
     ports:
@@ -21,6 +21,8 @@ services:
     environment:
       - DB_HOST=postgres
       - REDIS_HOST=redis
+      - INSTANCE_NAME=api
+      - TELEGRAM_HANDLER_INSTANCE=api
     volumes:
       - ./service-account.json:/app/service-account.json
     networks:
@@ -36,6 +38,9 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - INSTANCE_NAME=core-consumer
+      - TELEGRAM_HANDLER_INSTANCE=api
     depends_on:
       rabbitmq:
         condition: service_healthy
