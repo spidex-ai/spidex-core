@@ -46,7 +46,7 @@ export class DexhunterService {
         return token.is_verified === verified;
       });
 
-      return paginatedData;
+      return paginatedData.slice((page - 1) * limit, page * limit);
     } catch (error) {
       throw new BadRequestException({
         message: 'Search token failed',
