@@ -70,19 +70,16 @@ export class TelegramVerificationService implements OnModuleDestroy {
       await this.cleanup();
 
       // Create new bot instance with production-optimized configuration
-      const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 
       this.bot = new TelegramBot(token, {
-        polling: {
-          interval: isProduction ? 2000 : 1000, // Slower polling in production
-          autoStart: false,
-          params: {
-            timeout: isProduction ? 20 : 10, // Longer timeout in production
-            allowed_updates: ['message'], // Only listen for messages to reduce load
+        polling: true,
+        request: {
+          agentOptions: {
+            keepAlive: true,
+            family: 4,
           },
+          url: 'https://api.telegram.org',
         },
-        // Note: request options are handled internally by the library
-        // We'll rely on the default HTTP agent configuration
       });
 
       // Set up error handlers before starting polling
@@ -112,15 +109,43 @@ export class TelegramVerificationService implements OnModuleDestroy {
       this.logger.log(`✅ Telegram bot initialized successfully: @${me.username} (${me.first_name})`);
     } catch (error) {
       this.isReady = false;
-      this.logger.error(`❌ Failed to initialize Telegram bot (attempt ${this.initializationAttempts}):`, {
+
+      // Enhanced error logging for EC2 debugging
+      const errorDetails = {
         message: error.message,
         code: error.code,
         type: error.constructor.name,
-      });
+        stack: error.stack?.split('\n')[0], // First line of stack trace
+        attempt: this.initializationAttempts,
+        maxAttempts: this.maxInitializationAttempts,
+      };
 
-      // Retry logic
+      this.logger.error(`❌ Failed to initialize Telegram bot:`, errorDetails);
+
+      // Check for specific EC2-related errors
+      if (error.code === 'EFATAL' || error.message?.includes('EFATAL') || error.message?.includes('AggregateError')) {
+        this.logger.error('🚨 EFATAL/AggregateError detected! Common causes in EC2:');
+        this.logger.error('   1. Multiple instances polling the same bot token');
+        this.logger.error('   2. Webhook conflicts with polling');
+        this.logger.error('   3. Network connectivity issues to api.telegram.org');
+        this.logger.error('   4. EC2 security group blocking outbound HTTPS (port 443)');
+        this.logger.error('   5. Rate limiting from Telegram servers');
+      }
+
+      if (error.code === 'ENOTFOUND' || error.message?.includes('getaddrinfo')) {
+        this.logger.error('🌐 DNS resolution error detected! Check EC2 DNS settings and internet connectivity.');
+      }
+
+      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+        this.logger.error('⏱️  Timeout error detected! Check EC2 network latency and security groups.');
+      }
+
+      // Retry logic with longer delays for EC2
       if (this.initializationAttempts < this.maxInitializationAttempts) {
-        const retryDelay = this.initializationAttempts * 5000; // Exponential backoff
+        const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+        const baseDelay = isProduction ? 15000 : 5000; // Longer delays in production
+        const retryDelay = this.initializationAttempts * baseDelay; // Exponential backoff
+
         this.logger.log(`Retrying Telegram bot initialization in ${retryDelay}ms...`);
 
         setTimeout(() => {
@@ -128,6 +153,7 @@ export class TelegramVerificationService implements OnModuleDestroy {
         }, retryDelay);
       } else {
         this.logger.error('❌ Max initialization attempts reached. Telegram verification will be disabled.');
+        this.logger.error('💡 For EC2 troubleshooting, run: ./diagnose-telegram-ec2.sh');
       }
     }
   }
