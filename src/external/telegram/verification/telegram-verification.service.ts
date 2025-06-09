@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import TelegramBot from 'node-telegram-bot-api';
 
@@ -9,34 +9,17 @@ export interface TelegramVerificationResult {
 }
 
 @Injectable()
-export class TelegramVerificationService implements OnModuleDestroy {
+export class TelegramVerificationService implements OnModuleInit {
   private readonly logger = new Logger(TelegramVerificationService.name);
   private bot: TelegramBot;
   private isReady = false;
   private initializationAttempts = 0;
   private readonly maxInitializationAttempts = 3;
-  private initializationTimeout: NodeJS.Timeout;
 
-  constructor(private readonly configService: ConfigService) {
-    // Check if this instance should handle Telegram polling
-    const shouldInitialize = this.shouldInitializeTelegramBot();
+  constructor(private readonly configService: ConfigService) {}
 
-    if (!shouldInitialize) {
-      this.logger.warn('🚫 Telegram bot initialization skipped - another instance is handling it');
-      return;
-    }
-
-    // In production, delay longer to avoid conflicts with multiple instances
-    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
-    const delay = isProduction ? 15000 : 2000; // 15 seconds in production
-
-    this.logger.log(
-      `📱 This instance will handle Telegram bot. Scheduling initialization in ${delay}ms (${isProduction ? 'production' : 'development'} mode)`,
-    );
-
-    this.initializationTimeout = setTimeout(() => {
-      this.initializeBot();
-    }, delay);
+  async onModuleInit() {
+    await this.initializeBot();
   }
 
   /**
@@ -66,197 +49,30 @@ export class TelegramVerificationService implements OnModuleDestroy {
     return isApiInstance;
   }
 
-  async onModuleDestroy() {
-    if (this.initializationTimeout) {
-      clearTimeout(this.initializationTimeout);
-    }
-    await this.cleanup();
-  }
-
-  private async cleanup() {
-    if (this.bot) {
-      try {
-        this.logger.log('Cleaning up Telegram bot...');
-        await this.bot.stopPolling();
-        this.bot.removeAllListeners();
-        this.isReady = false;
-        this.logger.log('Telegram bot cleanup completed');
-      } catch (error) {
-        this.logger.warn('Error during Telegram bot cleanup:', error.message);
-      }
-    }
-  }
-
   private async initializeBot() {
-    this.initializationAttempts++;
+    // Check if this instance should handle Telegram polling
+    const shouldInitialize = this.shouldInitializeTelegramBot();
+
+    if (!shouldInitialize) {
+      this.logger.warn('🚫 Telegram bot initialization skipped - another instance is handling it');
+      return;
+    }
 
     try {
-      const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
-      if (!token) {
-        this.logger.warn('TELEGRAM_BOT_TOKEN not configured. Telegram verification will be disabled.');
+      const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+      if (!botToken) {
+        this.logger.error('Telegram bot token not configured');
         return;
       }
 
-      this.logger.log(
-        `Initializing Telegram bot (attempt ${this.initializationAttempts}/${this.maxInitializationAttempts})...`,
-      );
-
-      // Clean up any existing bot instance
-      await this.cleanup();
-
-      // Create new bot instance with production-optimized configuration
-
-      this.bot = new TelegramBot(token, {
-        polling: true,
-        request: {
-          agentOptions: {
-            keepAlive: true,
-            family: 4,
-          },
-          url: 'https://api.telegram.org',
-        },
-      });
-
-      // Set up error handlers before starting polling
-      this.bot.on('error', error => {
-        this.logger.error('Telegram bot error:', error);
-        this.handleBotError(error);
-      });
-
-      this.bot.on('polling_error', error => {
-        this.logger.error('Telegram bot polling error:', error);
-        this.handlePollingError(error);
-      });
-
-      // Start polling manually
-      await this.bot.startPolling();
-
-      // Test the bot connection with timeout
-      const connectionPromise = this.bot.getMe();
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Connection timeout')), 15000);
-      });
-
-      const me = (await Promise.race([connectionPromise, timeoutPromise])) as any;
-
+      this.bot = new TelegramBot(botToken, { polling: true });
       this.isReady = true;
-      this.initializationAttempts = 0; // Reset on success
-      this.logger.log(`✅ Telegram bot initialized successfully: @${me.username} (${me.first_name})`);
+
+      const botProfile = await this.bot.getMe();
+      this.logger.log(`✅ Telegram bot initialized successfully: ${botProfile.username}`);
     } catch (error) {
+      this.logger.error('Failed to initialize Telegram bot:', error);
       this.isReady = false;
-
-      // Enhanced error logging for EC2 debugging
-      const errorDetails = {
-        message: error.message,
-        code: error.code,
-        type: error.constructor.name,
-        stack: error.stack?.split('\n')[0], // First line of stack trace
-        attempt: this.initializationAttempts,
-        maxAttempts: this.maxInitializationAttempts,
-      };
-
-      this.logger.error(`❌ Failed to initialize Telegram bot:`, errorDetails);
-
-      // Check for specific EC2-related errors
-      if (error.code === 'EFATAL' || error.message?.includes('EFATAL') || error.message?.includes('AggregateError')) {
-        this.logger.error('🚨 EFATAL/AggregateError detected! Common causes in EC2:');
-        this.logger.error('   1. Multiple instances polling the same bot token');
-        this.logger.error('   2. Webhook conflicts with polling');
-        this.logger.error('   3. Network connectivity issues to api.telegram.org');
-        this.logger.error('   4. EC2 security group blocking outbound HTTPS (port 443)');
-        this.logger.error('   5. Rate limiting from Telegram servers');
-      }
-
-      if (error.code === 'ENOTFOUND' || error.message?.includes('getaddrinfo')) {
-        this.logger.error('🌐 DNS resolution error detected! Check EC2 DNS settings and internet connectivity.');
-      }
-
-      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
-        this.logger.error('⏱️  Timeout error detected! Check EC2 network latency and security groups.');
-      }
-
-      // Retry logic with longer delays for EC2
-      if (this.initializationAttempts < this.maxInitializationAttempts) {
-        const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
-        const baseDelay = isProduction ? 15000 : 5000; // Longer delays in production
-        const retryDelay = this.initializationAttempts * baseDelay; // Exponential backoff
-
-        this.logger.log(`Retrying Telegram bot initialization in ${retryDelay}ms...`);
-
-        setTimeout(() => {
-          this.initializeBot();
-        }, retryDelay);
-      } else {
-        this.logger.error('❌ Max initialization attempts reached. Telegram verification will be disabled.');
-        this.logger.error('💡 For EC2 troubleshooting, run: ./diagnose-telegram-ec2.sh');
-      }
-    }
-  }
-
-  private handleBotError(error: any) {
-    this.logger.error('Telegram bot encountered an error:', error);
-    this.isReady = false;
-
-    // Attempt to restart the bot after a delay
-    setTimeout(() => {
-      if (this.initializationAttempts < this.maxInitializationAttempts) {
-        this.logger.log('Attempting to restart Telegram bot after error...');
-        this.initializeBot();
-      }
-    }, 10000);
-  }
-
-  private handlePollingError(error: any) {
-    this.logger.error('Telegram bot polling error:', {
-      message: error.message,
-      code: error.code,
-      type: error.constructor.name,
-    });
-
-    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
-
-    // Handle specific polling errors
-    if (error.code === 'EFATAL' || error.message?.includes('EFATAL') || error.message?.includes('AggregateError')) {
-      this.logger.error(
-        '🚨 EFATAL/AggregateError detected! This usually indicates a conflict with another bot instance or network issues.',
-      );
-      this.isReady = false;
-
-      // In production, be more aggressive about cleanup and restart
-      const restartDelay = isProduction ? 30000 : 15000; // 30 seconds in production
-
-      this.logger.log(`Scheduling bot restart in ${restartDelay}ms due to EFATAL error...`);
-
-      setTimeout(async () => {
-        try {
-          await this.cleanup();
-
-          // In production, reset attempt counter to allow more retries for critical errors
-          if (isProduction && (error.code === 'EFATAL' || error.message?.includes('EFATAL'))) {
-            this.initializationAttempts = 0;
-            this.logger.log('Reset initialization attempts due to EFATAL error in production');
-          }
-
-          if (this.initializationAttempts < this.maxInitializationAttempts) {
-            this.initializeBot();
-          } else {
-            this.logger.error(
-              '❌ Max initialization attempts reached after EFATAL error. Manual intervention may be required.',
-            );
-          }
-        } catch (cleanupError) {
-          this.logger.error('Error during cleanup after EFATAL:', cleanupError);
-        }
-      }, restartDelay);
-    } else {
-      // Handle other polling errors with standard retry logic
-      this.isReady = false;
-      setTimeout(() => {
-        if (this.initializationAttempts < this.maxInitializationAttempts) {
-          this.logger.log('Attempting to restart bot after polling error...');
-          this.initializeBot();
-        }
-      }, 10000);
     }
   }
 
