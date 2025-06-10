@@ -69,6 +69,7 @@ export class UserQuestBackgroundService {
       case EQuestType.JOIN_DISCORD:
         if (user.discordId) {
           const discordResult = await this.discordVerificationService.verifyMembership(user.discordId);
+          console.log('Discord verified: ', discordResult);
           isVerified = discordResult.isVerified;
           verificationError = discordResult.error || '';
           this.logger.log(
