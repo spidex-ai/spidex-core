@@ -121,8 +121,8 @@ export class PortfolioService {
           ? `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`
           : tokenDetailsMap[transaction.tokenB]?.logo;
 
-      const tokenAName = transaction.tokenA === '' ? 'Cardano' : tokenDetailsMap[transaction.tokenA]?.name;
-      const tokenBName = transaction.tokenB === '' ? 'Cardano' : tokenDetailsMap[transaction.tokenB]?.name;
+      const tokenAName = transaction.tokenA === '' ? CARDANO_NAME : tokenDetailsMap[transaction.tokenA]?.name;
+      const tokenBName = transaction.tokenB === '' ? CARDANO_NAME : tokenDetailsMap[transaction.tokenB]?.name;
 
       return {
         ...transaction,

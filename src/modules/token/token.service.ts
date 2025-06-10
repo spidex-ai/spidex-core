@@ -15,6 +15,7 @@ import {
 import {
   CARDANO_DECIMALS,
   CARDANO_LOVELACE_UNIT,
+  CARDANO_NAME,
   CARDANO_POLICY,
   CARDANO_TICKER,
   CARDANO_TOTAL_SUPPLY,
@@ -86,7 +87,7 @@ export class TokenService {
         decimals: CARDANO_DECIMALS,
         price: 1,
         usdPrice: adaPrice,
-        name: 'Cardano',
+        name: CARDANO_NAME,
         description: 'Cardano is a blockchain platform that enables secure and scalable decentralized applications.',
       };
     }
