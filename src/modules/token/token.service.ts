@@ -1,6 +1,8 @@
 import {
   TOKEN_DETAILS_CACHE_KEY,
   TOKEN_DETAILS_CACHE_TTL,
+  TOKEN_METADATA_CACHE_KEY,
+  TOKEN_METADATA_CACHE_TTL,
   TOKEN_STATS_CACHE_KEY,
   TOKEN_STATS_CACHE_TTL,
   TOKEN_TRADES_CACHE_KEY,
@@ -418,5 +420,43 @@ export class TokenService {
       }),
     );
     return response;
+  }
+
+  async getTokenMetadata(tokenId: string) {
+    const cacheKey = TOKEN_METADATA_CACHE_KEY(tokenId);
+    const cachedData = await this.cache.get<TokenMetadataEntity>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+      return {
+        unit: CARDANO_UNIT,
+        name: CARDANO_NAME,
+        ticker: CARDANO_TICKER,
+        logo: `${this.configService.get(EEnvKey.APP_BASE_URL)}/public/icons/tokens/ada.svg`,
+        description: 'Cardano is a blockchain platform that enables secure and scalable decentralized applications.',
+        decimals: CARDANO_DECIMALS,
+        policy: CARDANO_POLICY,
+        url: 'https://cardano.org',
+      };
+    }
+
+    const data = await this.tokenMetaService.getTokenMetadata(tokenId, [
+      'logo',
+      'name',
+      'ticker',
+      'description',
+      'decimals',
+      'policy',
+      'url',
+    ]);
+
+    if (!data.ticker) {
+      data.ticker = data.name;
+    }
+
+    await this.cache.set(cacheKey, data, TOKEN_METADATA_CACHE_TTL);
+    return data;
   }
 }

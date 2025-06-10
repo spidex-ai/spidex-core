@@ -10,7 +10,7 @@ import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
   imports: [
     CustomRepositoryModule.forFeature([TokenMetadataRepository]),
     AwsModule,
-    TokenCardanoModule,
+  TokenCardanoModule,
     BlockfrostModule,
   ],
   providers: [TokenMetaService],

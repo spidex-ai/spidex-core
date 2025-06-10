@@ -107,4 +107,15 @@ export class TokenController {
   ) {
     return this.tokenService.getTokenOHLCV(tokenId, quote, request);
   }
+
+  @Get(':tokenId/metadata')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token stats',
+  })
+  async getTokenMetadata(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenMetadata(tokenId);
+  }
 }
