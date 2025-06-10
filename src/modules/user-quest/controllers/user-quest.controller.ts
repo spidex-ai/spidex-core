@@ -75,4 +75,10 @@ export class UserQuestController {
   //   const result = await this.userQuestService.getPublicQuests(ctx, filter.category)
   //   return result
   // }
+
+  @AuthUserGuard()
+  @Get('verify/:questId')
+  async verifyQuest(@AuthUser() user: IJwtPayload, @Param('questId') questId: number) {
+    return this.userQuestService.verifyQuestStatus(user.userId, questId);
+  }
 }

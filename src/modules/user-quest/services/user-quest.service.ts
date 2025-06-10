@@ -656,4 +656,24 @@ export class UserQuestService {
       }),
     );
   }
+
+  async verifyQuestStatus(userId: number, questId: number): Promise<UserQuestEntity> {
+    const quest = await this.questService.getQuestById(questId);
+    if (!quest) {
+      throw new BadRequestException({
+        validatorErrors: EError.QUEST_NOT_FOUND,
+        message: `UserQuestService::verifyQuest() | Quest not found`,
+      });
+    }
+
+    const existingUserQuest = await this.userQuestRepository.findOne({
+      where: {
+        userId,
+        questId,
+        deletedAt: IsNull(),
+      },
+    });
+
+    return existingUserQuest;
+  }
 }
