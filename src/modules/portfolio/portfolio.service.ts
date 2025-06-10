@@ -1,3 +1,4 @@
+import { CARDANO_LOVELACE_UNIT, CARDANO_NAME, CARDANO_TICKER } from '@constants/cardano.constant';
 import { EEnvKey } from '@constants/env.constant';
 import { PortfolioAddressResponse, PortfolioTransactionResponse } from '@modules/portfolio/dtos/portfolio-response.dto';
 import { GetPortfolioTransactionsQuery } from '@modules/portfolio/dtos/portfolio.request.dto';
@@ -35,11 +36,11 @@ export class PortfolioService {
           const totalPrice = new Decimal(asset.adaValue).toNumber();
           const usdTotalPrice = new Decimal(totalPrice).mul(adaPrice).toNumber();
           return {
-            unit: 'lovelace',
+            unit: CARDANO_LOVELACE_UNIT,
             quantity: new Decimal(asset.balance).toString(),
             price: 1,
-            ticker: 'ADA',
-            name: 'Cardano',
+            ticker: CARDANO_TICKER,
+            name: CARDANO_NAME,
             totalPrice,
             usdPrice: adaPrice,
             usdTotalPrice,
