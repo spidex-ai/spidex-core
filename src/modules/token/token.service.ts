@@ -352,8 +352,17 @@ export class TokenService {
   async searchTokens(request: TokenSearchRequest) {
     const { query, verified, limit, page } = request;
 
-    const pageLimit = Math.min(limit, 20);
-    const pageNumber = Math.max(page, 1);
+    let pageNumber = page;
+    let pageLimit = limit;
+    if (!pageNumber) {
+      pageNumber = 1;
+    }
+
+    if (!pageLimit) {
+      pageLimit = 20;
+    }
+
+    console.log({ pageLimit, pageNumber });
 
     const data = await this.dexHunterService.searchToken(query, verified, pageNumber, pageLimit);
 
