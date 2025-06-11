@@ -382,7 +382,7 @@ export class TokenService {
       unit: token.token_id,
       price: tokenPrices[token.token_id],
       usdPrice: tokenPrices[token.token_id] * adaPrice,
-    }));
+    })).filter(token => token.price > 0);
 
     if (query.match(/^(ada|ad|a)$/i)) {
       tokensWithDetails.unshift({
