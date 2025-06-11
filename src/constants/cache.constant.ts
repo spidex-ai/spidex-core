@@ -26,3 +26,13 @@ export const TOKEN_TRADES_CACHE_TTL = 0.5 * MILLISECONDS_PER_MINUTE;
 
 export const TOKEN_METADATA_CACHE_KEY = (tokenId: string) => `token_metadata_${tokenId}`;
 export const TOKEN_METADATA_CACHE_TTL = 20 * MILLISECONDS_PER_MINUTE;
+
+export const TOKEN_OHLCV_CACHE_KEY = (tokenId: string, interval: string, numIntervals: number) =>
+  `token_ohlcv_${tokenId}_${interval}_${numIntervals}`;
+export const TOKEN_OHLCV_CACHE_TTL = 3 * MILLISECONDS_PER_MINUTE;
+
+export const ADA_OHLCV_CACHE_KEY = (interval: string, numIntervals: number) => `ada_ohlcv_${interval}_${numIntervals}`;
+export const ADA_OHLCV_CACHE_TTL = 3 * MILLISECONDS_PER_MINUTE;
+
+export const ADA_INFO_CACHE_KEY = () => `ada_info`;
+export const ADA_INFO_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;

@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { CoingeckoTokenPrice } from 'external/coingecko/types';
+import { CoingeckoTokenInfo, CoingeckoTokenPrice } from 'external/coingecko/types';
 import { firstValueFrom } from 'rxjs';
 import { BadRequestException } from '@shared/exception';
 import { EError } from '@constants/error.constant';
@@ -59,6 +59,19 @@ export class CoingeckoService {
       throw new BadRequestException({
         message: 'Get token OHLCV failed',
         validatorErrors: EError.COINGECKO_GET_TOKEN_OHLCV_FAILED,
+        data: error.response.data,
+      });
+    }
+  }
+
+  async getTokenById(id: string): Promise<CoingeckoTokenInfo> {
+    try {
+      const response = await firstValueFrom(this.client.get<CoingeckoTokenInfo>(`coins/${id}`));
+      return response.data;
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Get token by id failed',
+        validatorErrors: EError.COINGECKO_GET_TOKEN_BY_ID_FAILED,
         data: error.response.data,
       });
     }

@@ -218,6 +218,11 @@ export class TokenService {
     const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
     if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+      const [adaInfo, marketStats] = await Promise.all([
+        this.tokenPriceService.getAdaInfo(),
+        this.taptoolsService.getMarketStats(),
+      ]);
+
       return {
         price: 1,
         usdPrice: adaPrice,
@@ -229,11 +234,11 @@ export class TokenService {
           buyVolume: 0,
           sells: 0,
         },
-        holders: 0,
+        holders: marketStats.activeAddresses,
         mcap: {
-          circSupply: 0,
-          fdv: 0,
-          mcap: 0,
+          circSupply: adaInfo.market_data.circulating_supply,
+          fdv: adaInfo.market_data.fully_diluted_valuation.usd,
+          mcap: adaInfo.market_data.market_cap.usd,
           price: 1,
           ticker: CARDANO_TICKER,
           totalSupply: CARDANO_TOTAL_SUPPLY,
