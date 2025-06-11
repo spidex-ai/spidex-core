@@ -352,7 +352,10 @@ export class TokenService {
   async searchTokens(request: TokenSearchRequest) {
     const { query, verified, limit, page } = request;
 
-    const data = await this.dexHunterService.searchToken(query, verified, page, limit);
+    const pageLimit = Math.min(limit, 20);
+    const pageNumber = Math.max(page, 1);
+
+    const data = await this.dexHunterService.searchToken(query, verified, pageNumber, pageLimit);
 
     const tokenIds = map(data, 'token_id');
     const [tokenDetails, adaPrice, tokenPrices] = await Promise.all([
