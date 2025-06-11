@@ -405,7 +405,7 @@ export class TokenService {
 
   async getTokenOHLCV(tokenId: string, quote: string, request: TokenOHLCVRequest) {
     if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
-      return [];
+      return this.tokenPriceService.getAdaOHLCV(request);
     }
 
     const { interval, numIntervals } = request;

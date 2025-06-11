@@ -8,3 +8,5 @@ export const CARDANO_TICKER = 'ADA';
 export const CARDANO_NAME = 'ADA';
 export const CARDANO_DESCRIPTION =
   'Cardano is a blockchain platform that enables secure and scalable decentralized applications.';
+
+export const CARDANO_COINGECKO_ID = 'cardano';

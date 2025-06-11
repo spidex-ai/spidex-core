@@ -1,5 +1,7 @@
 import { TOKEN_PRICE_IN_USD_CACHE_KEY, TOKEN_PRICE_IN_USD_CACHE_TTL } from '@constants/cache.constant';
+import { CARDANO_COINGECKO_ID } from '@constants/cardano.constant';
 import { EError } from '@constants/error.constant';
+import { TokenOHLCVRequest } from '@modules/token/dtos/token-request.dto';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
@@ -34,5 +36,10 @@ export class TokenPriceService {
         validatorErrors: EError.COINGECKO_TOKEN_PRICE_FETCH_ERROR,
       });
     }
+  }
+
+  async getAdaOHLCV(request: TokenOHLCVRequest) {
+    const data = await this.coingeckoService.getOHLCV(CARDANO_COINGECKO_ID, request);
+    return data;
   }
 }

@@ -54,14 +54,28 @@ export class TokenTopVolumeRequest extends PaginationDto {
 
 export class TokenTopMcapRequest extends PaginationDto {}
 
+export enum EInterval {
+  THREE_MINUTES = '3m',
+  FIVE_MINUTES = '5m',
+  FIFTEEN_MINUTES = '15m',
+  THIRTY_MINUTES = '30m',
+  ONE_HOUR = '1h',
+  TWO_HOURS = '2h',
+  FOUR_HOURS = '4h',
+  TWELVE_HOURS = '12h',
+  ONE_DAY = '1d',
+  THREE_DAYS = '3d',
+  ONE_WEEK = '1w',
+  ONE_MONTH = '1M',
+}
 export class TokenOHLCVRequest {
   @ApiProperty({
     description: 'Interval',
-    example: '1h',
+    example: EInterval.ONE_HOUR,
   })
-  @IsString()
+  @IsEnum(EInterval)
   @IsNotEmpty()
-  interval: string;
+  interval: EInterval;
 
   @ApiProperty({
     description: 'Number of intervals',
