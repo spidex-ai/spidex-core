@@ -291,14 +291,15 @@ export class TokenService {
       return cachedData;
     }
 
+    let data;
+
     if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
-      return [];
+      data = await this.taptoolsService.getTokenTrades(timeFrame, page, limit);
+    } else {
+      data = await this.taptoolsService.getTokenTrades(timeFrame, page, limit, tokenId);
     }
 
-    const [data, usdPrice] = await Promise.all([
-      this.taptoolsService.getTokenTrades(tokenId, timeFrame, page, limit),
-      this.tokenPriceService.getAdaPriceInUSD(),
-    ]);
+    const usdPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
     const response = data.map(trade => ({
       ...trade,

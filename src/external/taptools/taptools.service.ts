@@ -257,7 +257,7 @@ export class TaptoolsService {
    * @param perPage - Items per page (default: 100, max: 100)
    * @returns Promise with token trades
    */
-  async getTokenTrades(unit: string, timeframe = '24h', page = 1, perPage = 100): Promise<TokenTrade[]> {
+  async getTokenTrades(timeframe = '24h', page = 1, perPage = 100, unit?: string): Promise<TokenTrade[]> {
     try {
       const response = await firstValueFrom(
         this.client.get<TokenTrade[]>('token/trades', {
