@@ -107,6 +107,10 @@ export class TokenService {
 
     const priceTimeframe = '24h';
     const priceChanges = await this.getTokenPriceChange([tokenId], [priceTimeframe]);
+    let price24hChg = 0;
+    if (priceChanges && priceChanges.length && priceChanges[0]) {
+      price24hChg = priceChanges[0].priceChanges[priceTimeframe];
+    }
 
     const tokensWithDetails: TokenDetailsResponse = {
       policy: tokenMetadata?.policy,
@@ -122,7 +126,7 @@ export class TokenService {
       name: tokenMetadata.name,
       description: tokenMetadata.description,
       token_ascii: tokenMetadata?.ticker,
-      price24hChg: priceChanges[0]?.priceChanges?.[priceTimeframe],
+      price24hChg,
     };
 
     await this.cache.set(cacheKey, tokensWithDetails, TOKEN_DETAILS_CACHE_TTL);
