@@ -173,4 +173,7 @@ export class TokenDetailsResponse {
 
   @ApiProperty()
   token_ascii: string;
+
+  @ApiProperty()
+  price24hChg?: number;
 }

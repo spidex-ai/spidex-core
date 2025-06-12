@@ -76,7 +76,10 @@ export class TokenService {
     }
 
     if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
-      const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
+      const [adaPrice, adaInfo] = await Promise.all([
+        this.tokenPriceService.getAdaPriceInUSD(),
+        this.tokenPriceService.getAdaInfo(),
+      ]);
       return {
         policy: CARDANO_POLICY,
         ticker: CARDANO_TICKER,
@@ -91,6 +94,7 @@ export class TokenService {
         usdPrice: adaPrice,
         name: CARDANO_NAME,
         description: 'Cardano is a blockchain platform that enables secure and scalable decentralized applications.',
+        price24hChg: adaInfo.market_data.price_change_percentage_24h / 100,
       };
     }
 
@@ -100,6 +104,9 @@ export class TokenService {
       this.tokenPriceService.getAdaPriceInUSD(),
       this.taptoolsService.getTokenPrices([tokenId]),
     ]);
+
+    const priceTimeframe = '24h';
+    const priceChanges = await this.getTokenPriceChange([tokenId], [priceTimeframe]);
 
     const tokensWithDetails: TokenDetailsResponse = {
       policy: tokenMetadata?.policy,
@@ -115,6 +122,7 @@ export class TokenService {
       name: tokenMetadata.name,
       description: tokenMetadata.description,
       token_ascii: tokenMetadata?.ticker,
+      price24hChg: priceChanges[0]?.priceChanges?.[priceTimeframe],
     };
 
     await this.cache.set(cacheKey, tokensWithDetails, TOKEN_DETAILS_CACHE_TTL);
