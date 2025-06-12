@@ -28,6 +28,20 @@ export class UserQuestBackgroundService {
     private userQuestService: UserQuestService,
   ) {}
 
+  async getSocialQuestVerificationTimeout(questId: number): Promise<number> {
+    const quest = await this.questService.getQuestById(questId);
+    if (!quest) {
+      this.logger.error(`Quest not found during verification: ${questId}`);
+      return 0;
+    }
+
+    if ([EQuestType.JOIN_DISCORD, EQuestType.JOIN_TELEGRAM].includes(quest.type)) {
+      return 0;
+    }
+
+    return 7000;
+  }
+
   async handleSocialQuestVerifyEvent(data: ISocialQuestVerifyEvent): Promise<void> {
     // This method will be called after the delay to verify the social quest
     const quest = await this.questService.getQuestById(data.questId);
