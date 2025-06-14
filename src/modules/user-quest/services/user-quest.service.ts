@@ -479,9 +479,12 @@ export class UserQuestService {
     );
 
     const flatUserQuests = flattenDeep(userQuests);
-    const groupedUserQuests = groupBy<UserQuestEntity>(flatUserQuests, (quest: UserQuestEntity) => {
-      return `${quest.questId}-${quest.quest.category}`;
-    });
+    const groupedUserQuests: { [key: string]: UserQuestEntity[] } = groupBy<UserQuestEntity>(
+      flatUserQuests,
+      (quest: UserQuestEntity) => {
+        return `${quest.questId}-${quest.quest.category}`;
+      },
+    );
 
     const userQuestOutputs: UserQuestInfoOutput[] = allQuests.map(quest => {
       let status = EUserQuestStatus.TODO;
@@ -490,6 +493,16 @@ export class UserQuestService {
         target: 0,
       };
       const key = `${quest.id}-${quest.category}`;
+      let startedAt: Date;
+      let completedAt: Date;
+      let verifyingAt: Date;
+      if (groupedUserQuests[key] && groupedUserQuests[key].length > 0) {
+        const userQuest = groupedUserQuests[key][0];
+        startedAt = userQuest.startedAt;
+        completedAt = userQuest.completedAt;
+        verifyingAt = userQuest.verifyingAt;
+      }
+
       switch (quest.category) {
         case EQuestCategory.ONE_TIME:
           if (groupedUserQuests[key]) {
@@ -527,6 +540,9 @@ export class UserQuestService {
         description: quest.description,
         status,
         progress,
+        startedAt,
+        completedAt,
+        verifyingAt,
       };
     });
 
