@@ -179,6 +179,7 @@ export class UserQuestService {
       questId: quest.id,
       points: quest.points,
       status: EUserQuestStatus.PENDING,
+      startedAt: new Date(),
     });
 
     await this.userQuestRepository.save(userQuest);
@@ -229,10 +230,14 @@ export class UserQuestService {
       });
     }
 
+    existingUserQuest.status = EUserQuestStatus.VERIFYING;
+    existingUserQuest.verifyingAt = new Date();
+    await this.userQuestRepository.save(existingUserQuest);
+
     await this.emitSocialQuestVerifyEvent({
       userId,
       questId: quest.id,
-      triggeredAt: new Date(),
+      triggeredAt: existingUserQuest.verifyingAt,
     });
   }
 
@@ -262,12 +267,15 @@ export class UserQuestService {
         });
       }
       userQuest.status = EUserQuestStatus.COMPLETED;
+      userQuest.completedAt = new Date();
     } else {
       userQuest = this.userQuestRepository.create({
         userId,
         questId: quest.id,
         points: quest.points,
         status: EUserQuestStatus.COMPLETED,
+        startedAt: new Date(),
+        completedAt: new Date(),
       });
     }
 

@@ -6,7 +6,8 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm'
 export enum EUserQuestStatus {
   TODO = 0,
   PENDING = 1,
-  COMPLETED = 2,
+  VERIFYING = 2,
+  COMPLETED = 3,
 }
 
 @Entity('user_quests')
@@ -38,4 +39,13 @@ export class UserQuestEntity extends BaseEntity {
   @ManyToOne(() => QuestEntity, quest => quest.userQuests)
   @JoinColumn({ name: 'quest_id' })
   quest: QuestEntity;
+
+  @Column({ name: 'started_at', type: 'timestamp', nullable: true })
+  startedAt: Date;
+
+  @Column({ name: 'verifying_at', type: 'timestamp', nullable: true })
+  verifyingAt: Date;
+
+  @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
+  completedAt: Date;
 }
