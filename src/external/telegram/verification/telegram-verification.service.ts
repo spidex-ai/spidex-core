@@ -62,6 +62,8 @@ export class TelegramVerificationService implements OnModuleInit {
       const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
       const telegramApiUrl = this.configService.get<string>('TELEGRAM_API_URL') || 'https://api.telegram.org';
 
+      console.log({ botToken, telegramApiUrl });
+
       if (!botToken) {
         this.logger.error('Telegram bot token not configured');
         return;
@@ -69,6 +71,7 @@ export class TelegramVerificationService implements OnModuleInit {
 
       this.bot = new TelegramBot(botToken, {
         polling: true,
+        baseApiUrl: telegramApiUrl,
         request: {
           url: telegramApiUrl,
           agentOptions: {
