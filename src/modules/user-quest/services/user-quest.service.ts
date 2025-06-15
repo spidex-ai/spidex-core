@@ -100,7 +100,7 @@ export class UserQuestService {
     );
   }
 
-  async startSocialQuest(userId: number, questId: number): Promise<void> {
+  async startSocialQuest(userId: number, questId: number): Promise<UserQuestEntity> {
     const quest = await this.questService.getQuestById(questId);
     if (!quest) {
       throw new BadRequestException({
@@ -183,9 +183,10 @@ export class UserQuestService {
     });
 
     await this.userQuestRepository.save(userQuest);
+    return userQuest;
   }
 
-  async triggerSocialQuest(userId: number, questId: number): Promise<void> {
+  async triggerSocialQuest(userId: number, questId: number): Promise<UserQuestEntity> {
     // Emit verification event instead of immediately completing the quest
 
     const quest = await this.questService.getQuestById(questId);
@@ -239,6 +240,8 @@ export class UserQuestService {
       questId: quest.id,
       triggeredAt: existingUserQuest.verifyingAt,
     });
+
+    return existingUserQuest;
   }
 
   @Transactional()
