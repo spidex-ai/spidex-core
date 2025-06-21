@@ -404,4 +404,19 @@ export class SwapService implements OnModuleInit {
     const estimatedPoint = new Decimal(tokenInPriceInUsd * usdToPoint).toString();
     return estimatedPoint;
   }
+
+  async getTotalTokenTraded(userId: number, token: string) {
+    const query = this.swapTransactionRepository
+      .createQueryBuilder('swap')
+      .where('swap.user_id = :userId', { userId })
+      .andWhere('swap.status = :status', { status: SwapStatus.SUCCESS })
+      .andWhere('swap.token_a = :token', { token })
+      .select('SUM(swap.token_a_amount) as "totalTokenA"')
+      .groupBy('swap.user_id');
+
+    const response = await query.getRawOne();
+
+    const totalToken = new Decimal(response?.totalTokenA || 0).toNumber();
+    return totalToken;
+  }
 }

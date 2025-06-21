@@ -23,6 +23,7 @@ export enum EQuestType {
 
   // Trade quest
   DAILY_TRADE = 32,
+  TRADE_PARTNER_TOKEN = 35,
 
   // Prompt quest
   DAILY_PROMPT = 41,
@@ -49,6 +50,7 @@ export interface ITradeVolumeRequirement {
 
 export interface ITradePartnerTokenRequirement {
   token: string;
+  atLeast: number;
 }
 
 export type TQuestRequirement = ISocialInteractRequirement | ITradeRequirement | ITradePartnerTokenRequirement;

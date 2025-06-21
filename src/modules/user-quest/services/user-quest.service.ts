@@ -316,6 +316,11 @@ export class UserQuestService {
       return false;
     }
 
+    const canCompleteByType = await this.canCompleteQuestByType(userId, quest, options);
+    if (!canCompleteByType) {
+      return false;
+    }
+
     return true;
   }
 
@@ -337,6 +342,11 @@ export class UserQuestService {
     const quest = await this.questService.getQuestById(questId);
     if (!quest) {
       this.logger.warn(`UserQuestService::canCompleteDailyQuest() | Quest not found`, { questId });
+      return false;
+    }
+
+    const canCompleteByType = await this.canCompleteQuestByType(userId, quest, options);
+    if (!canCompleteByType) {
       return false;
     }
 
@@ -368,6 +378,11 @@ export class UserQuestService {
       }
     }
 
+    const canCompleteByType = await this.canCompleteQuestByType(userId, quest, options);
+    if (!canCompleteByType) {
+      return false;
+    }
+
     return true;
   }
 
@@ -375,6 +390,8 @@ export class UserQuestService {
     switch (quest.type) {
       case EQuestType.DAILY_TRADE:
         return this.canCompleteDailyTradeQuest(userId, quest);
+      case EQuestType.TRADE_PARTNER_TOKEN:
+        return this.canCompleteTradePartnerTokenQuest(userId, quest, options);
       default:
         this.logger.warn(`UserQuestService::canCompleteQuestByType() | Quest type not found`, { questId: quest.id });
         return true;
@@ -447,7 +464,11 @@ export class UserQuestService {
     }
     const requirements = quest.requirements as ITradePartnerTokenRequirement;
     if (txs.some(tx => tx.tokenA === requirements.token || tx.tokenB === requirements.token)) {
-      return true;
+      const totalTokenAmount = await this.swapService.getTotalTokenTraded(userId, requirements.token);
+      console.log({ totalTokenAmount });
+      if (totalTokenAmount >= requirements.atLeast) {
+        return true;
+      }
     }
     return false;
   }
@@ -617,7 +638,7 @@ export class UserQuestService {
   }
 
   async handleQuestRelatedToTradeEvent(data: IQuestRelatedToTradeEvent): Promise<void> {
-    const quests = await this.questService.getQuestInType([EQuestType.DAILY_TRADE]);
+    const quests = await this.questService.getQuestInType([EQuestType.DAILY_TRADE, EQuestType.TRADE_PARTNER_TOKEN]);
 
     const options = {
       txHash: data.txHash,
