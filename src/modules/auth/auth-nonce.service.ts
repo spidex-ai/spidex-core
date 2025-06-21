@@ -46,7 +46,7 @@ export class AuthNonceService {
 
       // Create challenge message with timestamp and nonce
       const timestamp = Date.now();
-      const challengeMessage = `Sign this message to authenticate with Spidex:\n\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${timestamp}\nExpires: ${expiresAt.toISOString()}\n\nThis request will expire in ${this.nonceExpirationMinutes} minutes.`;
+      const challengeMessage = `Spidex Authentication - Wallet: ${walletAddress} - Nonce: ${nonce} - Timestamp: ${timestamp} - Expires: ${expiresAt.toISOString()}`;
 
       // Save nonce to database
       const authNonce = new AuthNonceEntity();

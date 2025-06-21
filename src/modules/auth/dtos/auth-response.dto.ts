@@ -45,7 +45,7 @@ export class GenerateNonceResponseDto {
     type: String,
     description: 'Challenge message to be signed by the wallet',
     example:
-      'Sign this message to authenticate with Spidex:\n\nWallet: 0xe2FE03a0af021Db52750Fc895E1B626F84f2aE0D\nNonce: a1b2c3d4e5f6...\nTimestamp: 1640995200000\nExpires: 2024-01-01T12:00:00.000Z\n\nThis request will expire in 15 minutes.',
+      'Spidex Authentication - Wallet: addr1q8xcfx7wdlx9wr9vyz0y7wn02sp0nvu7zpjgsqmzln5gd0ju2dlhutnzc23navegy4gen7vftjjvkmcqt2qm9pz6m6rq3r0gyd - Nonce: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890123456 - Timestamp: 1750490191433 - Expires: 2024-01-01T12:15:00.000Z',
   })
   challengeMessage: string;
 
