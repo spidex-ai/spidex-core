@@ -413,7 +413,7 @@ export interface TokenIndicator {
   value: number;
 }
 
-export interface WalletPortfolioPosition {
+export class WalletPortfolioPosition {
   adaValue: number;
   adaBalance: number;
   numFTs: number;
@@ -457,6 +457,19 @@ export interface WalletPortfolioPosition {
     adaValue: number;
     exchange: string;
   }[];
+
+  static empty(): WalletPortfolioPosition {
+    return {
+      adaValue: 0,
+      adaBalance: 0,
+      numFTs: 0,
+      numNFTs: 0,
+      liquidValue: 0,
+      positionsFt: [],
+      positionsNft: [],
+      positionsLp: [],
+    };
+  }
 }
 
 export interface WalletTradeToken {
