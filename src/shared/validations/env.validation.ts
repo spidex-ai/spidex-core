@@ -64,8 +64,10 @@ class EnvironmentVariables {
   @IsOptional()
   [EEnvKey.VERIFICATION_URL]: string;
 
-  @IsString()
-  [EEnvKey.WALLET_SIGN_MESSAGE]: string;
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  [EEnvKey.AUTH_NONCE_EXPIRATION_MINUTES]: number;
 
   @IsString()
   @IsOptional()
