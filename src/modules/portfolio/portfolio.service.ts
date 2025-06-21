@@ -4,7 +4,8 @@ import { PortfolioAddressResponse, PortfolioTransactionResponse } from '@modules
 import { GetPortfolioTransactionsQuery } from '@modules/portfolio/dtos/portfolio.request.dto';
 import { TokenMetaService } from '@modules/token-metadata/token-meta.service';
 import { TokenPriceService } from '@modules/token-price/token-price.service';
-import { Injectable } from '@nestjs/common';
+import { UserService } from '@modules/user/user.service';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Decimal } from 'decimal.js';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
@@ -18,7 +19,15 @@ export class PortfolioService {
     private readonly tokenPriceService: TokenPriceService,
     private readonly configService: ConfigService,
     private readonly tokenMetaService: TokenMetaService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
   ) {}
+
+  async getMyPortfolio(userId: number): Promise<PortfolioAddressResponse> {
+    const user = await this.userService.getUserById(userId);
+    const address = user.stakeAddress;
+    return this.getPortfolio(address);
+  }
 
   async getPortfolio(address: string): Promise<PortfolioAddressResponse> {
     const addressDetail = await this.taptoolsService.getWalletPortfolioPositions(address);
@@ -83,6 +92,12 @@ export class PortfolioService {
         }, new Decimal(0))
         .toNumber(),
     };
+  }
+
+  async getMyTransactions(userId: number, query: GetPortfolioTransactionsQuery) {
+    const user = await this.userService.getUserById(userId);
+    const address = user.stakeAddress;
+    return this.getTransactions(address, query);
   }
 
   async getTransactions(

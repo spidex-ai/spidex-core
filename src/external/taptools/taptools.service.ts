@@ -1200,6 +1200,9 @@ export class TaptoolsService {
       return response.data;
     } catch (error) {
       console.error('TaptoolsService::getWalletPortfolioPositions error:', error);
+      if (error.response && error.response.status === 404) {
+        return WalletPortfolioPosition.empty();
+      }
       throw new BadRequestException({
         message: 'Get wallet portfolio positions failed',
         validatorErrors: EError.TAPTOOLS_GET_WALLET_PORTFOLIO_POSITIONS_FAILED,
@@ -1225,6 +1228,9 @@ export class TaptoolsService {
       return response.data;
     } catch (error) {
       console.error('TaptoolsService::getWalletTokenTrades error:', error);
+      if (error.response && error.response.status === 404) {
+        return [];
+      }
       throw new BadRequestException({
         message: 'Get wallet token trades failed',
         validatorErrors: EError.TAPTOOLS_GET_WALLET_TOKEN_TRADES_FAILED,
