@@ -18,12 +18,13 @@ import {
 } from './dtos/auth-request.dto';
 
 import verifyDataSignature from '@cardano-foundation/cardano-verify-datasignature';
-import { AuthResponseOutputDto } from '@modules/auth/dtos/auth-response.dto';
+import { AuthResponseOutputDto, GenerateNonceResponseDto } from '@modules/auth/dtos/auth-response.dto';
 import { DiscordOAuthService } from 'external/discord/oauth/discord-oauth.service';
 import { FirebaseAuthervice } from 'external/firebase/firebase-auth.service';
 import { TelegramOAuthService } from 'external/telegram/oauth/telegram-oauth.service';
 import { XApiHttpService } from 'external/x/x-api.service';
 import { firstValueFrom } from 'rxjs';
+import { AuthNonceService } from './auth-nonce.service';
 
 @Injectable()
 export class AuthService {
@@ -35,10 +36,16 @@ export class AuthService {
     private readonly firebaseAuthService: FirebaseAuthervice,
     private readonly discordOAuthService: DiscordOAuthService,
     private readonly telegramOAuthService: TelegramOAuthService,
+    private readonly authNonceService: AuthNonceService,
   ) {}
 
-  getConnectWalletSignMessage() {
-    return this.configService.get<string>(EEnvKey.WALLET_SIGN_MESSAGE);
+  async generateWalletNonce(walletAddress: string): Promise<GenerateNonceResponseDto> {
+    const result = await this.authNonceService.generateNonce(walletAddress);
+    return {
+      nonce: result.nonce,
+      challengeMessage: result.challengeMessage,
+      expiresAt: result.expiresAt.toISOString(),
+    };
   }
 
   getDiscordAuthUrl(redirectUri: string, state?: string) {
@@ -55,16 +62,28 @@ export class AuthService {
   }
 
   async connectWallet(connectWalletInput: ConnectWalletRequestDto, userId?: number): Promise<AuthResponseOutputDto> {
-    const { referralCode } = connectWalletInput;
-    const verify = await this.verifySignature(
+    const { referralCode, nonce } = connectWalletInput;
+
+    // Validate and consume the nonce
+    const nonceValidation = await this.authNonceService.validateAndConsumeNonce(nonce, connectWalletInput.address);
+    if (!nonceValidation.isValid) {
+      throw new Unauthorized({
+        validatorErrors: EError.INVALID_NONCE,
+        message: `AuthService::connectWallet() | Invalid nonce: ${nonceValidation.error}`,
+      });
+    }
+
+    // Verify signature against the challenge message
+    const verify = await this.verifySignatureWithMessage(
       connectWalletInput.publicKey,
       connectWalletInput.signature,
       connectWalletInput.address,
+      nonceValidation.challengeMessage,
     );
     if (!verify) {
       throw new Unauthorized({
         validatorErrors: EError.UNAUTHORIZED,
-        message: `AuthService::connectWallet() | Cannot connect: Invalid data`,
+        message: `AuthService::connectWallet() | Cannot connect: Invalid signature`,
       });
     }
 
@@ -113,16 +132,14 @@ export class AuthService {
     };
   }
 
-  verifySignature = async (publicKey: string, signature: string, walletAddress: string) => {
+  verifySignatureWithMessage = async (publicKey: string, signature: string, walletAddress: string, message: string) => {
     try {
-      const signMessage = process.env.WALLET_SIGN_MESSAGE;
-
-      const verify = verifyDataSignature(signature, publicKey, signMessage, walletAddress);
+      const verify = verifyDataSignature(signature, publicKey, message, walletAddress);
 
       if (!verify) {
         throw new BadRequestException({
           validatorErrors: EError.VERIFY_SIGNATURE_FAILED,
-          message: `AuthService::verifySignature() | Failed to verify signature`,
+          message: `AuthService::verifySignatureWithMessage() | Failed to verify signature`,
         });
       }
 
@@ -130,7 +147,7 @@ export class AuthService {
     } catch (error) {
       throw new BadRequestException({
         validatorErrors: EError.VERIFY_SIGNATURE_FAILED,
-        message: `AuthService::verifySignature() | Failed to verify signature: ${error}`,
+        message: `AuthService::verifySignatureWithMessage() | Failed to verify signature: ${error}`,
       });
     }
   };

@@ -36,6 +36,14 @@ export class ConnectWalletRequestDto {
   })
   stakeAddress: string;
 
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Authentication nonce received from /auth/wallet/nonce endpoint',
+    example: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890123456',
+  })
+  nonce: string;
+
   @ApiPropertyOptional({ description: 'Referral code', example: 'referral-code' })
   @Expose()
   @IsOptional()
@@ -63,6 +71,17 @@ export class SignMessageRequestDto {
     example: '8ee765ec2c235ad904ec55948e51f901aac0c77ca987355f1c781ef862c7ff82',
   })
   privateKey: string;
+}
+
+export class GenerateNonceRequestDto {
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    type: String,
+    description: 'Wallet address to generate nonce for',
+    example: '0xe2FE03a0af021Db52750Fc895E1B626F84f2aE0D',
+  })
+  walletAddress: string;
 }
 
 export class ConnectXRequestDto {
