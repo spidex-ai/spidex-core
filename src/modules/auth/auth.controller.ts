@@ -12,8 +12,9 @@ import {
   ConnectWalletRequestDto,
   ConnectXRequestDto,
   RefreshTokenRequestDto,
+  GenerateNonceRequestDto,
 } from './dtos/auth-request.dto';
-import { AuthResponseOutputDto, RefreshTokenResponseDto } from './dtos/auth-response.dto';
+import { AuthResponseOutputDto, RefreshTokenResponseDto, GenerateNonceResponseDto } from './dtos/auth-response.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -21,10 +22,20 @@ import { AuthResponseOutputDto, RefreshTokenResponseDto } from './dtos/auth-resp
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('connect-wallet/sign-message')
-  @GuardPublicOrAuth()
-  getConnectWalletPublicKey() {
-    return this.authService.getConnectWalletSignMessage();
+  @Post('wallet/nonce')
+  @GuardPublic()
+  @ApiOperation({
+    summary: 'Generate authentication nonce for wallet connection',
+    description:
+      'Generates a secure nonce and challenge message for wallet authentication. The nonce expires in 15 minutes.',
+  })
+  @ApiResponse({
+    type: GenerateNonceResponseDto,
+    status: HttpStatus.OK,
+    description: 'Nonce generated successfully',
+  })
+  async generateWalletNonce(@Body() generateNonceInput: GenerateNonceRequestDto): Promise<GenerateNonceResponseDto> {
+    return this.authService.generateWalletNonce(generateNonceInput.walletAddress);
   }
 
   @Post('connect-wallet')

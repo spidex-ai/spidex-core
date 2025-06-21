@@ -9,7 +9,7 @@ export class ConnectWalletRequestDto {
   @IsNotEmpty()
   @ApiProperty({
     type: String,
-    description: 'Wallet signature',
+    description: 'Wallet signature of the challenge message received from /auth/wallet/nonce',
     example:
       '0xce2c1751efd522ac0bec22c4eb2d00725d40d55580b60f15482cd751395c7deb5d60c8c0e09b80982b49c0e026225390bb0b3ca3e4b85711b5d382ae3b1306221c',
   })
@@ -26,6 +26,14 @@ export class ConnectWalletRequestDto {
     return isString(value) ? toChecksumAddress(value) : value;
   })
   address: string;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Authentication nonce received from /auth/wallet/nonce endpoint',
+    example: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890123456',
+  })
+  nonce: string;
 
   // @ApiProperty({
   //   type: String,
