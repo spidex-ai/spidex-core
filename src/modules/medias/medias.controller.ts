@@ -2,9 +2,11 @@ import { MAX_FILE_SIZE } from '@constants/file.constant';
 import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { AuthUserGuard } from '@shared/decorators/auth.decorator';
+import { AuthUser } from '@shared/decorators/auth-user.decorator';
+import { IJwtPayload } from '@shared/interfaces/auth.interface';
 import { mediaFileFilter } from '@shared/utils/upload';
 import { MediasService } from './medias.service';
+import { AuthUserGuard } from '@shared/decorators/auth.decorator';
 
 @Controller('medias')
 @ApiBearerAuth()
@@ -32,7 +34,7 @@ export class MediasController {
       },
     },
   })
-  uploadImage(@UploadedFile() file: any) {
-    return this.mediaService.upload({ file });
+  uploadImage(@AuthUser() user: IJwtPayload, @UploadedFile() file: any) {
+    return this.mediaService.upload({ file, userId: user.userId });
   }
 }
