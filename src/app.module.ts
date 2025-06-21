@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { GuardModule } from '@shared/guards/guard.module';
 import { LoggerHttpRequestMiddleware } from '@shared/middleware/logger.middleware';
+import { SvgSecurityMiddleware } from '@shared/middleware/svg-security.middleware';
 import { SharedModule } from '@shared/modules/shared.module';
 import { ConsoleModule } from 'nestjs-console';
 import { join } from 'path';
@@ -28,5 +29,6 @@ import { MODULES } from './modules';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerHttpRequestMiddleware).forRoutes('*');
+    consumer.apply(SvgSecurityMiddleware).forRoutes('*');
   }
 }

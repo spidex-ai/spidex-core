@@ -30,7 +30,21 @@ async function bootstrap() {
   if (configService.get<string>('APP_SWAGGER_PATH')) {
     initSwagger(app, configService.get<string>('APP_SWAGGER_PATH'));
   }
-  app.use(helmet());
+  // Enhanced helmet configuration with security-focused CSP
+  const securityConfig = require('./shared/config/security.config').getSecurityConfig(configService);
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: securityConfig.contentSecurityPolicy.directives,
+      },
+      crossOriginEmbedderPolicy: false, // Disable for compatibility
+      hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+    }),
+  );
 
   app.useGlobalFilters(new UnknownExceptionsFilter(loggingService));
   app.useGlobalFilters(new HttpExceptionFilter(loggingService));
