@@ -60,6 +60,9 @@ export class QuestEntity extends BaseEntity {
   @Column({ type: 'varchar', name: 'name', nullable: false })
   name: string;
 
+  @Column({ type: 'text', name: 'icon', nullable: true })
+  icon?: string;
+
   @Column({ type: 'varchar', name: 'description', nullable: true })
   description: string;
 

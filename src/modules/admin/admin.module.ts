@@ -3,6 +3,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { PasswordEncoderModule } from '@shared/modules/password-encoder/password-encoder.module';
 import { AdminRepository } from '@database/repositories/admin.repository';
+import { QuestRepository } from '@database/repositories/quest.repository';
 import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
 import { ConfigService } from '@nestjs/config';
 import { EEnvKey } from '@constants/env.constant';
@@ -15,7 +16,7 @@ import { AdminConsumer } from './admin.consumer';
 
 @Module({
   imports: [
-    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository]),
+    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository, QuestRepository]),
     PasswordEncoderModule,
     BullModule.registerQueue({
       name: CRAWL_DOCS_QUEUE_NAME,

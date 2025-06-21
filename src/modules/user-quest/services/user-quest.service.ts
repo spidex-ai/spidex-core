@@ -567,6 +567,7 @@ export class UserQuestService {
         startedAt,
         completedAt,
         verifyingAt,
+        icon: quest.icon,
       };
     });
 

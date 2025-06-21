@@ -1,19 +1,23 @@
 import { EEnvKey } from '@constants/env.constant';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
 import { AdminEntity, EAdminRole } from '@database/entities/admin.entity';
+import { QuestEntity } from '@database/entities/quest.entity';
 import { AdminRepository } from '@database/repositories/admin.repository';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
+import { QuestRepository } from '@database/repositories/quest.repository';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PageMetaDto } from '@shared/dtos/page-meta.dto';
 import { PageOptionsDto } from '@shared/dtos/page-option.dto';
+import { PageDto } from '@shared/dtos/page.dto';
 import { IJwtPayloadAdmin } from '@shared/interfaces/auth.interface';
 import { PasswordEncoder } from '@shared/modules/password-encoder/password-encoder';
 import { Queue } from 'bull';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
+import { CreateQuestDto, QuestFilterDto, QuestResponseDto, UpdateQuestDto } from './dtos/quest-management.dto';
 @Injectable()
 export class AdminService {
   constructor(
@@ -23,6 +27,7 @@ export class AdminService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly crawlDocsRepository: CrawlDocsRepository,
+    private readonly questRepository: QuestRepository,
   ) {}
 
   async create() {
@@ -108,6 +113,89 @@ export class AdminService {
     return {
       data: result,
       meta: new PageMetaDto(total, new PageOptionsDto(page, limit)),
+    };
+  }
+
+  // Quest Management Methods
+  async createQuest(createQuestDto: CreateQuestDto): Promise<QuestResponseDto> {
+    const quest = this.questRepository.create(createQuestDto);
+    const savedQuest = await this.questRepository.save(quest);
+    return this.mapQuestToResponseDto(savedQuest);
+  }
+
+  async updateQuest(id: number, updateQuestDto: UpdateQuestDto): Promise<QuestResponseDto> {
+    const quest = await this.questRepository.findOne({ where: { id } });
+    if (!quest) {
+      throw new NotFoundException(`Quest with ID ${id} not found`);
+    }
+
+    Object.assign(quest, updateQuestDto);
+    const updatedQuest = await this.questRepository.save(quest);
+    return this.mapQuestToResponseDto(updatedQuest);
+  }
+
+  async getQuestById(id: number): Promise<QuestResponseDto> {
+    const quest = await this.questRepository.findOne({ where: { id } });
+    if (!quest) {
+      throw new NotFoundException(`Quest with ID ${id} not found`);
+    }
+    return this.mapQuestToResponseDto(quest);
+  }
+
+  async getQuests(filterDto: QuestFilterDto): Promise<PageDto<QuestResponseDto>> {
+    const { page, limit, name, category, type, status } = filterDto;
+    const queryBuilder = this.questRepository.createQueryBuilder('quest');
+
+    if (name) {
+      queryBuilder.andWhere('quest.name ILIKE :name', { name: `%${name}%` });
+    }
+
+    if (category !== undefined) {
+      queryBuilder.andWhere('quest.category = :category', { category });
+    }
+
+    if (type !== undefined) {
+      queryBuilder.andWhere('quest.type = :type', { type });
+    }
+
+    if (status !== undefined) {
+      queryBuilder.andWhere('quest.status = :status', { status });
+    }
+
+    queryBuilder.orderBy('quest.createdAt', 'DESC');
+    queryBuilder.skip((page - 1) * limit);
+    queryBuilder.take(limit);
+
+    const [quests, total] = await queryBuilder.getManyAndCount();
+    const questDtos = quests.map(quest => this.mapQuestToResponseDto(quest));
+
+    return new PageDto(questDtos, new PageMetaDto(total, new PageOptionsDto(page, limit)));
+  }
+
+  async deleteQuest(id: number): Promise<void> {
+    const quest = await this.questRepository.findOne({ where: { id } });
+    if (!quest) {
+      throw new NotFoundException(`Quest with ID ${id} not found`);
+    }
+    await this.questRepository.softDelete(id);
+  }
+
+  private mapQuestToResponseDto(quest: QuestEntity): QuestResponseDto {
+    return {
+      id: quest.id,
+      name: quest.name,
+      description: quest.description,
+      icon: quest.icon,
+      category: quest.category,
+      type: quest.type,
+      requirements: quest.requirements,
+      limit: quest.limit,
+      points: quest.points,
+      status: quest.status,
+      startDate: quest.startDate,
+      endDate: quest.endDate,
+      createdAt: quest.createdAt,
+      updatedAt: quest.updatedAt,
     };
   }
 }

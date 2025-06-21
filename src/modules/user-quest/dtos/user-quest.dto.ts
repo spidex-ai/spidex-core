@@ -50,6 +50,10 @@ export class UserQuestInfoOutput {
   description: string;
 
   @Expose()
+  @ApiProperty({ required: false, description: 'Quest icon URL or path' })
+  icon?: string;
+
+  @Expose()
   @ApiProperty()
   createdAt: Date;
 
@@ -76,6 +80,18 @@ export class UserQuestInfoOutput {
   @Expose()
   @ApiProperty()
   status: EUserQuestStatus;
+
+  @Expose()
+  @ApiProperty()
+  startedAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  completedAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  verifyingAt: Date;
 }
 
 export class UserQuestOutput {

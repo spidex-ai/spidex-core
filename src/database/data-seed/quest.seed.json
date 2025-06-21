@@ -2,6 +2,7 @@
   {
     "name": "Daily check-in",
     "description": "Daily check-in to earn points",
+    "icon": "/public/icons/quests/daily-checkin.png",
     "category": 1,
     "type": 10,
     "points": 10,
@@ -11,6 +12,7 @@
   {
     "name": "Daily trade",
     "description": "Daily trade to earn points",
+    "icon": "/public/icons/quests/daily-trade.png",
     "category": 1,
     "type": 32,
     "points": 10,
@@ -20,6 +22,7 @@
   {
     "name": "Daily prompt",
     "description": "Daily prompt to earn points",
+    "icon": "/public/icons/quests/daily-prompt.png",
     "category": 1,
     "type": 41,
     "points": 10,
@@ -29,6 +32,7 @@
   {
     "name": "Follow Spidex AI on X",
     "description": "Follow our official X (Twitter) account",
+    "icon": "/public/icons/quests/follow-x.png",
     "category": 0,
     "type": 3,
     "requirements": {
@@ -41,6 +45,7 @@
   {
     "name": "Share Spidex AI X's Pin Post",
     "description": "Share Spidex AI X's Pin Post",
+    "icon": "/public/icons/quests/share-x-post.png",
     "category": 0,
     "type": 0,
     "requirements": {
@@ -53,6 +58,7 @@
   {
     "name": "Join Spidex AI Discord community",
     "description": "Join our Discord community to connect with other users",
+    "icon": "/public/icons/quests/join-discord.png",
     "category": 0,
     "type": 1,
     "requirements": {
@@ -65,6 +71,7 @@
   {
     "name": "Subscribe to Spidex AI TG channel",
     "description": "Subscribe to Spidex AI TG channel",
+    "icon": "/public/icons/quests/join-telegram.png",
     "category": 0,
     "type": 2,
     "requirements": {
