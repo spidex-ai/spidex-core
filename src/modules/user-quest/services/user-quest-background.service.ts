@@ -39,7 +39,8 @@ export class UserQuestBackgroundService {
       return 0;
     }
 
-    return 7000;
+    // 2 minutes
+    return 2 * 60 * 1000;
   }
 
   async handleSocialQuestVerifyEvent(data: ISocialQuestVerifyEvent): Promise<void> {
