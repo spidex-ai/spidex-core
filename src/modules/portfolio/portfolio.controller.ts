@@ -27,7 +27,7 @@ export class PortfolioController {
   @Get('transactions')
   @ApiOperation({ summary: 'Get transactions' })
   @ApiParam({ name: 'address', type: String, description: 'Address' })
-  @GuardPublic()
+  @AuthUserGuard()
   async getMyTransactions(@AuthUser() user: IJwtPayload, @Query() query: GetPortfolioTransactionsQuery) {
     return this.portfolioService.getMyTransactions(user.userId, query);
   }
