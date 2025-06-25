@@ -3,6 +3,8 @@ import {
   TOKEN_DETAILS_CACHE_TTL,
   TOKEN_HOLDER_COUNT_CACHE_KEY,
   TOKEN_HOLDER_COUNT_CACHE_TTL,
+  TOKEN_MCAP_CACHE_KEY,
+  TOKEN_MCAP_CACHE_TTL,
   TOKEN_METADATA_CACHE_KEY,
   TOKEN_METADATA_CACHE_TTL,
   TOKEN_STATS_CACHE_KEY,
@@ -507,6 +509,18 @@ export class TokenService {
     }
 
     await this.cache.set(cacheKey, data, TOKEN_METADATA_CACHE_TTL);
+    return data;
+  }
+
+  async getTokenMcap(tokenId: string) {
+    const cacheKey = TOKEN_MCAP_CACHE_KEY(tokenId);
+    const cachedData = await this.cache.get<number>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    const data = await this.taptoolsService.getTokenMcap(tokenId);
+    await this.cache.set(cacheKey, data, TOKEN_MCAP_CACHE_TTL);
     return data;
   }
 }

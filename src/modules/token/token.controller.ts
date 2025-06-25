@@ -125,4 +125,11 @@ export class TokenController {
   async getTokenMetadata(@Param('tokenId') tokenId: string) {
     return this.tokenService.getTokenMetadata(tokenId);
   }
+
+  @Get(':tokenId/mcap')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenMcap(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenMcap(tokenId);
+  }
 }
