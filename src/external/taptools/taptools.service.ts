@@ -1,7 +1,10 @@
 import { EError } from '@constants/error.constant';
+import { TOKEN_PRICES_CACHE_KEY, TOKEN_PRICES_CACHE_TTL } from '@constants/cache.constant';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 import {
   TokenPrice,
   TokenPriceChange,
@@ -58,19 +61,76 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class TaptoolsService {
-  constructor(private readonly client: HttpService) {}
+  constructor(
+    private readonly client: HttpService,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
 
   // Token Endpoints
 
   /**
-   * Get token prices for specified units
+   * Get token prices for specified units with Redis caching
    * @param units - Array of token units (policy + hex name)
+   * @param getIncludeCache - Whether to use Redis cache (default: true). When false, bypasses cache read but still stores fresh data
    * @returns Promise with token prices
    */
-  async getTokenPrices(units: string[]): Promise<TokenPrice> {
+  async getTokenPrices(units: string[], getIncludeCache = true): Promise<TokenPrice> {
     try {
-      const response = await firstValueFrom(this.client.post<TokenPrice>('token/prices', units));
-      return response.data;
+      const cacheKey = TOKEN_PRICES_CACHE_KEY();
+      const result: TokenPrice = {};
+      let missingUnits: string[] = [];
+
+      if (getIncludeCache) {
+        // Step 1: Check Redis cache for each requested unit (only when cache is enabled)
+        for (const unit of units) {
+          try {
+            const cachedPrice = await this.redis.hget(cacheKey, unit);
+            if (cachedPrice !== null) {
+              result[unit] = parseFloat(cachedPrice);
+            } else {
+              missingUnits.push(unit);
+            }
+          } catch (cacheError) {
+            console.warn(`TaptoolsService::getTokenPrices cache read error for unit ${unit}:`, cacheError);
+            missingUnits.push(unit);
+          }
+        }
+
+        // Step 2: If all tokens are cached, return immediately
+        if (missingUnits.length === 0) {
+          return result;
+        }
+      } else {
+        // When cache is bypassed, fetch all units from API
+        missingUnits = [...units];
+      }
+
+      // Step 3: Fetch tokens from API (missing tokens when cache enabled, or all tokens when cache bypassed)
+      const response = await firstValueFrom(this.client.post<TokenPrice>('token/prices', missingUnits));
+      const apiData = response.data;
+
+      // Step 4: Store fresh data in Redis cache and merge with existing cached data (if any)
+      if (Object.keys(apiData).length > 0) {
+        try {
+          // Prepare data for HSET operation
+          const cacheData: string[] = [];
+          for (const [unit, price] of Object.entries(apiData)) {
+            cacheData.push(unit, price.toString());
+            result[unit] = price;
+          }
+
+          // Store in Redis with HSET and set expiration
+          if (cacheData.length > 0) {
+            await this.redis.hset(cacheKey, ...cacheData);
+            await this.redis.expire(cacheKey, Math.floor(TOKEN_PRICES_CACHE_TTL / 1000));
+          }
+        } catch (cacheError) {
+          console.warn('TaptoolsService::getTokenPrices cache write error:', cacheError);
+          // Continue execution even if caching fails
+        }
+      }
+
+      return result;
     } catch (error) {
       console.error('TaptoolsService::getTokenPrices error:', error);
       throw new BadRequestException({

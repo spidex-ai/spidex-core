@@ -76,7 +76,7 @@ export class SwapService implements OnModuleInit {
           price: adaPrice,
         };
       } else {
-        const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit]);
+        const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit], false);
         tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
         tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
       }
@@ -87,7 +87,7 @@ export class SwapService implements OnModuleInit {
           price: adaPrice,
         };
       } else {
-        const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit]);
+        const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit], false);
         tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
         tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
       }
@@ -390,7 +390,7 @@ export class SwapService implements OnModuleInit {
 
   async getEstimatedPoint({ tokenIn, amountIn }: { tokenIn: string; amountIn: number }) {
     const [tokenInPrice, adaPriceInUsd, usdToPoint] = await Promise.all([
-      this.tapToolsService.getTokenPrices([tokenIn]),
+      this.tapToolsService.getTokenPrices([tokenIn], false),
       this.tokenPriceService.getAdaPriceInUSD(),
       this.systemConfigService.getUsdToPoint(),
     ]);

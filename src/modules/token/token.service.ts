@@ -150,10 +150,11 @@ export class TokenService {
       const tokenIds = data.map(token => token.unit);
 
       const priceTimeframe = '24h';
-      const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
+      const [tokenDetails, adaPrice, priceChanges, tokenPrices] = await Promise.all([
         this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['logo', 'name', 'ticker'])),
         this.tokenPriceService.getAdaPriceInUSD(),
         this.getTokenPriceChange(tokenIds, [priceTimeframe]),
+        this.taptoolsService.getTokenPrices(tokenIds),
       ]);
 
       const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
@@ -163,7 +164,7 @@ export class TokenService {
       const response = data.map(token => ({
         ...token,
         mcap: token.mcap * adaPrice,
-        usdPrice: token.price * adaPrice,
+        usdPrice: tokenPrices[token.unit] * adaPrice,
         logo: tokenDetailsMap[token.unit]?.logo,
         name: tokenDetailsMap[token.unit]?.name,
         ticker: tokenDetailsMap[token.unit]?.ticker,
@@ -194,10 +195,11 @@ export class TokenService {
       const tokenIds = data.map(token => token.unit);
 
       const priceTimeframe = '24h';
-      const [tokenDetails, adaPrice, priceChanges] = await Promise.all([
+      const [tokenDetails, adaPrice, priceChanges, tokenPrices] = await Promise.all([
         this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['logo', 'name', 'ticker'])),
         this.tokenPriceService.getAdaPriceInUSD(),
         this.getTokenPriceChange(tokenIds, [priceTimeframe]),
+        this.taptoolsService.getTokenPrices(tokenIds),
       ]);
 
       const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
@@ -207,7 +209,7 @@ export class TokenService {
       const response = data.map(token => ({
         ...token,
         volume: token.volume * adaPrice,
-        usdPrice: token.price * adaPrice,
+        usdPrice: tokenPrices[token.unit] * adaPrice,
         logo: tokenDetailsMap[token.unit]?.logo,
         name: tokenDetailsMap[token.unit]?.name,
         ticker: tokenDetailsMap[token.unit]?.ticker,
@@ -262,21 +264,23 @@ export class TokenService {
       };
     }
 
-    const [mcap, holders, tradingStats, pools] = await Promise.all([
+    const [mcap, holders, tradingStats, pools, tokenPrices] = await Promise.all([
       this.taptoolsService.getTokenMcap(tokenId),
       this.taptoolsService.getTokenHolders(tokenId),
       this.taptoolsService.getTokenTradingStats(tokenId, '24H'),
       this.taptoolsService.getTokenPools(tokenId, true),
+      this.taptoolsService.getTokenPrices([tokenId]),
     ]);
 
-    const usdPriceToken = new Decimal(mcap.price).mul(adaPrice).toNumber();
+    const tokenPrice = tokenPrices[tokenId] || 0;
+    const usdPriceToken = tokenPrice * adaPrice;
     const liquidity = pools.reduce(
       (acc, pool) => acc + pool.tokenALocked * usdPriceToken + pool.tokenBLocked * adaPrice,
       0,
     );
 
     const tokenStats = {
-      price: mcap.price,
+      price: tokenPrice,
       usdPrice: usdPriceToken,
       mcap: {
         circSupply: mcap.circSupply,
@@ -315,12 +319,12 @@ export class TokenService {
       data = await this.taptoolsService.getTokenTrades(timeFrame, page, limit, tokenId);
     }
 
-    const usdPrice = await this.tokenPriceService.getAdaPriceInUSD();
+    const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
     const response = data.map(trade => ({
       ...trade,
       totalPrice: new Decimal(trade.price).mul(trade.tokenAAmount).toNumber(),
-      usdTotalPrice: new Decimal(trade.price).mul(trade.tokenAAmount).mul(usdPrice).toNumber(),
+      usdTotalPrice: new Decimal(trade.price).mul(trade.tokenAAmount).mul(adaPrice).toNumber(),
     }));
 
     await this.cache.set(cacheKey, response, TOKEN_TRADES_CACHE_TTL);
@@ -350,7 +354,7 @@ export class TokenService {
       return [];
     }
 
-    const [tokenDetail, tokenPrice, usdPrice, topHolders] = await Promise.all([
+    const [tokenDetail, tokenPrice, adaPrice, topHolders] = await Promise.all([
       this.blockfrostService.getTokenDetail(tokenId),
       this.taptoolsService.getTokenPrices([tokenId]),
       this.tokenPriceService.getAdaPriceInUSD(),
@@ -364,7 +368,7 @@ export class TokenService {
       amount: holder.amount,
       ownershipPercentage: new Decimal(holder.amount).div(totalSupply).mul(100).toNumber(),
       totalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).toNumber(),
-      usdTotalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).mul(usdPrice).toNumber(),
+      usdTotalPrice: new Decimal(holder.amount).mul(tokenPrice[tokenId]).mul(adaPrice).toNumber(),
     }));
 
     await this.cache.set(cacheKey, data, TOP_HOLDERS_CACHE_TTL);

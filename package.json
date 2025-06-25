@@ -169,6 +169,13 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@constants/(.*)$": "<rootDir>/constants/$1",
+      "^@shared/(.*)$": "<rootDir>/shared/$1",
+      "^@modules/(.*)$": "<rootDir>/modules/$1",
+      "^@database/(.*)$": "<rootDir>/database/$1",
+      "^external/(.*)$": "<rootDir>/external/$1"
+    }
   }
 }
