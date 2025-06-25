@@ -89,6 +89,13 @@ export class TokenController {
     return this.tokenService.getTopHolders(tokenId, limit, page);
   }
 
+  @Get(':tokenId/num-of-holders')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenHolders(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenHoldersCount(tokenId);
+  }
+
   @Get(':tokenId/top-traders')
   @GuardPublic()
   @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })

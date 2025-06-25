@@ -36,3 +36,6 @@ export const ADA_OHLCV_CACHE_TTL = 3 * MILLISECONDS_PER_MINUTE;
 
 export const ADA_INFO_CACHE_KEY = () => `ada_info`;
 export const ADA_INFO_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;
+
+export const TOKEN_HOLDER_COUNT_CACHE_KEY = (tokenId: string) => `token_holder_count_${tokenId}`;
+export const TOKEN_HOLDER_COUNT_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;

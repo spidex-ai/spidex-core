@@ -1,6 +1,8 @@
 import {
   TOKEN_DETAILS_CACHE_KEY,
   TOKEN_DETAILS_CACHE_TTL,
+  TOKEN_HOLDER_COUNT_CACHE_KEY,
+  TOKEN_HOLDER_COUNT_CACHE_TTL,
   TOKEN_METADATA_CACHE_KEY,
   TOKEN_METADATA_CACHE_TTL,
   TOKEN_STATS_CACHE_KEY,
@@ -365,6 +367,24 @@ export class TokenService {
 
     await this.cache.set(cacheKey, data, TOP_HOLDERS_CACHE_TTL);
     return data;
+  }
+
+  async getTokenHoldersCount(tokenId: string) {
+    const cacheKey = TOKEN_HOLDER_COUNT_CACHE_KEY(tokenId);
+    const cachedData = await this.cache.get<number>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+    let count = 0;
+    if (tokenId.startsWith(CARDANO_LOVELACE_UNIT) || tokenId.startsWith(CARDANO_UNIT)) {
+      const marketStats = await this.taptoolsService.getMarketStats();
+      count = marketStats.activeAddresses;
+    } else {
+      count = (await this.taptoolsService.getTokenHolders(tokenId)).holders;
+    }
+
+    await this.cache.set(cacheKey, count, TOKEN_HOLDER_COUNT_CACHE_TTL);
+    return count;
   }
 
   async searchTokens(request: TokenSearchRequest) {

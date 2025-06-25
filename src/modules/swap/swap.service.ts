@@ -343,7 +343,7 @@ export class SwapService implements OnModuleInit {
 
       // Format the response
       return traders.map(trader => ({
-        address: trader.address,
+        address: trader.swap_address,
         totalVolume: parseFloat(trader.totalVolume),
         buyVolume: parseFloat(trader.buyVolume),
         sellVolume: parseFloat(trader.sellVolume),
