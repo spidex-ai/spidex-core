@@ -13,10 +13,12 @@ import { BullModule } from '@nestjs/bullmq';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
 import { AdminConsumer } from './admin.consumer';
+import { AdminAnalyticsService } from './services/admin-analytics.service';
+import { UserRepository } from '@database/repositories/user.repository';
 
 @Module({
   imports: [
-    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository, QuestRepository]),
+    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository, QuestRepository, UserRepository]),
     PasswordEncoderModule,
     BullModule.registerQueue({
       name: CRAWL_DOCS_QUEUE_NAME,
@@ -34,7 +36,7 @@ import { AdminConsumer } from './admin.consumer';
     ConfigModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, AdminConsumer],
-  exports: [AdminService],
+  providers: [AdminService, AdminConsumer, AdminAnalyticsService],
+  exports: [AdminService, AdminAnalyticsService],
 })
 export class AdminModule {}

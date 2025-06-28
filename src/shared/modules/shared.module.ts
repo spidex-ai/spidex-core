@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { LoggingModule } from '@shared/modules/loggers/logger.module';
 import { RabbitMQModule } from '@shared/modules/rabbitmq/rabbitmq.module';
 import { RedisModule } from '@shared/modules/redis/redis.module';
+import { SharedServicesModule } from '@shared/services/shared-services.module';
 import { ConfigurationModule } from 'config/config.module';
 import { DatabaseModule } from 'config/database.module';
 import { CustomizeRedisModule } from 'config/redis.module';
@@ -16,6 +17,7 @@ import { BullQueueModule } from './bull-queue/bull-queue.module';
     LoggingModule,
     RabbitMQModule,
     BullQueueModule,
+    SharedServicesModule,
   ],
 })
 export class SharedModule {}

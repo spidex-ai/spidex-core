@@ -15,28 +15,40 @@ export class UserPointRepository extends BaseRepository<UserPointEntity> {
   async getLeaderboard(user: UserEntity, query: PaginationDto): Promise<PageDto<LeaderboardUserOutputDto>> {
     const { page, limit } = query;
 
+    // Optimized query using LEFT JOIN instead of subquery for better performance
     const queryBuilder = this.createQueryBuilder('userPoint')
       .select([
         'userPoint.id',
         'userPoint.userId',
         'userPoint.amount',
+        'userPoint.updatedAt',
         'user.username',
         'user.walletAddress',
         'user.avatar',
         'user.email',
-        'user.xUsername',
         'user.fullName',
       ])
       .addSelect(`RANK() OVER (ORDER BY CAST(userPoint.amount AS DECIMAL) DESC, userPoint.updatedAt DESC)`, 'rank')
-      .leftJoin('userPoint.user', 'user');
+      .addSelect('COALESCE(COUNT(referrals.id), 0)', 'totalReferralCount')
+      .leftJoin('userPoint.user', 'user')
+      .leftJoin(
+        'user_referrals',
+        'referrals',
+        'referrals.referred_by = userPoint.userId AND referrals.deleted_at IS NULL',
+      )
+      .groupBy(
+        'userPoint.id, userPoint.userId, userPoint.amount, userPoint.updatedAt, user.id, user.username, user.walletAddress, user.avatar, user.email, user.fullName',
+      );
 
-    const total = await queryBuilder.getCount();
+    // Get total count before applying pagination - use separate query for better performance
+    const countQuery = this.createQueryBuilder('userPoint').where('userPoint.deletedAt IS NULL');
+    const total = await countQuery.getCount();
 
     const result = await queryBuilder
-      .take(limit)
-      .skip((page - 1) * limit)
       .orderBy('CAST(userPoint.amount AS DECIMAL)', 'DESC')
       .addOrderBy('userPoint.updatedAt', 'DESC')
+      .offset((page - 1) * limit)
+      .limit(limit)
       .getRawMany();
 
     const formattedResult: LeaderboardUserOutputDto[] = result.map(item => ({
@@ -45,24 +57,32 @@ export class UserPointRepository extends BaseRepository<UserPointEntity> {
         id: item.userPoint_user_id,
         username: item.user_username,
         avatar: item.user_avatar,
-        totalPoint: item.userPoint_amount,
         address: item.user_wallet_address,
         email: item.user_email,
-        xUsername: item.user_x_username,
         fullName: item.user_full_name,
       },
       totalPoint: item.userPoint_amount,
+      totalReferralCount: parseInt(item.totalReferralCount) || 0,
     }));
 
     return new PageDto(formattedResult, new PageMetaDto(total, new PageOptionsDto(page, limit)));
   }
 
-  async getUserRank(userId: number): Promise<{ id: number; rank: number; amount: string } | null> {
+  async getUserRank(
+    userId: number,
+  ): Promise<{ id: number; rank: number; amount: string; referralCount?: number } | null> {
     const result = await this.createQueryBuilder('userPoint')
       .select(['userPoint.userId', 'userPoint.amount', 'user.walletAddress'])
       .addSelect(`RANK() OVER (ORDER BY CAST(userPoint.amount AS DECIMAL) DESC)`, 'rank')
+      .addSelect('COALESCE(COUNT(referrals.id), 0)', 'referralCount')
       .leftJoin('userPoint.user', 'user')
+      .leftJoin(
+        'user_referrals',
+        'referrals',
+        'referrals.referred_by = userPoint.userId AND referrals.deleted_at IS NULL',
+      )
       .where('userPoint.userId = :userId', { userId })
+      .groupBy('userPoint.userId, userPoint.amount, user.walletAddress')
       .getRawOne();
 
     if (!result) return null;
@@ -71,6 +91,7 @@ export class UserPointRepository extends BaseRepository<UserPointEntity> {
       id: result.userPoint_userId,
       rank: parseInt(result.rank),
       amount: result.userPoint_amount,
+      referralCount: parseInt(result.referralCount) || 0,
     };
   }
 

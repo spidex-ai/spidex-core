@@ -175,4 +175,8 @@ export class UserReferralService {
       meta: new PageMetaDto(total, new PageOptionsDto(page, limit)),
     };
   }
+
+  async getReferralCount(userId: number): Promise<number> {
+    return this.referralRepository.count({ where: { referredBy: userId } });
+  }
 }

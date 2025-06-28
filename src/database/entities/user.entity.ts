@@ -1,6 +1,7 @@
 import { EUserStatus } from '@constants/user.constant';
 import { BaseExcludeDeletedAtEntity } from '@database/common/base.entity';
 import { UserPointLogEntity } from '@database/entities/user-point-log.entity';
+import { UserReferralEntity } from '@database/entities/user-referral.entity';
 import { Column, DeepPartial, Entity, Index, OneToMany } from 'typeorm';
 
 @Entity('users')
@@ -61,6 +62,12 @@ export class UserEntity extends BaseExcludeDeletedAtEntity {
   @Column({ name: 'referral_code', nullable: true, default: null })
   referralCode: string;
 
+  @Column({ name: 'last_activity_at', nullable: true, default: null })
+  lastActivityAt: Date;
+
   @OneToMany(() => UserPointLogEntity, userPointLog => userPointLog.user)
   userPointLogs: UserPointLogEntity[];
+
+  @OneToMany(() => UserReferralEntity, userReferral => userReferral.user)
+  referrals: UserReferralEntity[];
 }

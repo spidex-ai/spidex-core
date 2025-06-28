@@ -266,6 +266,7 @@ export class UserPointService {
   async getMyRank(userId: number): Promise<LeaderboardUserOutputDto> {
     const user = await this.userService.getUserById(userId);
     const result = await this.userPointRepository.getUserRank(userId);
+    const referralCount = await this.userReferralService.getReferralCount(userId);
     return {
       rank: result.rank,
       user: {
@@ -278,6 +279,7 @@ export class UserPointService {
         fullName: user.fullName,
       },
       totalPoint: result.amount,
+      totalReferralCount: referralCount,
     };
   }
 

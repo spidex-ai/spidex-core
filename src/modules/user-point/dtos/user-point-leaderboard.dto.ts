@@ -66,6 +66,11 @@ export class LeaderboardUserOutputDto {
   @IsString()
   @Expose()
   totalPoint: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @Expose()
+  totalReferralCount: number;
 }
 
 export class LeaderboardOutputDto {

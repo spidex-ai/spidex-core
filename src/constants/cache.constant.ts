@@ -45,3 +45,19 @@ export const TOKEN_MCAP_CACHE_TTL = 1 * MILLISECONDS_PER_MINUTE;
 
 export const TOKEN_PRICES_CACHE_KEY = () => `token_prices`;
 export const TOKEN_PRICES_CACHE_TTL = 5 * MILLISECONDS_PER_MINUTE;
+
+// Admin Analytics Cache Keys
+export const ADMIN_ANALYTICS_DAILY_ACTIVE_USERS_CACHE_KEY = () => `admin_analytics_daily_active_users`;
+export const ADMIN_ANALYTICS_DAILY_ACTIVE_USERS_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;
+
+export const ADMIN_ANALYTICS_TOP_VOLUME_USERS_CACHE_KEY = (timeframe: string, limit: number) =>
+  `admin_analytics_top_volume_users_${timeframe}_${limit}`;
+export const ADMIN_ANALYTICS_TOP_VOLUME_USERS_CACHE_TTL = 15 * MILLISECONDS_PER_MINUTE;
+
+export const ADMIN_ANALYTICS_TOP_SILK_POINT_USERS_CACHE_KEY = (timeframe: string, limit: number) =>
+  `admin_analytics_top_silk_point_users_${timeframe}_${limit}`;
+export const ADMIN_ANALYTICS_TOP_SILK_POINT_USERS_CACHE_TTL = 10 * MILLISECONDS_PER_MINUTE;
+
+export const ADMIN_ANALYTICS_TOP_REFERRAL_USERS_CACHE_KEY = (timeframe: string, limit: number) =>
+  `admin_analytics_top_referral_users_${timeframe}_${limit}`;
+export const ADMIN_ANALYTICS_TOP_REFERRAL_USERS_CACHE_TTL = 15 * MILLISECONDS_PER_MINUTE;
