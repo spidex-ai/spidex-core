@@ -1,0 +1,104 @@
+services:
+  api:
+    container_name: spidex-core-${NODE_ENV}-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      sh -c "yarn db:migration:run && yarn start:prod"
+    restart: always
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - INSTANCE_NAME=api
+      - TELEGRAM_HANDLER_INSTANCE=core-consumer
+    volumes:
+      - ./service-account.json:/app/service-account.json
+    networks:
+      spidex-core-app:
+
+  core-consumer:
+    container_name: spidex-core-${NODE_ENV}-core-consumer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "npm run core:consumer"
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - INSTANCE_NAME=core-consumer
+      - TELEGRAM_HANDLER_INSTANCE=core-consumer
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      spidex-core-app:
+
+  postgres:
+    container_name: spidex-core-${NODE_ENV}-postgres
+    image: postgres:16.1-alpine
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    command: -p ${DB_PORT}
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      spidex-core-app:
+
+  redis: 
+    container_name: spidex-core-${NODE_ENV}-redis
+    image: redis:7-alpine
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    command: redis-server --save 20 1 --loglevel warning --port ${REDIS_PORT}
+    networks:
+      spidex-core-app:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: spidex-core-${NODE_ENV}-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      spidex-core-app:
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db:
+  rabbitmq_data:
+
+networks:
+  spidex-core-app:
+

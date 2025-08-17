@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@common/*": ["common/*"],
+      "@configs/*": ["configs/*"],
+      "@constants/*": ["constants/*"],
+      "@entities/*": ["entities/*"],
+      "@guards/*": ["guards/*"],
+      "@models/*": ["models/*"],
+      "@modules/*": ["modules/*"],
+      "@repositories/*": ["repositories/*"],
+      "@shared/*": ["shared/*"],
+      "@database/*": ["database/*"],
+      "@abis/*": ["abis/*"]
+    },
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "preserveSymlinks": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts", "dist"],
+  "noImplicitAny": false,
+  "strictBindCallApply": false,
+  "forceConsistentCasingInFileNames": false,
+  "noFallthroughCasesInSwitch": false,
+  "resolveJsonModule": true,
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
+  }
+}

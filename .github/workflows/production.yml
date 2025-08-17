@@ -1,0 +1,224 @@
+name: Deploy Production
+run-name: ${{ github.actor }} is deploying production branch 🚀
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild all containers'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - 'production'
+
+env:
+  NODE_ENV: production
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: [spidex-core-prod-runner]
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11'
+          cache: 'npm'
+
+      - name: 🔐 Create service account file
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > ./service-account.json
+          chmod 600 ./service-account.json
+
+      - name: 🌍 Setup environment file
+        run: |
+          # Create production environment file from secrets
+          rm -f .env
+          echo "NODE_ENV=production" > .env
+          echo "APP_NAME=${{ secrets.APP_NAME || 'Spidex Core' }}" >> .env
+          echo "APP_DESCRIPTION=${{ secrets.APP_DESCRIPTION || 'Spidex Core API' }}" >> .env
+          echo "APP_GLOBAL_PREFIX=${{ secrets.APP_GLOBAL_PREFIX || '/api' }}" >> .env
+          echo "APP_SWAGGER_PATH=${{ secrets.APP_SWAGGER_PATH || '/swagger' }}" >> .env
+          echo "APP_DOCS_SCHEMA=${{ secrets.APP_DOCS_SCHEMA || 'https' }}" >> .env
+          echo "APP_VERSION=${{ secrets.APP_VERSION || '1.0.0' }}" >> .env
+          echo "APP_HOST=${{ secrets.APP_HOST || '0.0.0.0' }}" >> .env
+          echo "APP_PORT=${{ secrets.APP_PORT || '8000' }}" >> .env
+          echo "APP_HOST_NAME=${{ secrets.APP_HOST_NAME || 'api.spidex.ag' }}" >> .env
+          echo "APP_BASE_URL=${{ secrets.APP_BASE_URL || 'https://api.spidex.ag' }}" >> .env
+
+          # JWT Configuration
+          echo "JWT_ACCESS_TOKEN_SECRET=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}" >> .env
+          echo "JWT_ACCESS_TOKEN_EXPIRATION_TIME=${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '3600000' }}" >> .env
+          echo "JWT_REFRESH_TOKEN_SECRET=${{ secrets.JWT_REFRESH_TOKEN_SECRET }}" >> .env
+          echo "JWT_REFRESH_TOKEN_EXPIRATION_TIME=${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME || '86400000' }}" >> .env
+
+          # Database Configuration
+          echo "DB_TYPE=${{ secrets.DB_TYPE || 'postgres' }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST || 'postgres' }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT || '8001' }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_SYNC=${{ secrets.DB_SYNC || 'false' }}" >> .env
+          echo "DB_LOG=${{ secrets.DB_LOG || 'false' }}" >> .env
+          echo "DB_RETRY_ATTEMPT=${{ secrets.DB_RETRY_ATTEMPT || '3' }}" >> .env
+          echo "DB_RETRY_DELAY=${{ secrets.DB_RETRY_DELAY || '5000' }}" >> .env
+          echo "DB_EXTRA=${{ secrets.DB_EXTRA }}" >> .env
+          echo "DB_MAX_CONNECTIONS=${{ secrets.DB_MAX_CONNECTIONS || '100' }}" >> .env
+          echo "DB_SSL_ENABLED=${{ secrets.DB_SSL_ENABLED || 'false' }}" >> .env
+          echo "DB_REJECT_UNAUTHORIZED=${{ secrets.DB_REJECT_UNAUTHORIZED || 'false' }}" >> .env
+          echo "DB_CA=${{ secrets.DB_CA || '' }}" >> .env
+          echo "DB_KEY=${{ secrets.DB_KEY || '' }}" >> .env
+          echo "DB_CERT=${{ secrets.DB_CERT || '' }}" >> .env
+          echo "DB_URL=${{ secrets.DB_URL || '' }}" >> .env
+
+          # Adminer
+          echo "ADMINER_PORT=${{ secrets.ADMINER_PORT || '8002' }}" >> .env
+
+          # Redis Configuration
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT || '6383' }}" >> .env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST || 'redis' }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD || '' }}" >> .env
+          echo "REDIS_DB=${{ secrets.REDIS_DB || '0' }}" >> .env
+
+          # External Services
+          echo "S3_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY_ID }}" >> .env
+          echo "S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }}" >> .env
+          echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> .env
+          echo "S3_REGION=${{ secrets.S3_REGION }}" >> .env
+          echo "S3_PREVIEW_URL=${{ secrets.S3_PREVIEW_URL }}" >> .env
+          echo "S3_URL=${{ secrets.S3_URL }}" >> .env
+
+          # Firebase
+          echo "FIREBASE_SERVICE_ACCOUNT_PATH=service-account.json" >> .env
+
+          # X/Twitter API
+          echo "X_BASE_URL=${{ secrets.X_BASE_URL || 'https://api.x.com/2' }}" >> .env
+          echo "X_CLIENT_ID=${{ secrets.X_CLIENT_ID }}" >> .env
+          echo "X_CLIENT_SECRET=${{ secrets.X_CLIENT_SECRET }}" >> .env
+
+          # Kafka Configuration
+          echo "KAFKA_PROVIDER=${{ secrets.KAFKA_PROVIDER || 'kafka' }}" >> .env
+          echo "KAFKA_BROKERS=${{ secrets.KAFKA_BROKERS || 'kafka-0:9092' }}" >> .env
+          echo "KAFKA_EXTERNAL_PORT=${{ secrets.KAFKA_EXTERNAL_PORT || '39094' }}" >> .env
+          echo "KAFKA_CLIENT_ID=${{ secrets.KAFKA_CLIENT_ID || 'spidex-core' }}" >> .env
+          echo "KAFKA_SSL=${{ secrets.KAFKA_SSL || 'false' }}" >> .env
+          echo "KAFKA_REGION=${{ secrets.KAFKA_REGION || 'us-east-1' }}" >> .env
+          echo "KAFKA_UI_PORT=${{ secrets.KAFKA_UI_PORT || '8888' }}" >> .env
+
+          # External API URLs
+          echo "TAPTOOLS_API_URL=${{ secrets.TAPTOOLS_API_URL || 'https://openapi.taptools.io/api/v1' }}" >> .env
+          echo "DEXHUNTER_API_URL=${{ secrets.DEXHUNTER_API_URL || 'https://api-us.dexhunterv3.app' }}" >> .env
+          echo "DEXHUNTER_PARTNER_ID=${{ secrets.DEXHUNTER_PARTNER_ID }}" >> .env
+          echo "TOKEN_CARDANO_API_URL=${{ secrets.TOKEN_CARDANO_API_URL || 'https://tokens.cardano.org' }}" >> .env
+          echo "COINGECKO_API_URL=${{ secrets.COINGECKO_API_URL || 'https://api.coingecko.com/api/v3' }}" >> .env
+          echo "BLOCKFROST_API_URL=${{ secrets.BLOCKFROST_API_URL || 'https://cardano-mainnet.blockfrost.io/api/v0' }}" >> .env
+          echo "DHAPI_API_URL=${{ secrets.DHAPI_API_URL || 'https://dhapi.io' }}" >> .env
+          echo "DHAPI_PARTNER_ID=${{ secrets.DHAPI_PARTNER_ID }}" >> .env
+
+          # Azure Cosmos DB
+          echo "COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}" >> .env
+          echo "COSMOS_KEY=${{ secrets.COSMOS_KEY }}" >> .env
+
+          # Discord (both OAuth2 and Bot)
+          echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> .env
+          echo "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}" >> .env
+          echo "DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}" >> .env
+          echo "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}" >> .env
+
+          # Telegram
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+          echo "TELEGRAM_BOT_USERNAME=${{ secrets.TELEGRAM_BOT_USERNAME }}" >> .env
+          echo "TELEGRAM_CHANNEL_ID=${{ secrets.TELEGRAM_CHANNEL_ID }}" >> .env
+          echo "TELEGRAM_AUTH_MAX_AGE=${{ secrets.TELEGRAM_AUTH_MAX_AGE || '86400' }}" >> .env
+
+          # RabbitMQ
+          echo "RABBITMQ_USER=${{ secrets.RABBITMQ_USER || 'admin' }}" >> .env
+          echo "RABBITMQ_PASS=${{ secrets.RABBITMQ_PASS || 'admin' }}" >> .env
+          echo "RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT || '5672' }}" >> .env
+          echo "RABBITMQ_MANAGEMENT_PORT=${{ secrets.RABBITMQ_MANAGEMENT_PORT || '15672' }}" >> .env
+          echo "RABBITMQ_URLS=${{ secrets.RABBITMQ_URLS }}" >> .env
+
+          # API Keys
+          echo "TAPTOOLS_API_KEY=${{ secrets.TAPTOOLS_API_KEY }}" >> .env
+          echo "COINGECKO_API_KEY=${{ secrets.COINGECKO_API_KEY }}" >> .env
+          echo "BLOCKFROST_API_KEY=${{ secrets.BLOCKFROST_API_KEY }}" >> .env
+          echo "FIRECRAWL_API_KEY=${{ secrets.FIRECRAWL_API_KEY }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+
+          # Other configurations
+          echo "CRYPTO_SECRET_KEY=${{ secrets.CRYPTO_SECRET_KEY }}" >> .env
+          echo "LOG_LEVEL=${{ secrets.LOG_LEVEL || 'INFO' }}" >> .env
+          echo "IS_WRITE_LOG=${{ secrets.IS_WRITE_LOG || 'true' }}" >> .env
+          echo "AUTH_NONCE_EXPIRATION_MINUTES=${{ secrets.AUTH_NONCE_EXPIRATION_MINUTES || '15' }}" >> .env
+          echo "GOOGLE_RECAPCHA_SECRET_KEY=${{ secrets.GOOGLE_RECAPCHA_SECRET_KEY }}" >> .env
+          echo "VERIFICATION_URL=${{ secrets.VERIFICATION_URL }}" >> .env
+
+          # Set secure permissions
+          chmod 600 .env
+
+      - name: 🐳 Build and deploy with Docker Compose
+        run: |
+          echo "🏗️ Building and starting services..."
+          docker compose up -d --build --force-recreate
+
+          echo "📊 Checking service status..."
+          docker compose ps
+
+      - name: 🏥 Health check and verification
+        run: |
+          echo "⏳ Waiting for services to be ready..."
+          sleep 30
+
+          # Check if API is responding
+          max_attempts=10
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "🔍 Health check attempt $attempt/$max_attempts..."
+
+            if curl -f -s "http://localhost:${{ secrets.APP_PORT || '8000' }}/api/health-check" > /dev/null; then
+              echo "✅ API is healthy!"
+              break
+            fi
+
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ API health check failed after $max_attempts attempts"
+              echo "📋 Container logs:"
+              docker compose logs --tail=50
+              exit 1
+            fi
+
+            echo "⏳ Waiting 10 seconds before next attempt..."
+            sleep 10
+            ((attempt++))
+          done
+
+      - name: 📋 Show deployment status
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "📊 Final service status:"
+          docker compose ps
+
+          echo "💾 Disk usage:"
+          df -h
+
+          echo "🐳 Docker system info:"
+          docker system df
+
+      - name: 🧹 Cleanup on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed - showing logs and cleaning up..."
+          docker compose logs --tail=100

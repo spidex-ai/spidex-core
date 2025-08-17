@@ -1,0 +1,2 @@
+export const CORE_MICROSERVICE = 'CORE_MICROSERVICE';
+export const CORE_QUEUE = 'CORE_QUEUE';

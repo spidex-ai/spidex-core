@@ -1,0 +1,44 @@
+services:
+  postgres:
+    container_name: spidex-core-${NODE_ENV}-postgres
+    image: postgres:16.1-alpine
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    command: -p ${DB_PORT}
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      spidex-core-app:
+
+  redis: 
+    container_name: spidex-core-${NODE_ENV}-redis
+    image: redis:7-alpine
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    command: redis-server --save 20 1 --loglevel warning --port ${REDIS_PORT}
+    networks:
+      spidex-core-app:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: spidex-core-${NODE_ENV}-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  db:
+  rabbitmq_data:
+
+networks:
+  spidex-core-app:
+
