@@ -1,0 +1,135 @@
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { TokenService } from './token.service';
+import { ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GuardPublic } from '@shared/decorators/auth.decorator';
+import { TokenStatsResponse } from '@modules/token/dtos/token-response.dto';
+import {
+  TokenOHLCVRequest,
+  TokenSearchRequest,
+  TokenTopMcapRequest,
+  TokenTopTradersRequest,
+  TokenTopVolumeRequest,
+} from '@modules/token/dtos/token-request.dto';
+
+@Controller('tokens')
+@ApiTags('Tokens')
+export class TokenController {
+  constructor(private readonly tokenService: TokenService) {}
+
+  @Get('search')
+  @GuardPublic()
+  @ApiQuery({ name: 'query', type: String, required: true, description: 'Query to search for' })
+  async searchTokens(@Query() request: TokenSearchRequest) {
+    return this.tokenService.searchTokens(request);
+  }
+
+  @Get('top/mcap')
+  @GuardPublic()
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limit of tokens to return' })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
+  async getTopMcapTokens(@Query() request: TokenTopMcapRequest) {
+    return this.tokenService.getTopMcapTokens(request);
+  }
+
+  @Get('top/volume')
+  @GuardPublic()
+  @ApiQuery({ name: 'timeFrame', type: String, required: false, description: 'Time frame to get top volume tokens' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limit of tokens to return' })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
+  async getTopVolumeTokens(@Query() request: TokenTopVolumeRequest) {
+    return this.tokenService.getTopVolumeTokens(request);
+  }
+
+  @Get(':tokenId')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token stats',
+    type: TokenStatsResponse,
+  })
+  async getTokenDetails(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenDetails(tokenId);
+  }
+
+  @Get(':tokenId/stats')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token stats',
+    type: TokenStatsResponse,
+  })
+  async getTokenStats(@Param('tokenId') tokenId: string): Promise<TokenStatsResponse> {
+    return this.tokenService.getTokenStats(tokenId);
+  }
+
+  @Get(':tokenId/trades')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limit of trades to return' })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
+  async getTokenTrades(
+    @Param('tokenId') tokenId: string,
+    @Query('timeFrame') timeFrame: string = '24h',
+    @Query('limit') limit: number = 10,
+    @Query('page') page: number = 1,
+  ) {
+    return this.tokenService.getTokenTrades(tokenId, timeFrame, limit, page);
+  }
+
+  @Get(':tokenId/top-holders')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenTopHolders(
+    @Param('tokenId') tokenId: string,
+    @Query('limit') limit: number = 10,
+    @Query('page') page: number = 1,
+  ) {
+    return this.tokenService.getTopHolders(tokenId, limit, page);
+  }
+
+  @Get(':tokenId/num-of-holders')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenHolders(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenHoldersCount(tokenId);
+  }
+
+  @Get(':tokenId/top-traders')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenTopTraders(@Param('tokenId') tokenId: string, @Query() request: TokenTopTradersRequest) {
+    return this.tokenService.getTopTraders(tokenId, request);
+  }
+
+  @Get(':tokenId/ohlcv/quote')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiQuery({ name: 'quote', type: String, required: false, description: 'Quote currency' })
+  async getTokenOHLCV(
+    @Param('tokenId') tokenId: string,
+    @Query('quote') quote: string = 'ADA',
+    @Query() request: TokenOHLCVRequest,
+  ) {
+    return this.tokenService.getTokenOHLCV(tokenId, quote, request);
+  }
+
+  @Get(':tokenId/metadata')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token stats',
+  })
+  async getTokenMetadata(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenMetadata(tokenId);
+  }
+
+  @Get(':tokenId/mcap')
+  @GuardPublic()
+  @ApiParam({ name: 'tokenId', type: String, required: true, description: 'Token ID' })
+  async getTokenMcap(@Param('tokenId') tokenId: string) {
+    return this.tokenService.getTokenMcap(tokenId);
+  }
+}

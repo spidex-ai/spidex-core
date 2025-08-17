@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Daily check-in",
+    "description": "Daily check-in to earn points",
+    "icon": "/public/icons/quests/daily-checkin.png",
+    "category": 1,
+    "type": 10,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Daily trade",
+    "description": "Daily trade to earn points",
+    "icon": "/public/icons/quests/daily-trade.png",
+    "category": 1,
+    "type": 32,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Daily prompt",
+    "description": "Daily prompt to earn points",
+    "icon": "/public/icons/quests/daily-prompt.png",
+    "category": 1,
+    "type": 41,
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Follow Spidex AI on X",
+    "description": "Follow our official X (Twitter) account",
+    "icon": "/public/icons/quests/follow-x.png",
+    "category": 0,
+    "type": 3,
+    "requirements": {
+      "url": "https://twitter.com/intent/user?screen_name=Spidex_ag"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Share Spidex AI X's Pin Post",
+    "description": "Share Spidex AI X's Pin Post",
+    "icon": "/public/icons/quests/share-x-post.png",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "url": "https://twitter.com/intent/retweet?tweet_id=1905328929457799445"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Join Spidex AI Discord community",
+    "description": "Join our Discord community to connect with other users",
+    "icon": "/public/icons/quests/join-discord.png",
+    "category": 0,
+    "type": 1,
+    "requirements": {
+      "url": "https://discord.com/invite/xxxrzcwNfB"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Subscribe to Spidex AI TG channel",
+    "description": "Subscribe to Spidex AI TG channel",
+    "icon": "/public/icons/quests/join-telegram.png",
+    "category": 0,
+    "type": 2,
+    "requirements": {
+      "url": "https://t.me/SpidexAI"
+    },
+    "points": 10,
+    "status": 1,
+    "limit": 1
+  },
+  {
+    "name": "Refer a Friend",
+    "description": "Invite your friends to join the platform",
+    "category": 2,
+    "type": 20,
+    "points": 10,
+    "status": 1,
+    "limit": -1
+  }
+]
