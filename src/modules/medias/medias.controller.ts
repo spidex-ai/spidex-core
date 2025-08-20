@@ -35,6 +35,6 @@ export class MediasController {
     },
   })
   uploadImage(@AuthUser() user: IJwtPayload, @UploadedFile() file: any) {
-    return this.mediaService.upload({ file, userId: user.userId });
+    return this.mediaService.uploadImage({ file, userId: user.userId });
   }
 }

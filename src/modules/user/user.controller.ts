@@ -53,14 +53,14 @@ export class UserController {
   }
 
   @Get('profile/:walletAddress')
-  @GuardPublic()
+  @AuthUserGuard()
   @ApiResponse({
     type: GetProfileResponseDto,
     status: HttpStatus.OK,
     description: 'Successful',
   })
-  getProfile(@Param('walletAddress') walletAddress: string) {
-    return this.userService.getProfile(walletAddress);
+  getProfile(@AuthUser() user: IJwtPayload, @Param('walletAddress') walletAddress: string) {
+    return this.userService.getProfile(user.userId, walletAddress);
   }
 
   @GuardPublic()
