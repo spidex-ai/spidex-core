@@ -109,46 +109,6 @@ export const mediaFileFilter = (
   callback(null, true);
 };
 
-// Basic SVG content validation
-function isValidSvgContent(buffer: Buffer): boolean {
-  try {
-    if (!buffer || buffer.length === 0) {
-      return false;
-    }
-
-    const content = buffer.toString('utf8');
-
-    // Check for basic SVG structure
-    const hasSvgTag = /<svg[^>]*>/i.test(content);
-    const hasClosingSvgTag = /<\/svg>/i.test(content);
-
-    if (!hasSvgTag || !hasClosingSvgTag) {
-      return false;
-    }
-
-    // Check for obviously malicious content
-    const dangerousPatterns = [
-      /<script[^>]*>/i,
-      /javascript:/i,
-      /on\w+\s*=/i, // Event handlers like onclick, onload, etc.
-      /<iframe[^>]*>/i,
-      /<object[^>]*>/i,
-      /<embed[^>]*>/i,
-      /<foreignObject[^>]*>/i,
-    ];
-
-    for (const pattern of dangerousPatterns) {
-      if (pattern.test(content)) {
-        return false;
-      }
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export const fetchBuffer = async (url: string) => {
   const response = await axios.get(url, { responseType: 'arraybuffer' });
   return Buffer.from(response.data);

@@ -411,7 +411,8 @@ export class UserService {
 
     // Check avatar is valid
     if (updateProfileDto.avatar) {
-      const avatarRegex = /^https?:\/\/[^\s]+$/;
+      // Validate avatar URL format start with S3_URL env and end with image extension
+      const avatarRegex = new RegExp(`^${process.env.S3_URL}.*\\.(jpg|jpeg|png|gif|bmp|svg)$`);
       if (!avatarRegex.test(updateProfileDto.avatar)) {
         throw new BadRequestException({
           validatorErrors: EError.INVALID_AVATAR,
@@ -435,8 +436,8 @@ export class UserService {
     return plainToInstanceCustom(GetLoginManagementResponseDto, user);
   }
 
-  async getProfile(walletAddress: string) {
-    const user = await this.userRepository.findOneBy({ walletAddress });
+  async getProfile(userId: number, walletAddress: string) {
+    const user = await this.userRepository.findOneBy({ walletAddress, id: userId });
     if (!user) {
       throw new BadRequestException({
         validatorErrors: EError.USER_NOT_EXIST,

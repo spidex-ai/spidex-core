@@ -5,6 +5,7 @@ import { SvgSanitizerService } from '@shared/services/svg-sanitizer.service';
 import { getFileBuffer } from '@shared/utils/upload';
 import { S3Service } from 'external/aws/s3/s3.service';
 import mime from 'mime-types';
+import imageType from 'image-type';
 
 @Injectable()
 export class MediasService {
@@ -15,16 +16,32 @@ export class MediasService {
     private svgSanitizerService: SvgSanitizerService,
   ) {}
 
-  async upload({ file, userId }: { file: any; userId?: number }) {
-    // Get file buffer (handles both memory and disk storage)
+  async uploadImage({ file, userId }: { file: any; userId?: number }) {
     let fileBuffer: Buffer;
     try {
       fileBuffer = await getFileBuffer(file);
     } catch (error) {
       this.logger.error(`Failed to read file buffer: ${error}`);
       throw new BadRequestException({
-        validatorErrors: EError.INVALID_AVATAR,
+        validatorErrors: EError.UPLOAD_IMAGE_FAILED,
         message: 'Unable to read uploaded file',
+      });
+    }
+
+    const fileType = await imageType(fileBuffer);
+    if (!fileType) {
+      throw new BadRequestException({
+        validatorErrors: EError.UPLOAD_IMAGE_FAILED,
+        message: 'Uploaded file is not a valid image',
+      });
+    }
+
+    const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+
+    if (!SUPPORTED_IMAGE_TYPES.includes(fileType.mime)) {
+      throw new BadRequestException({
+        validatorErrors: EError.UPLOAD_IMAGE_FAILED,
+        message: 'Uploaded image only supports JPEG, PNG, GIF, and SVG formats',
       });
     }
 
