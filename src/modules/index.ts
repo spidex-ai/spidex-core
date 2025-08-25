@@ -10,6 +10,7 @@ import { PortfolioModule } from '@modules/portfolio/portfolio.module';
 import { MediasModule } from '@modules/medias/medias.module';
 import { AdminModule } from '@modules/admin/admin.module';
 import { EventModule } from '@modules/event/event.module';
+import { FavouriteTokenModule } from '@modules/favourite-token/favourite-token.module';
 export const MODULES = [
   UserModule,
   AuthModule,
@@ -23,4 +24,5 @@ export const MODULES = [
   MediasModule,
   AdminModule,
   EventModule,
+  FavouriteTokenModule,
 ];
