@@ -1,7 +1,8 @@
 import { BaseRepository } from '@database/common/base.repository';
-import { EEventStatus, EventEntity } from '@database/entities/event.entity';
+import { ALL_DEX, ALL_TOKEN, EEventStatus, EventEntity } from '@database/entities/event.entity';
+import { EventFilterStatus } from '@modules/event/dtos/event-request.dto';
 import { EntityRepository } from 'nestjs-typeorm-custom-repository';
-import { IsNull, LessThan } from 'typeorm';
+import { In, IsNull, LessThan } from 'typeorm';
 
 export interface EventLeaderboardEntry {
   user_id: number;
@@ -25,17 +26,62 @@ export interface EventAnalytics {
 
 @EntityRepository(EventEntity)
 export class EventRepository extends BaseRepository<EventEntity> {
-  async getActiveEventsForTokens(tokenA: string, tokenB: string, tradingTime: Date): Promise<EventEntity[]> {
-    return this.createQueryBuilder('event')
+  async getActiveEventsForTokenAndDex(
+    tokenA: string,
+    tokenB: string,
+    dex: string,
+    tradingTime: Date,
+  ): Promise<EventEntity[]> {
+    const result = await this.createQueryBuilder('event')
       .where('event.status = :status', { status: EEventStatus.ACTIVE })
       .andWhere('event.start_date <= :tradingTime', { tradingTime })
       .andWhere('event.end_date >= :tradingTime', { tradingTime })
-      .andWhere('(event.trade_token = :tokenA OR event.trade_token = :tokenB)', {
+      .andWhere('(event.trade_token = :tokenA OR event.trade_token = :tokenB OR event.trade_token = :allToken)', {
         tokenA: tokenA,
         tokenB: tokenB,
+        allToken: ALL_TOKEN,
+      })
+      .andWhere('(event.trade_dex = :tradeDex OR event.trade_dex = :allDex)', {
+        tradeDex: dex,
+        allDex: ALL_DEX,
       })
       .andWhere('event.deleted_at IS NULL')
       .getMany();
+
+    return result;
+  }
+
+  async getEventsWithFilter(filter?: { status?: EventFilterStatus }): Promise<EventEntity[]> {
+    const query = this.createQueryBuilder('event').where('event.deleted_at IS NULL');
+    const now = new Date();
+    if (filter?.status) {
+      switch (filter.status) {
+        case EventFilterStatus.UPCOMING:
+          query
+            .andWhere('event.start_date > :now', { now })
+            .andWhere('event.status = :status', { status: EEventStatus.ACTIVE });
+          break;
+        case EventFilterStatus.LIVE:
+          query
+            .andWhere('event.start_date <= :now AND event.end_date >= :now', { now })
+            .andWhere('event.status = :status', { status: EEventStatus.ACTIVE });
+          break;
+        case EventFilterStatus.ENDED:
+          query
+            .andWhere('event.end_date < :now', { now })
+            .andWhere('event.status = :status', { status: In([EEventStatus.ENDED, EEventStatus.ACTIVE]) });
+          break;
+        case EventFilterStatus.DISTRIBUTED:
+          query.andWhere('event.status = :status', { status: EEventStatus.PRIZES_DISTRIBUTED });
+          break;
+      }
+    } else {
+      query.andWhere('event.status = :status', { status: EEventStatus.ACTIVE });
+    }
+
+    query.orderBy('event.created_at', 'DESC');
+
+    return query.getMany();
   }
 
   async getEventLeaderboard(

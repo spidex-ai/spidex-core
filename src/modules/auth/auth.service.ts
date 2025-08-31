@@ -290,4 +290,21 @@ export class AuthService {
       userId: user.id,
     };
   }
+
+  async getToken(id: number): Promise<AuthResponseOutputDto> {
+    const testable = this.configService.get<boolean>(EEnvKey.TESTABLE);
+    if (!testable) {
+      throw new BadRequestException({
+        validatorErrors: EError.ERROR_NOT_TESTABLE,
+        message: `AuthService::getToken() | Not in testable environment`,
+      });
+    }
+    const payload = { userId: id };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+    return {
+      accessToken,
+      refreshToken,
+      userId: id,
+    };
+  }
 }

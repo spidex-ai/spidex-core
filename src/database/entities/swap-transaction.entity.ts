@@ -4,6 +4,7 @@ import { Column, Entity, Index } from 'typeorm';
 export enum SwapExchange {
   DEXHUNTER = 'dexhunter',
   MINSWAP = 'minswap',
+  CARDEXSCAN = 'cardexscan',
 }
 
 export enum SwapAction {

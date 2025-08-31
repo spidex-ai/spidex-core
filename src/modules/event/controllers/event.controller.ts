@@ -1,5 +1,5 @@
 import { UserEntity } from '@database/entities/user.entity';
-import { LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
+import { EventFilterDto, LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
 import {
   EventInfoResponseDto,
   EventLeaderboardResponseDto,
@@ -18,11 +18,11 @@ import { IJwtPayload } from '@shared/interfaces/auth.interface';
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  @Get('active')
+  @Get('')
   @ApiOperation({ summary: 'Get all active events' })
   @ApiResponse({ status: 200, description: 'List of active events', type: [EventInfoResponseDto] })
-  async getActiveEvents(): Promise<EventInfoResponseDto[]> {
-    return this.eventService.getActiveEvents();
+  async getActiveEvents(@Query() filter: EventFilterDto): Promise<EventInfoResponseDto[]> {
+    return this.eventService.getActiveEvents(filter);
   }
 
   @Get(':id')

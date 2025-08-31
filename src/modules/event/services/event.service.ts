@@ -1,6 +1,6 @@
 import { EEventStatus } from '@database/entities/event.entity';
 import { SwapTransactionEntity } from '@database/entities/swap-transaction.entity';
-import { LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
+import { EventFilterDto, LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
 import {
   EventInfoResponseDto,
   EventLeaderboardResponseDto,
@@ -22,8 +22,8 @@ export class EventService {
 
   // ==================== Query Methods ====================
 
-  async getActiveEvents(): Promise<EventInfoResponseDto[]> {
-    return await this.eventQueryService.getActiveEvents();
+  async getActiveEvents(filter: EventFilterDto): Promise<EventInfoResponseDto[]> {
+    return await this.eventQueryService.getActiveEvents(filter);
   }
 
   async getEventById(eventId: number): Promise<EventInfoResponseDto> {

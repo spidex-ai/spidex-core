@@ -1,3 +1,4 @@
+import { ALL_TOKEN } from '@database/entities/event.entity';
 import { EventParticipantRepository } from '@database/repositories/event-participant.repository';
 import { EventTradeRepository } from '@database/repositories/event-trade.repository';
 import { EventRepository } from '@database/repositories/event.repository';
@@ -75,7 +76,7 @@ export class EventTradeProcessorService {
 
       // Get or create participant
       const participant = await this.getOrCreateParticipant(eventId, tradeData.userId);
-      const isNewParticipant = !await this.eventParticipantRepository.findByEventAndUser(eventId, tradeData.userId);
+      const isNewParticipant = !(await this.eventParticipantRepository.findByEventAndUser(eventId, tradeData.userId));
 
       // Validate trade against event
       const tradeInfo = await this.validateTradeForEvent(eventId, tradeData);
@@ -189,15 +190,16 @@ export class EventTradeProcessorService {
   }
 
   private async findActiveEventsForTrade(data: IEventRelatedTradeMessage) {
-    return await this.eventRepository.getActiveEventsForTokens(
+    return await this.eventRepository.getActiveEventsForTokenAndDex(
       data.tokenA || '',
       data.tokenB || '',
+      data.exchange,
       data.timestamp,
     );
   }
 
   private async processTradeForAllEvents(activeEvents: any[], data: IEventRelatedTradeMessage) {
-    const eventProcessingPromises = activeEvents.map(async (event) => {
+    const eventProcessingPromises = activeEvents.map(async event => {
       try {
         await this.processTradeForEvent(event.id, data);
       } catch (error) {
@@ -269,7 +271,10 @@ export class EventTradeProcessorService {
     return await this.eventParticipantRepository.save(participant);
   }
 
-  private async validateTradeForEvent(eventId: number, tradeData: IEventRelatedTradeMessage): Promise<ITokenTradeInfo | null> {
+  private async validateTradeForEvent(
+    eventId: number,
+    tradeData: IEventRelatedTradeMessage,
+  ): Promise<ITokenTradeInfo | null> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
     });
@@ -284,6 +289,15 @@ export class EventTradeProcessorService {
   private determineTradeType(eventToken: string, tradeData: IEventRelatedTradeMessage): ITokenTradeInfo | null {
     if (!eventToken || eventToken.trim() === '') {
       return null;
+    }
+
+    if (eventToken === ALL_TOKEN) {
+      return {
+        tokenAddress: tradeData.tokenA,
+        tradeType: EEventTradeType.SELL,
+        tokenAmount: new Decimal(tradeData.tokenAAmount || '0').toString(),
+        volumeUsd: new Decimal(tradeData.usdVolume || '0').toString(),
+      };
     }
 
     // Check if tokenA is an event token (user is selling event token)

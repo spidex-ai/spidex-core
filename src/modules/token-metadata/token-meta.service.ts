@@ -29,6 +29,10 @@ export class TokenMetaService {
   ) {}
 
   async getTokenMetadata(unit: string, properties: TokenMetadataProperties[]) {
+    if (!unit || !properties) {
+      return null;
+    }
+
     if (unit === CARDANO_UNIT) {
       return this.getAda(properties);
     }
@@ -131,19 +135,23 @@ export class TokenMetaService {
 
   async getTokensMetadata(units: Set<string>, properties: Set<TokenMetadataProperties>): Promise<any[]> {
     console.time('getTokensMetadata');
+    // Filter null or undefined units and properties
+    const filteredUnits = new Set(Array.from(units).filter(unit => unit !== null && unit !== undefined));
+    const filteredProperties = new Set(Array.from(properties).filter(prop => prop !== null && prop !== undefined));
+
     try {
-      if (units.size === 0) {
+      if (filteredUnits.size === 0) {
         return [];
       }
-      console.log(units);
+      console.log(filteredUnits);
 
       let adaMetadata;
-      if (units.has(CARDANO_UNIT)) {
-        units.delete(CARDANO_UNIT);
-        adaMetadata = this.getAda(Array.from(properties));
+      if (filteredUnits.has(CARDANO_UNIT)) {
+        filteredUnits.delete(CARDANO_UNIT);
+        adaMetadata = this.getAda(Array.from(filteredProperties));
       }
-      const unitsArray = Array.from(units);
-      const propertiesArray = Array.from(properties);
+      const unitsArray = Array.from(filteredUnits);
+      const propertiesArray = Array.from(filteredProperties);
       const pickProperties = ['unit'].concat(propertiesArray);
       // 1. Fetch all existing metadata in one query
       const tokenMetadataList = await this.tokenMetadataRepository.find({ where: { unit: In(unitsArray) } });
@@ -219,7 +227,7 @@ export class TokenMetaService {
       if (adaMetadata) {
         results.push(adaMetadata);
       }
-      for (const unit of units) {
+      for (const unit of filteredUnits) {
         const tokenMetadata = tokenMetadataMap.get(unit);
         if (!tokenMetadata) {
           results.push(null);

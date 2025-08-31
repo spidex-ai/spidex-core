@@ -4,6 +4,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm
 import { Decimal } from 'decimal.js';
 import { EventParticipantEntity } from './event-participant.entity';
 import { EventRankPrizeEntity } from './event-rank-prize.entity';
+import { SwapExchange } from '@database/entities/swap-transaction.entity';
 
 export enum EEventStatus {
   DRAFT = 'DRAFT',
@@ -17,7 +18,11 @@ export enum EEventType {
   TRADING_COMPETITION = 'TRADING_COMPETITION',
   VOLUME_CHALLENGE = 'VOLUME_CHALLENGE',
   TOKEN_SPECIFIC = 'TOKEN_SPECIFIC',
+  DEX_SPECIFIC = 'DEX_SPECIFIC',
 }
+
+export const ALL_TOKEN = 'ALL_TOKEN';
+export const ALL_DEX = 'ALL_DEX';
 
 @Entity('events')
 @Index(['status'])
@@ -40,6 +45,12 @@ export class EventEntity extends BaseEntity {
   @Column({ name: 'end_date', type: 'timestamp' })
   endDate: Date;
 
+  @Column({ name: 'estimate_distribution_date', nullable: true })
+  estimateDistributionDate: Date;
+
+  @Column({ name: 'distribution_date', nullable: true })
+  distributionDate: Date;
+
   @Column({
     name: 'status',
     type: 'enum',
@@ -56,8 +67,11 @@ export class EventEntity extends BaseEntity {
   })
   type: EEventType;
 
-  @Column({ name: 'trade_token', type: 'varchar' })
+  @Column({ name: 'trade_token', type: 'varchar', default: ALL_TOKEN })
   tradeToken: string;
+
+  @Column({ name: 'trade_dex', type: 'varchar', default: ALL_DEX })
+  tradeDex: SwapExchange;
 
   @Column({ name: 'url', type: 'text', nullable: true })
   url?: string;
@@ -67,6 +81,9 @@ export class EventEntity extends BaseEntity {
 
   @Column({ name: 'icon', nullable: true })
   icon: string;
+
+  @Column({ name: 'banner', nullable: true })
+  banner: string;
 
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'created_by' })

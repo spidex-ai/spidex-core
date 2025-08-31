@@ -40,5 +40,5 @@ export interface IEventRelatedTradeMessage {
   txHash: string;
   timestamp: Date;
   transactionId: number;
-  exchange: string; // Assuming this field exists
+  exchange: string;
 }

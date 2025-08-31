@@ -40,6 +40,49 @@ export class EventToken {
   decimals: number;
 }
 
+export class PrizeInfo {
+  @ApiProperty()
+  @Expose()
+  unit: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  logo?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  ticker?: string;
+
+  @ApiProperty()
+  @Expose()
+  tokenAmount: string;
+
+  @ApiProperty()
+  @Expose()
+  point: string;
+}
+
+export class Top3Prizes {
+  @ApiPropertyOptional({ type: PrizeInfo })
+  @Expose()
+  @Type(() => PrizeInfo)
+  firstPlace?: PrizeInfo;
+
+  @ApiPropertyOptional({ type: PrizeInfo })
+  @Expose()
+  @Type(() => PrizeInfo)
+  secondPlace?: PrizeInfo;
+
+  @ApiPropertyOptional({ type: PrizeInfo })
+  @Expose()
+  @Type(() => PrizeInfo)
+  thirdPlace?: PrizeInfo;
+}
+
 export class EventInfoResponseDto {
   @ApiProperty()
   @Expose()
@@ -67,6 +110,16 @@ export class EventInfoResponseDto {
   @Transform(({ value }) => value?.toISOString())
   endDate: string;
 
+  @ApiProperty()
+  @Expose()
+  @Transform(({ value }) => value?.toISOString())
+  estimateDistributionDate: string;
+
+  @ApiProperty()
+  @Expose()
+  @Transform(({ value }) => value?.toISOString())
+  distributionDate: string;
+
   @ApiProperty({ enum: EEventStatus })
   @Expose()
   status: EEventStatus;
@@ -82,6 +135,10 @@ export class EventInfoResponseDto {
   @ApiPropertyOptional()
   @Expose()
   icon?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  banner?: string;
 
   @ApiProperty()
   @Expose()
@@ -108,6 +165,10 @@ export class EventInfoResponseDto {
   @Expose()
   @Transform(({ value }) => value?.toISOString())
   updatedAt: string;
+  @ApiPropertyOptional({ type: Top3Prizes })
+  @Expose()
+  @Type(() => Top3Prizes)
+  top3Prizes?: Top3Prizes;
 }
 
 export class EventLeaderboardEntryDto {

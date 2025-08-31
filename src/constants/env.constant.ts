@@ -86,6 +86,8 @@ export enum EEnvKey {
 
   MINSWAP_API_URL = 'MINSWAP_API_URL',
   MINSWAP_PARTNER_ID = 'MINSWAP_PARTNER_ID',
+
+  TESTABLE = 'TESTABLE',
 }
 
 export enum EEnvironment {

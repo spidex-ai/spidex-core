@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
@@ -11,10 +11,10 @@ import {
   ConnectTelegramRequestDto,
   ConnectWalletRequestDto,
   ConnectXRequestDto,
-  RefreshTokenRequestDto,
   GenerateNonceRequestDto,
+  RefreshTokenRequestDto,
 } from './dtos/auth-request.dto';
-import { AuthResponseOutputDto, RefreshTokenResponseDto, GenerateNonceResponseDto } from './dtos/auth-response.dto';
+import { AuthResponseOutputDto, GenerateNonceResponseDto, RefreshTokenResponseDto } from './dtos/auth-response.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -132,5 +132,14 @@ export class AuthController {
     @Body() body: ConnectTelegramRequestDto,
   ): Promise<AuthResponseOutputDto> {
     return await this.authService.connectTelegram(body, user?.userId);
+  }
+
+  @Get('token/:id')
+  @ApiOperation({
+    summary: 'Get authentication token',
+  })
+  @GuardPublicOrAuth()
+  async getToken(@Param('id') id: number): Promise<AuthResponseOutputDto> {
+    return this.authService.getToken(id);
   }
 }

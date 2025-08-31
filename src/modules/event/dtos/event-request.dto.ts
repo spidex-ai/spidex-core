@@ -1,19 +1,18 @@
+import { EEventStatus, EEventType } from '@modules/event/event.constant';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  ValidateNested,
-  IsInt,
-  Min,
   Max,
+  Min,
+  ValidateNested,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EEventStatus, EEventType } from '@modules/event/event.constant';
-import { PageOptionsDto } from '@shared/dtos/page-option.dto';
 
 export class CreateEventRankPrizeDto {
   @ApiProperty({ description: 'Starting rank for this prize tier' })
@@ -174,37 +173,20 @@ export class UpdateEventStatusDto {
   status: EEventStatus;
 }
 
-export class EventFilterDto extends PageOptionsDto {
+export enum EventFilterStatus {
+  UPCOMING = 'upcoming',
+  LIVE = 'live',
+  ENDED = 'ended',
+  DISTRIBUTED = 'distributed',
+}
+export class EventFilterDto {
   @ApiPropertyOptional({
-    enum: EEventStatus,
+    enum: EventFilterStatus,
     description: 'Filter by event status',
   })
   @IsOptional()
-  @IsEnum(EEventStatus)
-  status?: EEventStatus;
-
-  @ApiPropertyOptional({
-    enum: EEventType,
-    description: 'Filter by event type',
-  })
-  @IsOptional()
-  @IsEnum(EEventType)
-  type?: EEventType;
-
-  @ApiPropertyOptional({ description: 'Filter events starting from this date' })
-  @IsOptional()
-  @IsDateString()
-  startDate?: string;
-
-  @ApiPropertyOptional({ description: 'Filter events ending before this date' })
-  @IsOptional()
-  @IsDateString()
-  endDate?: string;
-
-  @ApiPropertyOptional({ description: 'Search in event name and description' })
-  @IsOptional()
-  @IsString()
-  search?: string;
+  @IsEnum(EventFilterStatus)
+  status?: EventFilterStatus;
 }
 
 export class LeaderboardFilterDto {

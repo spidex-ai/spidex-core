@@ -1,10 +1,11 @@
 import { EventRankPrizeEntity } from '@database/entities/event-rank-prize.entity';
+import { ALL_TOKEN } from '@database/entities/event.entity';
 import { EventParticipantRepository } from '@database/repositories/event-participant.repository';
 import { EventRankPrizeRepository } from '@database/repositories/event-rank-prize.repository';
 import { EventTradeRepository } from '@database/repositories/event-trade.repository';
 import { EventRepository } from '@database/repositories/event.repository';
 import { UserRepository } from '@database/repositories/user.repository';
-import { LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
+import { EventFilterDto, LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
 import {
   EventInfoResponseDto,
   EventLeaderboardEntryDto,
@@ -32,24 +33,24 @@ export class EventQueryService {
     private loggerService: LoggerService,
   ) {}
 
-  async getActiveEvents(): Promise<EventInfoResponseDto[]> {
-    this.logger.info('Getting active events');
+  async getActiveEvents(filter?: EventFilterDto): Promise<EventInfoResponseDto[]> {
+    this.logger.info('Getting events with filter', { filter });
 
-    const activeEvents = await this.eventRepository.getActiveEvents();
-    if (activeEvents.length === 0) {
+    const events = await this.eventRepository.getEventsWithFilter(filter);
+    if (events.length === 0) {
       return [];
     }
 
-    const tokenMetas = await this.getTokenMetadataForEvents(activeEvents);
+    const tokenMetas = await this.getTokenMetadataForEvents(events);
     const tokenMetaMap = keyBy(tokenMetas, 'unit');
 
-    const eventIds = activeEvents.map(event => event.id);
+    const eventIds = events.map(event => event.id);
     const [participantCountsMap, volumeStatsMap] = await Promise.all([
       this.eventParticipantRepository.getBatchParticipantCounts(eventIds),
       this.eventTradeRepository.getBatchEventVolumeStats(eventIds),
     ]);
 
-    const eventsWithStats = activeEvents.map(event => {
+    const eventsWithStats = events.map(event => {
       const participantCount = participantCountsMap.get(event.id) || 0;
       const volumeStats = volumeStatsMap.get(event.id) || { totalVolume: '0', totalTrades: 0, uniqueTokens: 0 };
 
@@ -73,6 +74,7 @@ export class EventQueryService {
 
     const event = await this.eventRepository.findOne({
       where: { id: eventId, deletedAt: IsNull() },
+      relations: ['rankPrizes'],
     });
 
     if (!event) {
@@ -80,7 +82,9 @@ export class EventQueryService {
     }
 
     const tokenIds: Set<string> = new Set();
-    tokenIds.add(event.tradeToken);
+    if (event.tradeToken && event.tradeToken != ALL_TOKEN) {
+      tokenIds.add(event.tradeToken);
+    }
     const tokenMetas = await this.tokenMetadataService.getTokensMetadata(
       tokenIds,
       new Set(['logo', 'name', 'ticker', 'decimals']),
@@ -89,6 +93,8 @@ export class EventQueryService {
     const tokenMetaMap = keyBy(tokenMetas, 'unit');
     const stats = await this.getEventBasicStats(eventId);
 
+    const prizeTokenMetas = await this.getPrizeTokenMetadata(event.rankPrizes);
+    const prizeTokenMetaMap = keyBy(prizeTokenMetas, 'unit');
     const eventWithStats = {
       ...event,
       tradeToken: {
@@ -98,6 +104,7 @@ export class EventQueryService {
       participantCount: stats.participantCount,
       totalVolumeTraded: stats.totalVolumeTraded,
       totalTrades: stats.totalTrades,
+      top3Prizes: this.formatTop3Prizes(event.rankPrizes, prizeTokenMetaMap),
     };
 
     return plainToClass(EventInfoResponseDto, eventWithStats, { excludeExtraneousValues: true });
@@ -272,6 +279,29 @@ export class EventQueryService {
       joinedAt: null,
       lastTradeAt: null,
       prizeInfo: null,
+    };
+  }
+
+  private formatTop3Prizes(prizes: any[], prizeTokenMetaMap: any) {
+    const sortedPrizes = prizes.sort((a, b) => a.rankFrom - b.rankFrom);
+
+    const formatPrize = (prize: any) => ({
+      unit: prize.prizeToken,
+      logo: prizeTokenMetaMap[prize.prizeToken]?.logo || null,
+      name: prizeTokenMetaMap[prize.prizeToken]?.name || null,
+      ticker: prizeTokenMetaMap[prize.prizeToken]?.ticker || null,
+      tokenAmount: prize.prizeTokenAmount?.toString() || '0',
+      point: prize.prizePoints?.toString() || '0',
+    });
+
+    const findPrizeForRank = (rank: number) => {
+      return sortedPrizes.find(p => rank >= p.rankFrom && rank <= p.rankTo);
+    };
+
+    return {
+      firstPlace: findPrizeForRank(1) ? formatPrize(findPrizeForRank(1)) : null,
+      secondPlace: findPrizeForRank(2) ? formatPrize(findPrizeForRank(2)) : null,
+      thirdPlace: findPrizeForRank(3) ? formatPrize(findPrizeForRank(3)) : null,
     };
   }
 }
