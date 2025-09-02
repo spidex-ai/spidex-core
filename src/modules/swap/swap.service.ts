@@ -685,7 +685,13 @@ export class SwapService implements OnModuleInit {
           witness_set: payload.signatures,
         });
       } else if (swapSellTx.exchange === SwapExchange.CARDEXSCAN) {
-        submitResponse = await this.cardexscanService.submitSwap(payload);
+        if (!payload.signedTx) {
+          throw new BadRequestException({
+            message: 'Signed transaction is required',
+            validatorErrors: EError.CARDEXSCAN_SUBMIT_SWAP_FAILED,
+          });
+        }
+        submitResponse = await this.cardexscanService.submitSwap(payload.signedTx);
       } else {
         submitResponse = await this.dexhunterService.submitSwap(payload);
       }

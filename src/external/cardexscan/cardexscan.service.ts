@@ -2,6 +2,7 @@ import { EError } from '@constants/error.constant';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@shared/exception';
+import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { firstValueFrom } from 'rxjs';
 import {
   CardexscanBuildSwapPayload,
@@ -9,8 +10,6 @@ import {
   CardexscanEstimateSwapPayload,
   CardexscanEstimateSwapResponse,
 } from './types';
-import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
-import { SubmitSwapRequest } from '@modules/swap/dtos/swap-request.dto';
 
 @Injectable()
 export class CardexscanService {
@@ -67,9 +66,9 @@ export class CardexscanService {
     }
   }
 
-  async submitSwap(payload: SubmitSwapRequest): Promise<{ txHash: string }> {
+  async submitSwap(signedTx: string): Promise<{ txHash: string }> {
     try {
-      const data = await this.blockfrostService.submitTx(payload.txCbor);
+      const data = await this.blockfrostService.submitTx(signedTx);
       return { txHash: data };
     } catch (error) {
       this.logger.error('Failed to submit swap', error);

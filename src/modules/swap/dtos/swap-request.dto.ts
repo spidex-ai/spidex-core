@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { CardexscanToken } from 'external/cardexscan/types';
 
@@ -139,6 +139,15 @@ export class SubmitSwapRequest {
   @IsString()
   @IsNotEmpty()
   signatures: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Signed transaction',
+    example: 'cbor_transaction_data',
+  })
+  signedTx?: string;
 }
 
 export class BuildCardexscanSwapRequest {
