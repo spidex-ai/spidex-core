@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { EEnvKey } from '@constants/env.constant';
 import { EError } from '@constants/error.constant';
 import {
   EQuestCategory,
@@ -23,6 +24,7 @@ import {
   UserQuestInfoOutput,
 } from '@modules/user-quest/dtos/user-quest.dto';
 import { IQuestRelatedToTradeEvent, ISocialQuestVerifyEvent } from '@modules/user-quest/interfaces/event-message';
+import { ZealyWebhookPayload, ZealyWebhookResponse } from '@modules/user-quest/interfaces/zealy-webhook.interface';
 import { USER_QUEST_EVENT_PATTERN } from '@modules/user-quest/interfaces/event-pattern';
 import {
   IQuestRelatedToReferralOptions,
@@ -32,7 +34,8 @@ import {
 } from '@modules/user-quest/interfaces/type';
 import { QuestService } from '@modules/user-quest/services/quest.service';
 import { UserReferralService } from '@modules/user-referral/user-referral.service';
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PageMetaDto } from '@shared/dtos/page-meta.dto';
 import { PageOptionsDto } from '@shared/dtos/page-option.dto';
 import { PageDto } from '@shared/dtos/page.dto';
@@ -59,6 +62,7 @@ export class UserQuestService {
     private userReferralService: UserReferralService,
     @Inject(forwardRef(() => SwapService))
     private swapService: SwapService,
+    private configService: ConfigService,
   ) {}
 
   async checkIn(userId: number): Promise<void> {
@@ -297,7 +301,7 @@ export class UserQuestService {
       logType: EUserPointLogType.FROM_QUEST,
       userQuestId: userQuest.id,
       myReferralId: referralId,
-      referralIdOfReferee: get<IQuestRelatedToReferralOptions>(options, 'referralId', null),
+      referralIdOfReferee: get(options, 'referralId', null),
       plusToReferral: shouldAddToReferralPoint,
     };
 
@@ -572,7 +576,7 @@ export class UserQuestService {
     });
 
     const total = userQuestOutputs.length;
-    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['type'], ['DESC']).slice(
+    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['type'], ['desc']).slice(
       (page - 1) * limit,
       page * limit,
     );
@@ -731,5 +735,82 @@ export class UserQuestService {
       where: { id, userId },
       relations: ['quest'],
     });
+  }
+
+  async handleZealyWebhook(payload: ZealyWebhookPayload, apiKey: string): Promise<ZealyWebhookResponse> {
+    // Validate API key
+    const expectedApiKey = this.configService.get<string>(EEnvKey.ZEALY_API_KEY);
+    if (!expectedApiKey || apiKey !== expectedApiKey) {
+      throw new UnauthorizedException('Invalid API Key');
+    }
+
+    this.logger.log(`Zealy webhook received for user ${payload.userId}, quest ${payload.questId}`, { payload });
+
+    try {
+      // Example quest validation logic - customize based on your requirements
+      const questId = parseInt(payload.questId);
+
+      // For wallet-based verification
+      if (payload.accounts?.wallet) {
+        // Verify wallet-related quest completion
+        const success = await this.validateWalletQuest(payload.accounts.wallet, questId);
+        if (!success) {
+          return { message: 'Wallet verification failed' };
+        }
+      }
+
+      // For social media verification
+      if (payload.accounts?.twitter || payload.accounts?.discord) {
+        // Verify social quest completion
+        const success = await this.validateSocialQuest(payload.accounts, questId);
+        if (!success) {
+          return { message: 'Social verification failed' };
+        }
+      }
+
+      // For Zealy Connect integration (custom user ID)
+      if (payload.accounts?.['zealy-connect']) {
+        const userId = parseInt(payload.accounts['zealy-connect']);
+        // Verify quest completion for the specific user
+        const success = await this.validateUserQuest(userId, questId);
+        if (!success) {
+          return { message: 'Quest verification failed' };
+        }
+      }
+
+      return { message: 'Quest completed' };
+    } catch (error) {
+      this.logger.error(`Zealy webhook validation failed: ${error.message}`, { payload, error });
+      throw new BadRequestException({
+        message: error.message || 'Validation failed',
+        validatorErrors: EError.QUEST_NOT_FOUND,
+      });
+    }
+  }
+
+  private async validateWalletQuest(walletAddress: string, questId: number): Promise<boolean> {
+    // Implement wallet-based quest validation logic
+    // This could check if the wallet has made trades, holds certain tokens, etc.
+    // For now, return true as a placeholder
+    return true;
+  }
+
+  private async validateSocialQuest(accounts: any, questId: number): Promise<boolean> {
+    // Implement social media quest validation logic
+    // This could verify Twitter follows, Discord membership, etc.
+    // For now, return true as a placeholder
+    return true;
+  }
+
+  private async validateUserQuest(userId: number, questId: number): Promise<boolean> {
+    // Check if the user has completed the quest in your system
+    const quest = await this.questService.getQuestById(questId);
+    if (!quest) {
+      return false;
+    }
+
+    // Check if the user can complete this quest
+    const canComplete = await this.canCompleteQuestByType(userId, quest);
+    return canComplete;
   }
 }
