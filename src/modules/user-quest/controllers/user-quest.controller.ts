@@ -4,8 +4,9 @@ import {
   UserQuestFilterDto,
   UserQuestInfoOutput,
 } from '@modules/user-quest/dtos/user-quest.dto';
+import { ZealyWebhookPayload, ZealyWebhookResponse } from '@modules/user-quest/interfaces/zealy-webhook.interface';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
-import { Controller, Get, Param, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
 import { AuthUserGuard } from '@shared/decorators/auth.decorator';
@@ -80,5 +81,13 @@ export class UserQuestController {
   @Get('verify/:questId')
   async verifyQuest(@AuthUser() user: IJwtPayload, @Param('questId') questId: number) {
     return this.userQuestService.verifyQuestStatus(user.userId, questId);
+  }
+
+  @Post('zealy/webhook')
+  async zealyWebhook(
+    @Body() payload: ZealyWebhookPayload,
+    @Headers('x-api-key') apiKey: string,
+  ): Promise<ZealyWebhookResponse> {
+    return this.userQuestService.handleZealyWebhook(payload, apiKey);
   }
 }
