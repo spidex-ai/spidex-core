@@ -1,4 +1,4 @@
-import { CARDANO_LOVELACE_UNIT, CARDANO_UNIT, LOVELACE_TO_ADA_RATIO } from '@constants/cardano.constant';
+import { CARDANO_LOVELACE_UNIT, CARDANO_NAME, CARDANO_UNIT, LOVELACE_TO_ADA_RATIO } from '@constants/cardano.constant';
 import { EEnvKey } from '@constants/env.constant';
 import { EError } from '@constants/error.constant';
 import {
@@ -12,14 +12,19 @@ import { SwapTransactionRepository } from '@database/repositories/swap-transacti
 import { Blockfrost, Lucid, LucidEvolution } from '@lucid-evolution/lucid';
 import { EventService } from '@modules/event/services/event.service';
 import {
+  BuildCardexscanSwapRequest,
   BuildDexhunterSwapRequest,
   BuildMinswapSwapRequest,
+  CardexscanTokenInfo,
   EstimateSwapRequest,
   GetPoolStatsRequest,
+  MinswapTokenDBInfo,
   SubmitSwapRequest,
+  TokenDBInfo,
 } from '@modules/swap/dtos/swap-request.dto';
 import {
   AggregatorEstimateSwapResponse,
+  cardexscanProtocolMap,
   dexhunterProtocolMap,
   EstimateSwapResponse,
   minswapProtocolMap,
@@ -34,8 +39,11 @@ import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/co
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@shared/exception';
 import { generateRandomCbor, getTxHashFromCbor } from '@shared/utils/cardano';
+import { toHexString } from '@shared/utils/string';
 import Decimal from 'decimal.js';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
+import { CardexscanService } from 'external/cardexscan/cardexscan.service';
+import { CardexscanEstimateSwapResponse, CardexscanToken } from 'external/cardexscan/types';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
 import { DexHunterEsitmateSwapResponse } from 'external/dexhunter/types';
 import { DHAPIService } from 'external/dhapi/dhapi.service';
@@ -43,7 +51,6 @@ import { MinswapService } from 'external/minswap/minswap.service';
 import { MinswapEsitmateSwapResponse } from 'external/minswap/types';
 import { TaptoolsService } from 'external/taptools/taptools.service';
 import { Transactional } from 'typeorm-transactional';
-
 @Injectable()
 export class SwapService implements OnModuleInit {
   private readonly logger = new Logger(SwapService.name);
@@ -51,6 +58,7 @@ export class SwapService implements OnModuleInit {
   constructor(
     private readonly dexhunterService: DexhunterService,
     private readonly minswapService: MinswapService,
+    private readonly cardexscanService: CardexscanService,
     private readonly blockfrostService: BlockfrostService,
     private readonly swapTransactionRepository: SwapTransactionRepository,
     private readonly tapToolsService: TaptoolsService,
@@ -81,9 +89,9 @@ export class SwapService implements OnModuleInit {
       const tokenBUnit = payload.tokenOut;
       const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
-      let tokenIn, tokenOut;
+      let tokenIn, tokenOut: TokenDBInfo;
 
-      if (payload.tokenIn === 'ADA') {
+      if (payload.tokenIn === CARDANO_UNIT) {
         tokenIn = {
           unit: '',
           name: 'Ada',
@@ -94,7 +102,7 @@ export class SwapService implements OnModuleInit {
         tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
         tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
       }
-      if (payload.tokenOut === 'ADA') {
+      if (payload.tokenOut === CARDANO_UNIT) {
         tokenOut = {
           unit: '',
           name: 'Ada',
@@ -102,8 +110,12 @@ export class SwapService implements OnModuleInit {
         };
       } else {
         const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit], false);
-        tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
-        tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
+        const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
+        tokenOut = {
+          unit: tokenBUnit,
+          name: tokenOutMetadata.name,
+          price: tokenOutPrices[tokenBUnit] * adaPrice,
+        };
       }
 
       const mainAddress = payload.addresses[0];
@@ -184,33 +196,41 @@ export class SwapService implements OnModuleInit {
       const tokenBUnit = token_out;
       const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
-      let tokenIn, tokenOut;
+      let tokenIn: MinswapTokenDBInfo, tokenOut: MinswapTokenDBInfo;
 
-      if (token_in === 'ADA') {
+      if (token_in === CARDANO_UNIT) {
         tokenIn = {
           unit: '',
-          name: 'Ada',
+          name: CARDANO_NAME,
           price: adaPrice,
           unitSwap: CARDANO_LOVELACE_UNIT,
         };
       } else {
         const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit], false);
-        tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
-        tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
-        tokenIn.unitSwap = tokenAUnit;
+        const tokenInMetadata = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
+        tokenIn = {
+          unit: tokenInMetadata.unit,
+          name: tokenInMetadata.name,
+          price: tokenInPrices[tokenAUnit] * adaPrice,
+          unitSwap: tokenAUnit,
+        };
       }
-      if (token_out === 'ADA') {
+      if (token_out === CARDANO_UNIT) {
         tokenOut = {
           unit: '',
-          name: 'Ada',
+          name: CARDANO_NAME,
           price: adaPrice,
           unitSwap: CARDANO_LOVELACE_UNIT,
         };
       } else {
         const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit], false);
-        tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
-        tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
-        tokenOut.unitSwap = tokenBUnit;
+        const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
+        tokenOut = {
+          unit: tokenOutMetadata.unit,
+          name: tokenOutMetadata.name,
+          price: tokenOutPrices[tokenBUnit] * adaPrice,
+          unitSwap: tokenBUnit,
+        };
       }
 
       const response = await this.minswapService.buildSwap({
@@ -278,10 +298,135 @@ export class SwapService implements OnModuleInit {
     }
   }
 
+  async buildSwapCardexscan(userId: number, payload: BuildCardexscanSwapRequest) {
+    try {
+      const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
+
+      let cardexscanTokenIn: CardexscanTokenInfo, cardexscanTokenOut: CardexscanTokenInfo;
+      let tokenIn: TokenDBInfo, tokenOut: TokenDBInfo;
+
+      if (payload.tokenIn === CARDANO_UNIT) {
+        cardexscanTokenIn = CARDANO_LOVELACE_UNIT;
+        tokenIn = {
+          unit: CARDANO_LOVELACE_UNIT,
+          name: 'Ada',
+          price: adaPrice,
+        };
+      } else {
+        const tokenInPrice = await this.tapToolsService.getTokenPrices([payload.tokenIn], false);
+        const tokenInMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenIn, [
+          'name',
+          'ticker',
+          'policy',
+        ]);
+        cardexscanTokenIn = {
+          policyId: tokenInMetadata.policy,
+          nameHex: toHexString(tokenInMetadata.name.toUpperCase()),
+          ticker: tokenInMetadata.ticker,
+        } as CardexscanToken;
+
+        tokenIn = {
+          unit: tokenInMetadata.ticker,
+          name: tokenInMetadata.name,
+          price: tokenInPrice[payload.tokenIn] * adaPrice,
+        };
+      }
+
+      if (payload.tokenOut === CARDANO_UNIT) {
+        cardexscanTokenOut = CARDANO_LOVELACE_UNIT;
+      } else {
+        const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenOut, [
+          'name',
+          'ticker',
+          'policy',
+        ]);
+        const tokenOutPrice = await this.tapToolsService.getTokenPrices([payload.tokenOut], false);
+        cardexscanTokenOut = {
+          policyId: tokenOutMetadata.policy,
+          nameHex: toHexString(tokenOutMetadata.name.toUpperCase()),
+          ticker: tokenOutMetadata.ticker,
+        } as CardexscanToken;
+
+        tokenOut = {
+          unit: tokenOutMetadata.ticker,
+          name: tokenOutMetadata.name,
+          price: tokenOutPrice[payload.tokenOut] * adaPrice,
+        };
+      }
+
+      const estimatedSwap = await this.cardexscanService.estimateSwap({
+        tokenInAmount: payload.tokenInAmount,
+        slippage: payload.slippage || 1,
+        tokenIn: cardexscanTokenIn,
+        tokenOut: cardexscanTokenOut,
+        blacklisted_dexes: [],
+      });
+
+      const response = await this.cardexscanService.buildSwap({
+        tokenInAmount: payload.tokenInAmount,
+        slippage: payload.slippage || 1,
+        tokenIn: cardexscanTokenIn,
+        tokenOut: cardexscanTokenOut,
+        blacklisted_dexes: [],
+        userAddress: payload.sender,
+      });
+
+      const txHash = getTxHashFromCbor(response.data.txCbor);
+
+      const swapSellTx = this.swapTransactionRepository.create({
+        userId: userId,
+        address: payload.sender,
+        tokenA: payload.tokenIn,
+        tokenAName: tokenIn.name,
+        tokenB: payload.tokenOut,
+        tokenBName: tokenOut.name,
+        tokenAAmount: new Decimal(payload.tokenInAmount).toString(),
+        tokenBAmount: new Decimal(estimatedSwap.data.estimatedTotalRecieve).toString(),
+        action: SwapAction.SELL,
+        timestamp: new Date(),
+        exchange: SwapExchange.CARDEXSCAN,
+        cborHex: response.data.txCbor,
+        totalFee: 0,
+        totalUsd: new Decimal(payload.tokenInAmount).times(tokenIn.price).toString(),
+        txHash: txHash,
+      });
+
+      const swapBuyTx = this.swapTransactionRepository.create({
+        userId: userId,
+        address: payload.sender,
+        tokenA: payload.tokenOut,
+        tokenAName: tokenOut.name,
+        tokenB: payload.tokenIn,
+        tokenBName: tokenIn.name,
+        tokenAAmount: new Decimal(estimatedSwap.data.estimatedTotalRecieve).toString(),
+        tokenBAmount: new Decimal(payload.tokenInAmount).toString(),
+        action: SwapAction.BUY,
+        timestamp: new Date(),
+        exchange: SwapExchange.CARDEXSCAN,
+        cborHex: response.data.txCbor,
+        totalFee: 0,
+        totalUsd: new Decimal(estimatedSwap.data.estimatedTotalRecieve).times(tokenOut.price).toString(),
+        txHash: txHash,
+      });
+
+      await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
+
+      return { cbor: response.data.txCbor, txHash: txHash };
+    } catch (error) {
+      this.logger.error(`Failed to build Cardexscan swap: ${error}`, error.stack);
+      throw new BadRequestException({
+        message: 'Failed to build swap',
+        data: error.response?.data,
+        validatorErrors: EError.CARDEXSCAN_BUILD_SWAP_FAILED,
+      });
+    }
+  }
+
   async estimateSwap(payload: EstimateSwapRequest): Promise<EstimateSwapResponse> {
     try {
-      let tokenInDexHunter, tokenOutDexHunter;
-      let tokenInMinswap, tokenOutMinswap;
+      let tokenInDexHunter: any, tokenOutDexHunter: any;
+      let tokenInMinswap: any, tokenOutMinswap: any;
+      let tokenInCardexscan: CardexscanTokenInfo, tokenOutCardexscan: CardexscanTokenInfo;
       if (payload.tokenIn === 'ADA') {
         tokenInDexHunter = {
           unit: '',
@@ -289,12 +434,23 @@ export class SwapService implements OnModuleInit {
         tokenInMinswap = {
           unit: 'lovelace',
         };
+        tokenInCardexscan = 'lovelace';
       } else {
         tokenInDexHunter = {
           unit: payload.tokenIn,
         };
         tokenInMinswap = {
           unit: payload.tokenIn,
+        };
+        const tokenInMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenIn, [
+          'name',
+          'ticker',
+          'policy',
+        ]);
+        tokenInCardexscan = {
+          policyId: tokenInMetadata.policy,
+          nameHex: toHexString(tokenInMetadata.name.toLowerCase()),
+          ticker: tokenInMetadata.ticker,
         };
       }
 
@@ -305,6 +461,7 @@ export class SwapService implements OnModuleInit {
         tokenOutMinswap = {
           unit: 'lovelace',
         };
+        tokenOutCardexscan = 'lovelace';
       } else {
         tokenOutDexHunter = {
           unit: payload.tokenOut,
@@ -312,9 +469,20 @@ export class SwapService implements OnModuleInit {
         tokenOutMinswap = {
           unit: payload.tokenOut,
         };
+
+        const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenOut, [
+          'name',
+          'ticker',
+          'policy',
+        ]);
+        tokenOutCardexscan = {
+          policyId: tokenOutMetadata.policy,
+          nameHex: toHexString(tokenOutMetadata.name.toUpperCase()),
+          ticker: tokenOutMetadata.ticker,
+        };
       }
 
-      const [dexHunterResp, minswapResp, estimatedPoint] = await Promise.allSettled([
+      const [dexHunterResp, minswapResp, cardexscanResp, estimatedPoint] = await Promise.allSettled([
         this.dexhunterService.estimateSwap({
           token_in: tokenInDexHunter.unit,
           token_out: tokenOutDexHunter.unit,
@@ -330,6 +498,13 @@ export class SwapService implements OnModuleInit {
           exclude_protocols: [],
           allow_multi_hops: true,
           partner: this.configService.get<string>(EEnvKey.MINSWAP_PARTNER_ID),
+        }),
+        this.cardexscanService.estimateSwap({
+          tokenInAmount: payload.amountIn,
+          slippage: payload.slippage || 0.01,
+          tokenIn: tokenInCardexscan,
+          tokenOut: tokenOutCardexscan,
+          blacklisted_dexes: [],
         }),
         this.getEstimatedPoint({
           tokenIn: payload.tokenIn,
@@ -347,6 +522,8 @@ export class SwapService implements OnModuleInit {
                 minswapResp.value,
               )
             : null,
+        cardexscan:
+          cardexscanResp.status === 'fulfilled' ? this.mapCardexscanEstimatedSwapResponse(cardexscanResp.value) : null,
         estimatedPoint: estimatedPoint.status === 'fulfilled' ? estimatedPoint.value : '0',
       };
     } catch (error) {
@@ -387,8 +564,8 @@ export class SwapService implements OnModuleInit {
   ): AggregatorEstimateSwapResponse {
     try {
       return {
-        netPrice: new Decimal(amountIn || 0).div(response.amount_out).toString(),
-        minReceive: new Decimal(response.min_amount_out || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
+        netPrice: new Decimal(amountIn || 0).div(response.amount_out).div(LOVELACE_TO_ADA_RATIO).toString(),
+        minReceive: new Decimal(response.min_amount_out || 0).toString(),
         dexFee: new Decimal(response.total_dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
         dexDeposits: new Decimal(response.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
         totalDeposits: new Decimal(
@@ -403,8 +580,8 @@ export class SwapService implements OnModuleInit {
                 protocol: minswapProtocolMap[p.protocol],
                 poolId: p.pool_id,
                 amountIn: new Decimal(p.amount_in || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                amountOut: new Decimal(p.amount_out || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                minReceive: new Decimal(p.min_amount_out || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
+                amountOut: new Decimal(p.amount_out || 0).toString(),
+                minReceive: new Decimal(p.min_amount_out || 0).toString(),
                 priceImpact: p.price_impact,
                 batcherFee: new Decimal(p.dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
                 refundableDeposits: new Decimal(p.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
@@ -419,6 +596,42 @@ export class SwapService implements OnModuleInit {
         message: 'Failed to map minswap response',
         data: error.response.data,
         validatorErrors: EError.SWAP_ESTIMATION_FAILED,
+      });
+    }
+  }
+
+  mapCardexscanEstimatedSwapResponse(response: CardexscanEstimateSwapResponse): AggregatorEstimateSwapResponse {
+    try {
+      const totalDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits + split.batcherFee, 0);
+      const totalRefundableDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits, 0);
+      console.log(response);
+      return {
+        netPrice: '0', // Cardexscan doesn't provide this directly
+        minReceive: response.data.estimatedTotalRecieve.toString(),
+        dexFee: '0', // Not provided separately
+        dexDeposits: totalRefundableDeposits.toString(),
+        totalDeposits: totalDeposits.toString(),
+        paths: response.data.splits.map(split => {
+          console.log({ split });
+          return {
+            protocol: cardexscanProtocolMap[split.dex],
+            poolId: '', // Not provided by Cardexscan
+            amountIn: split.amountIn.toString(),
+            amountOut: split.estimatedAmount,
+            minReceive: split.minimumAmount.toString(),
+            priceImpact: split.priceImpact,
+            batcherFee: new Decimal(split.batcherFee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
+            refundableDeposits: new Decimal(split.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
+          };
+        }),
+      };
+    } catch (error) {
+      console.error(error);
+      this.logger.error(`Failed to map Cardexscan response: ${error}`);
+      throw new BadRequestException({
+        message: 'Failed to map Cardexscan response',
+        data: error.message,
+        validatorErrors: EError.CARDEXSCAN_ESTIMATE_SWAP_FAILED,
       });
     }
   }
@@ -465,12 +678,14 @@ export class SwapService implements OnModuleInit {
       });
 
       await this.swapTransactionRepository.save([swapSellTx, swapBuyTx]);
-      let submitResponse;
+      let submitResponse: any;
       if (swapSellTx.exchange === SwapExchange.MINSWAP) {
         submitResponse = await this.minswapService.submitSwap({
           cbor: payload.txCbor,
           witness_set: payload.signatures,
         });
+      } else if (swapSellTx.exchange === SwapExchange.CARDEXSCAN) {
+        submitResponse = await this.cardexscanService.submitSwap(payload);
       } else {
         submitResponse = await this.dexhunterService.submitSwap(payload);
       }
@@ -671,7 +886,7 @@ export class SwapService implements OnModuleInit {
       // Get real prices and metadata (keep this real)
       const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
-      let tokenIn, tokenOut;
+      let tokenIn: any, tokenOut: any;
 
       if (payload.tokenIn === 'ADA') {
         tokenIn = {
@@ -791,7 +1006,7 @@ export class SwapService implements OnModuleInit {
       // Get real prices and metadata (keep this real)
       const adaPrice = await this.tokenPriceService.getAdaPriceInUSD();
 
-      let tokenIn, tokenOut;
+      let tokenIn: MinswapTokenDBInfo, tokenOut: MinswapTokenDBInfo;
 
       if (token_in === 'ADA') {
         tokenIn = {
@@ -802,9 +1017,13 @@ export class SwapService implements OnModuleInit {
         };
       } else {
         const tokenInPrices = await this.tapToolsService.getTokenPrices([tokenAUnit], false);
-        tokenIn = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
-        tokenIn.price = tokenInPrices[tokenAUnit] * adaPrice;
-        tokenIn.unitSwap = tokenAUnit;
+        const tokenInMetadata = await this.tokenMetaService.getTokenMetadata(tokenAUnit, ['name']);
+        tokenIn = {
+          unit: tokenInMetadata.unit,
+          name: tokenInMetadata.name,
+          price: tokenInPrices[tokenAUnit] * adaPrice,
+          unitSwap: tokenAUnit,
+        };
       }
 
       if (token_out === 'ADA') {
@@ -816,9 +1035,13 @@ export class SwapService implements OnModuleInit {
         };
       } else {
         const tokenOutPrices = await this.tapToolsService.getTokenPrices([tokenBUnit], false);
-        tokenOut = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
-        tokenOut.price = tokenOutPrices[tokenBUnit] * adaPrice;
-        tokenOut.unitSwap = tokenBUnit;
+        const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(tokenBUnit, ['name']);
+        tokenOut = {
+          unit: tokenOutMetadata.unit,
+          name: tokenOutMetadata.name,
+          price: tokenOutPrices[tokenBUnit] * adaPrice,
+          unitSwap: tokenBUnit,
+        };
       }
 
       // Mock the Minswap API response instead of calling it

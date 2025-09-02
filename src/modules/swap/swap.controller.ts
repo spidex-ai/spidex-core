@@ -1,4 +1,5 @@
 import {
+  BuildCardexscanSwapRequest,
   BuildDexhunterSwapRequest,
   BuildMinswapSwapRequest,
   EstimateSwapRequest,
@@ -32,6 +33,15 @@ export class SwapController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async buildSwapMinswap(@AuthUser() user: IJwtPayload, @Body() body: BuildMinswapSwapRequest) {
     return this.swapService.buildSwapMinswap(user.userId, body);
+  }
+
+  @Post('build/cardexscan')
+  @ApiOperation({ summary: 'Build a swap' })
+  @ApiResponse({ status: 200, description: 'Swap built successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async buildSwapCardexscan(@AuthUser() user: IJwtPayload, @Body() body: BuildCardexscanSwapRequest) {
+    return this.swapService.buildSwapCardexscan(user.userId, body);
   }
 
   @Post('estimate')

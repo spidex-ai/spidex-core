@@ -6,3 +6,7 @@ export function createSubParagraphWithTheGivenNumberOfCharacters(paragraph: stri
     return result + char;
   }, '');
 }
+
+export function toHexString(input: string): string {
+  return Buffer.from(input, 'utf8').toString('hex');
+}
