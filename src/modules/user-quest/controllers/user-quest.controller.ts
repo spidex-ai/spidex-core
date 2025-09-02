@@ -59,24 +59,6 @@ export class UserQuestController {
     return result;
   }
 
-  // @Get('/public')
-  // @ApiOperation({
-  //   summary: 'Get quest as a list public API',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.UNAUTHORIZED,
-  //   type: BaseApiErrorResponse,
-  // })
-  // async getPublicQuests(
-  //   @ReqContext() ctx: RequestContext,
-  //   @Query() filter: UserQuestFilterDto,
-  // ): Promise<UserQuestOutput> {
-  //   this.logger.log(ctx, `${this.getQuests.name} was called`);
-
-  //   const result = await this.userQuestService.getPublicQuests(ctx, filter.category)
-  //   return result
-  // }
-
   @AuthUserGuard()
   @Get('verify/:questId')
   async verifyQuest(@AuthUser() user: IJwtPayload, @Param('questId') questId: number) {
