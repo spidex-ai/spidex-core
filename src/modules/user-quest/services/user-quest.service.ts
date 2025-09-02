@@ -297,7 +297,7 @@ export class UserQuestService {
       logType: EUserPointLogType.FROM_QUEST,
       userQuestId: userQuest.id,
       myReferralId: referralId,
-      referralIdOfReferee: get<IQuestRelatedToReferralOptions>(options, 'referralId', null),
+      referralIdOfReferee: get(options, 'referralId', null),
       plusToReferral: shouldAddToReferralPoint,
     };
 
@@ -572,7 +572,7 @@ export class UserQuestService {
     });
 
     const total = userQuestOutputs.length;
-    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['type'], ['DESC']).slice(
+    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['type'], ['desc']).slice(
       (page - 1) * limit,
       page * limit,
     );

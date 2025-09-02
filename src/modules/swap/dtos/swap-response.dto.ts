@@ -51,6 +51,21 @@ export enum MinswapProtocolEnum {
   MUESLISWAP = 'MuesliSwap',
 }
 
+export enum CardexscanProtocolEnum {
+  VYFI = 'VyFinance',
+  WINGRIDER = 'WingRiders',
+  WINGRIDERV2 = 'WingRidersV2',
+  MINSWAP = 'Minswap',
+  MINSWAPV2 = 'MinswapV2',
+  SUNDAESWAP = 'SundaeSwap',
+  SUNDAESWAPV3 = 'SundaeSwapV3',
+  SPECTRUM = 'Spectrum',
+  MUESLISWAP = 'MuesliSwap',
+  SPLASH = 'Splash',
+  CSWAP = 'CSwap',
+  SNEKFUN = 'SnekFun',
+}
+
 export const dexhunterProtocolMap: Record<DexHunterProtocolEnum, ProtocolEnum> = {
   [DexHunterProtocolEnum.SUNDAESWAPV3]: ProtocolEnum.SUNDAESWAPV3,
   [DexHunterProtocolEnum.SPLASH]: ProtocolEnum.SPLASH,
@@ -84,9 +99,25 @@ export const minswapProtocolMap: Record<MinswapProtocolEnum, ProtocolEnum> = {
   [MinswapProtocolEnum.MUESLISWAP]: ProtocolEnum.MUESLISWAP,
 };
 
+export const cardexscanProtocolMap: Record<string, ProtocolEnum> = {
+  [CardexscanProtocolEnum.VYFI]: ProtocolEnum.VYFI,
+  [CardexscanProtocolEnum.WINGRIDER]: ProtocolEnum.WINGRIDER,
+  [CardexscanProtocolEnum.WINGRIDERV2]: ProtocolEnum.WINGRIDERV2,
+  [CardexscanProtocolEnum.MINSWAP]: ProtocolEnum.MINSWAP,
+  [CardexscanProtocolEnum.MINSWAPV2]: ProtocolEnum.MINSWAPV2,
+  [CardexscanProtocolEnum.SUNDAESWAP]: ProtocolEnum.SUNDAESWAP,
+  [CardexscanProtocolEnum.SUNDAESWAPV3]: ProtocolEnum.SUNDAESWAPV3,
+  [CardexscanProtocolEnum.SPECTRUM]: ProtocolEnum.SPECTRUM,
+  [CardexscanProtocolEnum.MUESLISWAP]: ProtocolEnum.MUESLISWAP,
+  [CardexscanProtocolEnum.SPLASH]: ProtocolEnum.SPLASH,
+  [CardexscanProtocolEnum.CSWAP]: ProtocolEnum.CSWAP,
+  [CardexscanProtocolEnum.SNEKFUN]: ProtocolEnum.SNEKFUN,
+};
+
 export interface EstimateSwapResponse {
   dexhunter: AggregatorEstimateSwapResponse;
   minswap: AggregatorEstimateSwapResponse;
+  cardexscan: AggregatorEstimateSwapResponse;
   estimatedPoint: string;
 }
 

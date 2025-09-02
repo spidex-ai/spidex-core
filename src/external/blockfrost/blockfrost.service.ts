@@ -1,5 +1,7 @@
+import { EError } from '@constants/error.constant';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { BadRequestException } from '@shared/exception';
 import {
   BlockfrostAddressDetail,
   BlockfrostTokenDetail,
@@ -8,11 +10,10 @@ import {
   BlockfrostTransactionDetail,
 } from 'external/blockfrost/types';
 import { firstValueFrom } from 'rxjs';
-import { BadRequestException } from '@shared/exception';
-import { EError } from '@constants/error.constant';
 
 @Injectable()
 export class BlockfrostService {
+  private submitTxToBytes = true;
   constructor(private readonly client: HttpService) {}
 
   async getAddressDetail(address: string): Promise<BlockfrostAddressDetail> {
@@ -97,5 +98,36 @@ export class BlockfrostService {
         data: error.message,
       });
     }
+  }
+
+  async submitTx(tx: string): Promise<string> {
+    try {
+      const headers = { 'Content-Type': 'application/cbor' };
+      const { data, status } = await firstValueFrom(
+        this.client.post('tx/submit', this.submitTxToBytes ? this.toBytes(tx) : tx, {
+          headers,
+        }),
+      );
+
+      if (status === 200 || status == 202) {
+        return data;
+      }
+
+      throw new BadRequestException({
+        message: 'Submit transaction failed',
+        validatorErrors: EError.BLOCKFROST_SUBMIT_TRANSACTION_FAILED,
+        data: '<BLOCKFROST_SUBMIT_TRANSACTION_FAILED>',
+      });
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Submit transaction failed',
+        validatorErrors: EError.BLOCKFROST_SUBMIT_TRANSACTION_FAILED,
+        data: error.message,
+      });
+    }
+  }
+
+  toBytes(tx: string): Uint8Array {
+    return new Uint8Array(Buffer.from(tx, 'hex'));
   }
 }

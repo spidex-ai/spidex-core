@@ -14,6 +14,7 @@ import { DHAPIModule } from 'external/dhapi/dhapi.module';
 import { MinswapModule } from 'external/minswap/minswap.module';
 import { TaptoolsModule } from 'external/taptools/taptools.module';
 import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
+import { CardexscanModule } from 'external/cardexscan/cardexscan.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
     TokenMetaModule,
     DHAPIModule,
     MinswapModule,
+    CardexscanModule,
     forwardRef(() => UserPointModule),
     forwardRef(() => QuestModule),
     forwardRef(() => EventModule),

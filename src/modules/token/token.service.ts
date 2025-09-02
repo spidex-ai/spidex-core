@@ -57,7 +57,7 @@ import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { DexhunterService } from 'external/dexhunter/dexhunter.service';
 import { MinswapService } from 'external/minswap/minswap.service';
 import { TaptoolsService } from 'external/taptools/taptools.service';
-import { TokenPriceChange, TopTokenByVolume, TopTokenMcap } from 'external/taptools/types';
+import { TopTokenByVolume, TopTokenMcap } from 'external/taptools/types';
 import { keyBy } from 'lodash';
 
 @Injectable()
@@ -176,7 +176,7 @@ export class TokenService {
 
       const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
 
-      const priceChangesMap = keyBy<TokenPriceChange>(priceChanges, 'unit');
+      const priceChangesMap = keyBy(priceChanges, 'unit');
 
       const response = data.map(token => ({
         ...token,
@@ -221,7 +221,7 @@ export class TokenService {
 
       const tokenDetailsMap = keyBy<TokenMetadataEntity>(tokenDetails, 'unit');
 
-      const priceChangesMap = keyBy<TokenPriceChange>(priceChanges, 'unit');
+      const priceChangesMap = keyBy(priceChanges, 'unit');
 
       const response = data.map(token => ({
         ...token,
@@ -453,10 +453,20 @@ export class TokenService {
 
     if (query.match(/^(ada|ad|a)$/i)) {
       const adaDetails = this.tokenMetaService.getAda([]);
-      tokensWithDetails.unshift({
-        ...adaDetails,
+      const adaToken: SearchTokenResponse = {
+        token_id: adaDetails.unit,
+        token_decimals: adaDetails.decimals,
+        token_policy: adaDetails.policy,
+        token_ascii: adaDetails.name,
+        ticker: adaDetails.ticker!,
+        is_verified: true,
+        price: 1,
+        logo: adaDetails.logo,
+        unit: adaDetails.unit,
         usdPrice: adaPrice,
-      });
+        name: adaDetails.name,
+      };
+      tokensWithDetails.unshift(adaToken);
     }
     return tokensWithDetails;
   }

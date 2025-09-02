@@ -7,7 +7,7 @@ import {
   CARDANO_UNIT,
 } from '@constants/cardano.constant';
 import { EEnvKey } from '@constants/env.constant';
-import { TokenMetadataProperties } from '@database/entities/token-metadata.entity';
+import { TokenMetadataEntity, TokenMetadataProperties } from '@database/entities/token-metadata.entity';
 import { TokenMetadataRepository } from '@database/repositories/token-metadata.repository';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +28,7 @@ export class TokenMetaService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getTokenMetadata(unit: string, properties: TokenMetadataProperties[]) {
+  async getTokenMetadata(unit: string, properties: TokenMetadataProperties[]): Promise<Partial<TokenMetadataEntity>> {
     if (!unit || !properties) {
       return null;
     }
@@ -315,7 +315,7 @@ export class TokenMetaService {
     return logoUrl;
   }
 
-  getAda(properties: TokenMetadataProperties[]) {
+  getAda(properties: TokenMetadataProperties[]): Partial<TokenMetadataEntity> {
     const adaMetadata = {
       name: CARDANO_NAME,
       decimals: CARDANO_DECIMALS,

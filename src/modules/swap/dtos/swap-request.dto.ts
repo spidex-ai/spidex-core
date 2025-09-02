@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { CardexscanToken } from 'external/cardexscan/types';
 
 export class BuildDexhunterSwapRequest {
   @IsArray()
@@ -140,6 +141,53 @@ export class SubmitSwapRequest {
   signatures: string;
 }
 
+export class BuildCardexscanSwapRequest {
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: Number,
+    description: 'Token in amount',
+    example: 1000000,
+  })
+  tokenInAmount: number;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    type: Number,
+    description: 'Slippage',
+    example: 0.01,
+  })
+  slippage: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Token in',
+    example: 'lovelace',
+  })
+  tokenIn: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Token out',
+    example: 'lovelace',
+  })
+  tokenOut: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Sender address',
+    example: 'addr1q8...',
+  })
+  sender: string;
+}
+
 export class GetPoolStatsRequest {
   @IsString()
   @IsNotEmpty()
@@ -149,3 +197,15 @@ export class GetPoolStatsRequest {
   @IsNotEmpty()
   tokenOut: string;
 }
+
+export interface TokenDBInfo {
+  unit: string;
+  name: string;
+  price: number;
+}
+
+export interface MinswapTokenDBInfo extends TokenDBInfo {
+  unitSwap: string;
+}
+
+export type CardexscanTokenInfo = CardexscanToken | string;
