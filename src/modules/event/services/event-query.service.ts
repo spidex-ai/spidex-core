@@ -103,12 +103,10 @@ export class EventQueryService {
     const tradeToken =
       event.tradeToken && event.tradeToken != ALL_TOKEN
         ? {
-            tradeToken: {
-              ...tokenMetaMap[event.tradeToken],
-              unit: event.tradeToken,
-            },
+            ...tokenMetaMap[event.tradeToken],
+            unit: event.tradeToken,
           }
-        : { tradeToken: { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 } };
+        : { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 };
 
     const eventWithStats = {
       ...event,
