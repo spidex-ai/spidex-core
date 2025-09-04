@@ -54,12 +54,17 @@ export class EventQueryService {
       const participantCount = participantCountsMap.get(event.id) || 0;
       const volumeStats = volumeStatsMap.get(event.id) || { totalVolume: '0', totalTrades: 0, uniqueTokens: 0 };
 
+      const tradeToken =
+        event.tradeToken && event.tradeToken != ALL_TOKEN
+          ? {
+              ...tokenMetaMap[event.tradeToken],
+              unit: event.tradeToken,
+            }
+          : { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 };
+
       return {
         ...event,
-        tradeToken: {
-          ...tokenMetaMap[event.tradeToken],
-          unit: event.tradeToken,
-        },
+        tradeToken: tradeToken,
         participantCount,
         totalVolumeTraded: volumeStats.totalVolume,
         totalTrades: volumeStats.totalTrades,
@@ -95,12 +100,19 @@ export class EventQueryService {
 
     const prizeTokenMetas = await this.getPrizeTokenMetadata(event.rankPrizes);
     const prizeTokenMetaMap = keyBy(prizeTokenMetas, 'unit');
+    const tradeToken =
+      event.tradeToken && event.tradeToken != ALL_TOKEN
+        ? {
+            tradeToken: {
+              ...tokenMetaMap[event.tradeToken],
+              unit: event.tradeToken,
+            },
+          }
+        : { tradeToken: { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 } };
+
     const eventWithStats = {
       ...event,
-      tradeToken: {
-        ...tokenMetaMap[event.tradeToken],
-        unit: event.tradeToken,
-      },
+      tradeToken: tradeToken,
       participantCount: stats.participantCount,
       totalVolumeTraded: stats.totalVolumeTraded,
       totalTrades: stats.totalTrades,

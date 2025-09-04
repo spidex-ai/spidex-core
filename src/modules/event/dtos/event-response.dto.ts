@@ -130,7 +130,11 @@ export class EventInfoResponseDto {
 
   @ApiProperty({ type: EventToken })
   @Expose()
-  tradeToken: EventToken;
+  tradeToken: EventToken | string;
+
+  @ApiProperty()
+  @Expose()
+  tradeDex: string;
 
   @ApiPropertyOptional()
   @Expose()

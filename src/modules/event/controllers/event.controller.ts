@@ -1,4 +1,3 @@
-import { UserEntity } from '@database/entities/user.entity';
 import { EventFilterDto, LeaderboardFilterDto } from '@modules/event/dtos/event-request.dto';
 import {
   EventInfoResponseDto,
