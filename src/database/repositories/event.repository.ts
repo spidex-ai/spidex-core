@@ -67,9 +67,9 @@ export class EventRepository extends BaseRepository<EventEntity> {
             .andWhere('event.status = :status', { status: EEventStatus.ACTIVE });
           break;
         case EventFilterStatus.ENDED:
-          query
-            .andWhere('event.end_date < :now', { now })
-            .andWhere('event.status = :status', { status: In([EEventStatus.ENDED, EEventStatus.ACTIVE]) });
+          query.andWhere('event.end_date < :now', { now }).andWhere('event.status IN (:...statuses)', {
+            statuses: [EEventStatus.ACTIVE, EEventStatus.ENDED],
+          });
           break;
         case EventFilterStatus.DISTRIBUTED:
           query.andWhere('event.status = :status', { status: EEventStatus.PRIZES_DISTRIBUTED });
