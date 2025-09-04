@@ -94,7 +94,7 @@ export class EventRepository extends BaseRepository<EventEntity> {
         ep.user_id,
         ep.total_volume,
         ep.trade_count,
-        RANK() OVER (ORDER BY ep.total_volume DESC) as rank,
+        RANK() OVER (ORDER BY ep.total_volume DESC, last_trade_at DESC) as rank,
         u.wallet_address,
         u.username,
         u.avatar
@@ -103,7 +103,7 @@ export class EventRepository extends BaseRepository<EventEntity> {
       WHERE ep.event_id = $1
         AND ep.total_volume > 0
         AND ep.deleted_at IS NULL
-      ORDER BY ep.total_volume DESC
+      ORDER BY ep.total_volume DESC, last_trade_at DESC
       LIMIT $2 OFFSET $3
     `;
 
