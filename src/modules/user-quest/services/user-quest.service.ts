@@ -13,6 +13,17 @@ import {
 import { EUserPointLogType } from '@database/entities/user-point-log.entity';
 import { EUserQuestStatus, UserQuestEntity } from '@database/entities/user-quest.entity';
 import { UserQuestRepository } from '@database/repositories/user-quest.repository';
+import { ZealyQuestRepository } from '@database/repositories/zealy-quest.repository';
+import { ZealyUserQuestRepository } from '@database/repositories/zealy-user-quest.repository';
+import {
+  EZealyQuestCategory,
+  EZealyQuestType,
+  EZealyQuestStatus,
+  ZealyQuestEntity,
+  IZealyTradeCheckRequirement,
+  IZealyReferralCheckRequirement,
+} from '@database/entities/zealy-quest.entity';
+import { EZealyUserQuestStatus, ZealyUserQuestEntity } from '@database/entities/zealy-user-quest.entity';
 import { SwapService } from '@modules/swap/swap.service';
 import { IUserPointChangeEvent } from '@modules/user-point/interfaces/event-message';
 import { UserPointService } from '@modules/user-point/services/user-point.service';
@@ -47,12 +58,15 @@ import Decimal from 'decimal.js';
 import { flattenDeep, get, groupBy, orderBy } from 'lodash';
 import { And, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
+import { UserService } from '@modules/user/user.service';
 
 @Injectable()
 export class UserQuestService {
   private readonly logger = this.loggerService.getLogger(UserQuestService.name);
   constructor(
     private userQuestRepository: UserQuestRepository,
+    private zealyQuestRepository: ZealyQuestRepository,
+    private zealyUserQuestRepository: ZealyUserQuestRepository,
     @Inject(forwardRef(() => UserPointService))
     private userPointService: UserPointService,
     private rabbitMQService: RabbitMQService,
@@ -63,6 +77,7 @@ export class UserQuestService {
     @Inject(forwardRef(() => SwapService))
     private swapService: SwapService,
     private configService: ConfigService,
+    private userService: UserService,
   ) {}
 
   async checkIn(userId: number): Promise<void> {
@@ -747,38 +762,74 @@ export class UserQuestService {
     this.logger.log(`Zealy webhook received for user ${payload.userId}, quest ${payload.questId}`, { payload });
 
     try {
-      // Example quest validation logic - customize based on your requirements
-      const questId = parseInt(payload.questId);
+      // Find the Zealy quest in our database
+      const zealyQuest = await this.zealyQuestRepository.findOne({
+        where: {
+          zealyQuestId: payload.questId,
+          status: EZealyQuestStatus.ACTIVE,
+        },
+      });
 
-      // For wallet-based verification
-      if (payload.accounts?.wallet) {
-        // Verify wallet-related quest completion
-        const success = await this.validateWalletQuest(payload.accounts.wallet, questId);
-        if (!success) {
-          return { message: 'Wallet verification failed' };
+      if (!zealyQuest) {
+        this.logger.warn(`Zealy quest not found: ${payload.questId}`);
+        return { success: false, message: 'Quest not found' };
+      }
+
+      if (zealyQuest.hasDuration) {
+        const currentTime = new Date();
+        if (currentTime < zealyQuest.startDate) {
+          this.logger.warn(`Zealy quest not started yet: ${payload.questId}`);
+          return { success: false, message: 'Quest not started yet' };
+        }
+        if (currentTime > zealyQuest.endDate) {
+          this.logger.warn(`Zealy quest expired: ${payload.questId}`);
+          return { success: false, message: 'Quest expired' };
         }
       }
 
-      // For social media verification
-      if (payload.accounts?.twitter || payload.accounts?.discord) {
-        // Verify social quest completion
-        const success = await this.validateSocialQuest(payload.accounts, questId);
-        if (!success) {
-          return { message: 'Social verification failed' };
-        }
+      const spidexUser = await this.userService.getUserByWalletAddress(payload.accounts?.wallet);
+
+      if (!spidexUser) {
+        this.logger.warn(`No user ID found in zealy-connect for quest ${payload.questId}`);
+        return {
+          success: false,
+          message: 'User not found in Spidex',
+        };
       }
 
-      // For Zealy Connect integration (custom user ID)
-      if (payload.accounts?.['zealy-connect']) {
-        const userId = parseInt(payload.accounts['zealy-connect']);
-        // Verify quest completion for the specific user
-        const success = await this.validateUserQuest(userId, questId);
-        if (!success) {
-          return { message: 'Quest verification failed' };
-        }
+      const userId = spidexUser.id;
+
+      // Verify quest completion based on category first
+      let verificationResult: { success: boolean; message?: string } = { success: false };
+
+      // Check if user can complete this quest based on category
+      const canComplete = await this.canCompleteZealyQuestByCategory(userId, zealyQuest);
+      if (!canComplete.allowed) {
+        return { success: false, message: canComplete.reason };
       }
 
-      return { message: 'Quest completed' };
+      switch (zealyQuest.type) {
+        case EZealyQuestType.REFERRAL_CHECK:
+          verificationResult = await this.verifyReferralQuest(userId, zealyQuest);
+          break;
+        case EZealyQuestType.TRADE_CHECK:
+          verificationResult = await this.verifyTradeQuest(userId, zealyQuest);
+          break;
+        default:
+          this.logger.warn(`Unknown Zealy quest type: ${zealyQuest.type}`);
+          return { success: false, message: 'Unknown quest type' };
+      }
+      if (!verificationResult.success) {
+        return { success: false, message: verificationResult.message || 'Quest verification failed' };
+      }
+
+      // Complete the quest for the user
+      await this.completeZealyQuest(userId, zealyQuest, payload);
+
+      return {
+        success: verificationResult.success,
+        message: verificationResult.success ? 'Quest completed' : 'Quest verification failed',
+      };
     } catch (error) {
       this.logger.error(`Zealy webhook validation failed: ${error.message}`, { payload, error });
       throw new BadRequestException({
@@ -788,29 +839,169 @@ export class UserQuestService {
     }
   }
 
-  private async validateWalletQuest(walletAddress: string, questId: number): Promise<boolean> {
-    // Implement wallet-based quest validation logic
-    // This could check if the wallet has made trades, holds certain tokens, etc.
-    // For now, return true as a placeholder
-    return true;
+  private async verifyReferralQuest(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const requirements = zealyQuest.requirements as IZealyReferralCheckRequirement;
+      const requiredCount = requirements.referralCount;
+
+      const currentReferralCount = await this.userReferralService.getReferralCount(userId);
+
+      const isReferralQuestCompleted = currentReferralCount >= requiredCount;
+
+      if (!isReferralQuestCompleted) {
+        this.logger.log(`Referral quest not completed for user ${userId}`, { zealyQuest: zealyQuest.id });
+
+        return {
+          success: false,
+          message: `Referral quest not completed. Current referrals: ${currentReferralCount}, required: ${requiredCount}`,
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error(`Error verifying referral quest: ${error.message}`, { userId, zealyQuest: zealyQuest.id });
+      return {
+        success: false,
+        message: `Error checking referral count: ${error.message}`,
+      };
+    }
   }
 
-  private async validateSocialQuest(accounts: any, questId: number): Promise<boolean> {
-    // Implement social media quest validation logic
-    // This could verify Twitter follows, Discord membership, etc.
-    // For now, return true as a placeholder
-    return true;
+  private async verifyTradeQuest(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const requirements = zealyQuest.requirements as IZealyTradeCheckRequirement;
+      const requiredAmount = requirements.amount;
+      const tokenId = requirements.token;
+
+      // Get user's total traded amount for the specific token
+      const totalTraded = await this.swapService.getTotalTokenTraded(userId, tokenId);
+
+      const hasMetTradeRequirement = totalTraded >= requiredAmount;
+
+      if (!hasMetTradeRequirement) {
+        this.logger.log(`Trade quest not completed for user ${userId}`, {
+          zealyQuest: zealyQuest.id,
+          totalTraded,
+          requiredAmount,
+          tokenId,
+        });
+
+        return {
+          success: false,
+          message: `Trade quest not completed. Current traded ${tokenId}: ${totalTraded}, required: ${requiredAmount}`,
+        };
+      }
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      this.logger.error(`Error verifying trade quest: ${error.message}`, { userId, zealyQuest: zealyQuest.id });
+      return {
+        success: false,
+        message: `Error checking trade volume: ${error.message}`,
+      };
+    }
   }
 
-  private async validateUserQuest(userId: number, questId: number): Promise<boolean> {
-    // Check if the user has completed the quest in your system
-    const quest = await this.questService.getQuestById(questId);
-    if (!quest) {
-      return false;
+  private async canCompleteZealyQuestByCategory(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    switch (zealyQuest.category) {
+      case EZealyQuestCategory.ONE_TIME:
+        return this.canCompleteOneTimeZealyQuest(userId, zealyQuest);
+
+      case EZealyQuestCategory.DAILY:
+        return this.canCompleteDailyZealyQuest(userId, zealyQuest);
+
+      case EZealyQuestCategory.MULTI_TIME:
+        return this.canCompleteMultiTimeZealyQuest(userId, zealyQuest);
+
+      default:
+        this.logger.warn(`Unknown Zealy quest category: ${zealyQuest.category}`);
+        return { allowed: false, reason: 'Unknown quest category' };
+    }
+  }
+
+  private async canCompleteOneTimeZealyQuest(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    // Check if user has already completed this quest
+    const completedAttempt = await this.zealyUserQuestRepository.findOne({
+      where: {
+        userId,
+        zealyQuestId: zealyQuest.id,
+        status: EZealyUserQuestStatus.COMPLETED,
+      },
+    });
+
+    if (completedAttempt) {
+      return { allowed: false, reason: 'Quest already completed (one-time only)' };
     }
 
-    // Check if the user can complete this quest
-    const canComplete = await this.canCompleteQuestByType(userId, quest);
-    return canComplete;
+    return { allowed: true };
+  }
+
+  private async canCompleteDailyZealyQuest(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    // Check if user has completed this quest today
+    const startOfDay = getStartOfDay(new Date());
+    const endOfDay = getEndOfDay(new Date());
+
+    const todayAttempt = await this.zealyUserQuestRepository.findOne({
+      where: {
+        userId,
+        zealyQuestId: zealyQuest.id,
+        status: EZealyUserQuestStatus.COMPLETED,
+        createdAt: And(LessThanOrEqual(endOfDay), MoreThanOrEqual(startOfDay)),
+      },
+    });
+
+    if (todayAttempt) {
+      return { allowed: false, reason: 'Quest already completed today' };
+    }
+
+    return { allowed: true };
+  }
+
+  private async canCompleteMultiTimeZealyQuest(
+    userId: number,
+    zealyQuest: ZealyQuestEntity,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    // For multi-time quests, we typically don't limit completions
+    // But we could add logic here if needed (e.g., daily limits, cooldowns)
+
+    // Optional: Check if there's a daily limit or cooldown
+    // For now, always allow multi-time quests
+    return { allowed: true };
+  }
+
+  async completeZealyQuest(userId: number, zealyQuest: ZealyQuestEntity, payload: ZealyWebhookPayload): Promise<void> {
+    const zealyUserQuest = this.zealyUserQuestRepository.create({
+      userId,
+      zealyQuestId: zealyQuest.id,
+      zealyUserId: payload.userId,
+      zealyRequestId: payload.requestId,
+      status: EZealyUserQuestStatus.COMPLETED,
+      verifiedAt: new Date(),
+    });
+
+    await this.zealyUserQuestRepository.save(zealyUserQuest);
+
+    this.logger.log(`Zealy quest completed for user ${userId}`, {
+      zealyQuestId: zealyQuest.id,
+      zealyUserId: payload.userId,
+      requestId: payload.requestId,
+    });
   }
 }

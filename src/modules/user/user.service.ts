@@ -45,6 +45,15 @@ export class UserService {
     return user;
   }
 
+  async getUserByWalletAddress(walletAddress: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        walletAddress,
+      },
+    });
+    return user;
+  }
+
   async connectWallet(connectWalletInput: ConnectWalletRequestDto, userId?: number) {
     if (userId) {
       const user = await this.userRepository.findOne({ where: { id: userId } });

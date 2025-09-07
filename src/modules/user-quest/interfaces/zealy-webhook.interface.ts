@@ -5,24 +5,16 @@ export interface ZealyWebhookPayload {
   questId: string;
   requestId: string;
   accounts?: {
-    email?: string;
     wallet?: string;
-    discord?: {
-      id: string;
-      handle: string;
-    };
-    twitter?: {
-      id: string;
-      username: string;
-    };
-    'zealy-connect'?: string;
   };
 }
 
 export interface ZealyWebhookResponse {
+  success: boolean;
   message: string;
 }
 
 export interface ZealyWebhookErrorResponse {
+  success: boolean;
   message: string;
 }
