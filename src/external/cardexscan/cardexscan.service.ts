@@ -29,15 +29,20 @@ export class CardexscanService {
       );
 
       if (response.data.error) {
-        throw new Error(response.data.error);
+        throw new BadRequestException({
+          message: 'Failed to estimate swap',
+          data: response.data.error,
+          validatorErrors: EError.CARDEXSCAN_ESTIMATE_SWAP_FAILED,
+        });
       }
 
       return response.data;
     } catch (error) {
-      this.logger.error('Failed to estimate swap', error);
+      console.error(error);
+      this.logger.error('Failed to estimate swap', JSON.stringify(error));
       throw new BadRequestException({
         message: 'Failed to estimate swap',
-        data: error.response?.data,
+        data: error,
         validatorErrors: EError.CARDEXSCAN_ESTIMATE_SWAP_FAILED,
       });
     }
@@ -52,15 +57,19 @@ export class CardexscanService {
       );
 
       if (response.data.error) {
-        throw new Error(response.data.error);
+        throw new BadRequestException({
+          message: 'Failed to build swap',
+          data: response.data.error,
+          validatorErrors: EError.CARDEXSCAN_BUILD_SWAP_FAILED,
+        });
       }
 
       return response.data;
     } catch (error) {
-      this.logger.error('Failed to build swap', error);
+      this.logger.error('Failed to build swap', JSON.stringify(error));
       throw new BadRequestException({
         message: 'Failed to build swap',
-        data: error.response?.data,
+        data: error,
         validatorErrors: EError.CARDEXSCAN_BUILD_SWAP_FAILED,
       });
     }
