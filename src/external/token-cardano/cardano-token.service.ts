@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { BatchTokenCardanoInfo, TokenCardanoInfo } from './types';
+import { BatchTokenCardanoInfo, TokenCardanoInfo, TokenCardanoInfoSubject } from './types';
 import { BadRequestException } from '@shared/exception';
 import { EError } from '@constants/error.constant';
 @Injectable()
@@ -11,12 +11,13 @@ export class TokenCardanoService {
   async batchTokenInfo(tokens: string[]): Promise<BatchTokenCardanoInfo> {
     try {
       const response = await firstValueFrom(
-        this.client.post<BatchTokenCardanoInfo>('metadata/query', {
+        this.client.post<BatchTokenCardanoInfo>('subjects/query', {
           subjects: tokens,
         }),
       );
       return response.data;
     } catch (error) {
+      console.error(error);
       throw new BadRequestException({
         message: 'Batch token info failed',
         validatorErrors: EError.CARDANO_TOKEN_BATCH_INFO_FAILED,
@@ -25,10 +26,10 @@ export class TokenCardanoService {
     }
   }
 
-  async tokenInfo(token: string): Promise<TokenCardanoInfo> {
+  async tokenInfo(token: string): Promise<TokenCardanoInfoSubject> {
     try {
-      const response = await firstValueFrom(this.client.get<TokenCardanoInfo>(`metadata/${token}`));
-      return response.data;
+      const response = await firstValueFrom(this.client.get<TokenCardanoInfo>(`subjects/${token}`));
+      return response.data.subject;
     } catch (error) {
       throw new BadRequestException({
         message: 'Token info failed',

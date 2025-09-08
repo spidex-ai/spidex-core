@@ -1,105 +1,29 @@
 export interface BatchTokenCardanoInfo {
-  subjects: BatchTokenCardanoSubject[];
+  subjects: TokenCardanoInfoSubject[];
+  queryPriority: string[];
 }
 
-export interface BatchTokenCardanoSubject {
+export interface TokenCardanoInfoSubject {
   subject: string;
-  policy: string;
-  logo?: BatchTokenCardanoLogo;
-  name?: BatchTokenCardanoName;
-  ticker?: BatchTokenCardanoTicker;
-  description?: BatchTokenCardanoDescription;
-  url?: BatchTokenCardanoUrl;
-  decimals?: BatchTokenCardanoDecimals;
+  metadata: TokenCardanoInfoSubjectMetadata;
 }
 
-export interface BatchTokenCardanoLogo {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
+export interface TokenCardanoInfoSubjectMetadata {
+  name: TokenCardanoInfoSubjectMetadataProperty;
+  description: TokenCardanoInfoSubjectMetadataProperty;
+  ticker: TokenCardanoInfoSubjectMetadataProperty;
+  decimals: TokenCardanoInfoSubjectMetadataProperty;
+  logo: TokenCardanoInfoSubjectMetadataProperty;
+  url: TokenCardanoInfoSubjectMetadataProperty;
+  version?: TokenCardanoInfoSubjectMetadataProperty;
+}
+
+export interface TokenCardanoInfoSubjectMetadataProperty {
   value: string;
-}
-
-export interface BatchTokenCardanoName {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface BatchTokenCardanoTicker {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface BatchTokenCardanoDescription {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface BatchTokenCardanoUrl {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface BatchTokenCardanoDecimals {
-  signatures: BatchTokenCardanoSignature[];
-  sequenceNumber: number;
-  value: number;
-}
-export interface BatchTokenCardanoSignature {
-  signature: string;
-  publicKey: string;
+  source: string;
 }
 
 export interface TokenCardanoInfo {
-  subject: string;
-  policy: string;
-  name: TokenCardanoName;
-  description: TokenCardanoDescription;
-  url: TokenCardanoUrl;
-  ticker: TokenCardanoTicker;
-  decimals: TokenCardanoDecimals;
-  logo: TokenCardanoLogo;
-}
-export interface TokenCardanoName {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface TokenCardanoSignature {
-  signature: string;
-  publicKey: string;
-}
-
-export interface TokenCardanoDescription {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface TokenCardanoUrl {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface TokenCardanoTicker {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
-}
-
-export interface TokenCardanoDecimals {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: number;
-}
-
-export interface TokenCardanoLogo {
-  signatures: TokenCardanoSignature[];
-  sequenceNumber: number;
-  value: string;
+  subject: TokenCardanoInfoSubject;
+  queryPriority: string[];
 }

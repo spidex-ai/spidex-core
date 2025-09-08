@@ -29,6 +29,7 @@ export class CardexscanService {
       );
 
       if (response.data.error) {
+        console.error(response.data.error, payload);
         throw new BadRequestException({
           message: 'Failed to estimate swap',
           data: response.data.error,

@@ -1,7 +1,15 @@
 import { BaseExcludeDeletedAtEntity } from '@database/common/base.entity';
 import { Column, Entity, Index } from 'typeorm';
 
-export type TokenMetadataProperties = 'name' | 'policy' | 'description' | 'url' | 'ticker' | 'decimals' | 'logo';
+export type TokenMetadataProperties =
+  | 'name'
+  | 'policy'
+  | 'description'
+  | 'url'
+  | 'ticker'
+  | 'decimals'
+  | 'logo'
+  | 'nameHex';
 
 @Entity('token_metadata')
 export class TokenMetadataEntity extends BaseExcludeDeletedAtEntity {
@@ -26,6 +34,9 @@ export class TokenMetadataEntity extends BaseExcludeDeletedAtEntity {
 
   @Column({ type: 'int', name: 'decimals', nullable: true })
   decimals: number;
+
+  @Column({ type: 'varchar', name: 'name_hex', nullable: true })
+  nameHex: string;
 
   @Column({ type: 'varchar', name: 'logo', nullable: true })
   logo: string;

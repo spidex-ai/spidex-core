@@ -15,8 +15,8 @@ import { S3Service } from 'external/aws/s3/s3.service';
 import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { BlockfrostTokenDetail } from 'external/blockfrost/types';
 import { TokenCardanoService } from 'external/token-cardano/cardano-token.service';
-import { TokenCardanoInfo } from 'external/token-cardano/types';
-import { pick, isNil } from 'lodash';
+import { TokenCardanoInfoSubject } from 'external/token-cardano/types';
+import { isNil, pick } from 'lodash';
 import { In } from 'typeorm';
 @Injectable()
 export class TokenMetaService {
@@ -47,49 +47,58 @@ export class TokenMetaService {
         return null;
       }
       let logo: string;
-      if (token.logo?.value) {
-        logo = await this.uploadTokenLogo(token.subject, token.logo.value);
+      if (token?.metadata?.logo?.value) {
+        logo = await this.uploadTokenLogo(token.subject, token.metadata.logo.value);
       } else if (blockfrostToken?.metadata?.logo) {
-        logo = await this.uploadTokenLogo(token.subject, blockfrostToken?.metadata?.logo);
+        logo = await this.uploadTokenLogo(token?.subject || blockfrostToken?.asset, blockfrostToken?.metadata?.logo);
       } else if (blockfrostToken?.onchain_metadata?.image) {
         logo = blockfrostToken?.onchain_metadata?.image;
       }
 
       tokenMetadata = this.tokenMetadataRepository.create({
         unit: token?.subject || blockfrostToken?.asset,
-        name: token?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
+        name:
+          token?.metadata?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
         logo,
-        ticker: token?.ticker?.value || blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
-        policy: token?.policy || blockfrostToken?.policy_id,
+        ticker:
+          token?.metadata?.ticker?.value ||
+          blockfrostToken?.metadata?.ticker ||
+          blockfrostToken?.onchain_metadata?.ticker,
+        policy: blockfrostToken?.policy_id,
         description:
-          token?.description?.value ||
+          token?.metadata?.description?.value ||
           blockfrostToken?.metadata?.description ||
           blockfrostToken?.onchain_metadata?.description,
-        url: token?.url?.value || blockfrostToken?.metadata?.url,
+        url: token?.metadata?.url?.value || blockfrostToken?.metadata?.url,
         decimals:
-          token?.decimals?.value ||
+          Number(token?.metadata?.decimals?.value) ||
           blockfrostToken?.metadata?.decimals ||
           blockfrostToken?.onchain_metadata?.decimals ||
           0,
+        nameHex: blockfrostToken?.asset_name,
       });
 
       await this.tokenMetadataRepository.save(tokenMetadata);
     }
 
     let blockfrostToken: BlockfrostTokenDetail;
-    let cardanoToken: TokenCardanoInfo;
+    let cardanoToken: TokenCardanoInfoSubject;
+    console.log('tokenMetadata', tokenMetadata);
     for (const property of pickProperties) {
       if (!tokenMetadata[property]) {
+        console.log('Fetch missing property', property);
         if (!blockfrostToken) {
           blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
         }
+        console.log({ blockfrostToken });
+
         if (!cardanoToken) {
           cardanoToken = await this.tokenCardanoService.tokenInfo(unit);
         }
         switch (property) {
           case 'logo':
-            if (cardanoToken?.logo?.value) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken?.logo?.value);
+            if (cardanoToken?.metadata?.logo?.value) {
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
             } else if (blockfrostToken?.metadata?.logo) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
             } else if (blockfrostToken?.onchain_metadata?.image) {
@@ -98,29 +107,36 @@ export class TokenMetaService {
             break;
           case 'name':
             tokenMetadata.name =
-              cardanoToken?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name;
+              cardanoToken?.metadata?.name?.value ||
+              blockfrostToken?.metadata?.name ||
+              blockfrostToken?.onchain_metadata?.name;
             break;
           case 'ticker':
             tokenMetadata.ticker =
-              cardanoToken?.ticker?.value ||
+              cardanoToken?.metadata?.ticker?.value ||
               blockfrostToken?.metadata?.ticker ||
               blockfrostToken?.onchain_metadata?.ticker;
             break;
           case 'description':
             tokenMetadata.description =
-              cardanoToken?.description?.value ||
+              cardanoToken?.metadata?.description?.value ||
               blockfrostToken?.metadata?.description ||
               blockfrostToken?.onchain_metadata?.description;
             break;
           case 'url':
-            tokenMetadata.url = cardanoToken?.url?.value || blockfrostToken?.metadata?.url;
+            tokenMetadata.url = cardanoToken?.metadata?.url?.value || blockfrostToken?.metadata?.url;
             break;
           case 'decimals':
             tokenMetadata.decimals =
-              cardanoToken?.decimals?.value ||
+              Number(cardanoToken?.metadata?.decimals?.value) ||
               blockfrostToken?.metadata?.decimals ||
               blockfrostToken?.onchain_metadata?.decimals ||
               0;
+          case 'nameHex':
+            tokenMetadata.nameHex = blockfrostToken?.asset_name;
+            break;
+          case 'policy':
+            tokenMetadata.policy = blockfrostToken?.policy_id;
             break;
           default:
             break;
@@ -133,172 +149,276 @@ export class TokenMetaService {
     return pick(tokenMetadata, pickProperties);
   }
 
-  async getTokensMetadata(units: Set<string>, properties: Set<TokenMetadataProperties>): Promise<any[]> {
-    console.time('getTokensMetadata');
-    // Filter null or undefined units and properties
+  private validateAndPreprocessInputs(units: Set<string>, properties: Set<TokenMetadataProperties>) {
     const filteredUnits = new Set(Array.from(units).filter(unit => unit !== null && unit !== undefined));
     const filteredProperties = new Set(Array.from(properties).filter(prop => prop !== null && prop !== undefined));
 
-    try {
-      if (filteredUnits.size === 0) {
-        return [];
-      }
-      console.log(filteredUnits);
+    let adaMetadata = null;
+    if (filteredUnits.has(CARDANO_UNIT)) {
+      filteredUnits.delete(CARDANO_UNIT);
+      adaMetadata = this.getAda(Array.from(filteredProperties));
+    }
 
-      let adaMetadata;
-      if (filteredUnits.has(CARDANO_UNIT)) {
-        filteredUnits.delete(CARDANO_UNIT);
-        adaMetadata = this.getAda(Array.from(filteredProperties));
-      }
-      const unitsArray = Array.from(filteredUnits);
-      const propertiesArray = Array.from(filteredProperties);
-      const pickProperties = ['unit'].concat(propertiesArray);
-      // 1. Fetch all existing metadata in one query
-      const tokenMetadataList = await this.tokenMetadataRepository.find({ where: { unit: In(unitsArray) } });
-      const tokenMetadataMap = new Map(tokenMetadataList.map(t => [t.unit, t]));
-      // 2. Identify missing units
-      const missingUnits = unitsArray.filter(unit => !tokenMetadataMap.has(unit));
-      // 3. Batch fetch from Cardano
-      const cardanoBatchMap = new Map();
-      if (missingUnits.length > 0) {
-        const cardanoBatch = await this.tokenCardanoService.batchTokenInfo(missingUnits);
-        if (cardanoBatch?.subjects?.length) {
-          for (const subject of cardanoBatch.subjects) {
-            cardanoBatchMap.set(subject.subject, subject);
-          }
+    return {
+      filteredUnits,
+      filteredProperties,
+      adaMetadata,
+      unitsArray: Array.from(filteredUnits),
+      propertiesArray: Array.from(filteredProperties),
+      pickProperties: ['unit'].concat(Array.from(filteredProperties)),
+    };
+  }
+
+  private async getExistingMetadata(units: string[]): Promise<Map<string, TokenMetadataEntity>> {
+    const tokenMetadataList = await this.tokenMetadataRepository.find({
+      where: { unit: In(units) },
+    });
+    return new Map(tokenMetadataList.map(t => [t.unit, t]));
+  }
+
+  private async fetchCardanoTokens(missingUnits: string[]): Promise<Map<string, TokenCardanoInfoSubject>> {
+    const cardanoBatchMap = new Map();
+
+    if (missingUnits.length > 0) {
+      const cardanoBatch = await this.tokenCardanoService.batchTokenInfo(missingUnits);
+      if (cardanoBatch?.subjects?.length) {
+        for (const subject of cardanoBatch.subjects) {
+          cardanoBatchMap.set(subject.subject, subject);
         }
       }
-      // 4. For units still missing after Cardano, fetch from Blockfrost in parallel
-      const cardanoFoundUnits = Array.from(cardanoBatchMap.keys());
-      const stillMissingUnits = missingUnits.filter(unit => !cardanoFoundUnits.includes(unit));
-      const blockfrostMap = new Map();
-      if (stillMissingUnits.length > 0) {
-        const blockfrostResults = await Promise.allSettled(
-          stillMissingUnits.map(unit => this.blockfrostService.getTokenDetail(unit)),
-        );
-        blockfrostResults.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            blockfrostMap.set(stillMissingUnits[idx], result.value);
-          }
-        });
-      }
-      // 5. Create and save new metadata for missing units
-      for (const unit of missingUnits) {
-        let token;
-        let logo;
-        if (cardanoBatchMap.has(unit)) {
-          token = cardanoBatchMap.get(unit);
-          if (token.logo?.value) {
-            logo = await this.uploadTokenLogo(token.subject, token.logo.value);
-          }
-          const entity = this.tokenMetadataRepository.create({
-            unit: token.subject,
-            name: token.name?.value,
-            logo,
-            ticker: token.ticker?.value,
-            policy: token.policy,
-            description: token.description?.value,
-            url: token.url?.value,
-            decimals: token.decimals?.value || 0,
-          });
-          await this.tokenMetadataRepository.save(entity);
-          tokenMetadataMap.set(unit, entity);
-        } else if (blockfrostMap.has(unit)) {
-          const blockfrostToken = blockfrostMap.get(unit);
-          logo = blockfrostToken?.metadata?.logo || blockfrostToken?.onchain_metadata?.image;
-          const entity = this.tokenMetadataRepository.create({
-            unit,
-            name: blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name,
-            logo,
-            ticker: blockfrostToken?.metadata?.ticker || blockfrostToken?.onchain_metadata?.ticker,
-            policy: blockfrostToken?.policy_id,
-            description: blockfrostToken?.metadata?.description || blockfrostToken?.onchain_metadata?.description,
-            url: blockfrostToken?.metadata?.url,
-            decimals: blockfrostToken?.metadata?.decimals || blockfrostToken?.onchain_metadata?.decimals || 0,
-          });
-          await this.tokenMetadataRepository.save(entity);
-          tokenMetadataMap.set(unit, entity);
-        } else {
-          tokenMetadataMap.set(unit, null);
+    }
+
+    return cardanoBatchMap;
+  }
+
+  private async fetchBlockfrostTokens(missingUnits: string[]): Promise<Map<string, BlockfrostTokenDetail>> {
+    const blockfrostMap = new Map();
+
+    if (missingUnits.length > 0) {
+      const blockfrostResults = await Promise.allSettled(
+        missingUnits.map(async unit => {
+          const token = await this.blockfrostService.getTokenDetail(unit);
+          return { unit, token };
+        }),
+      );
+
+      for (const result of blockfrostResults) {
+        if (result.status === 'fulfilled' && result.value.token) {
+          blockfrostMap.set(result.value.unit, result.value.token);
         }
       }
-      // 6. Ensure all requested properties are present for each token
+    }
+
+    return blockfrostMap;
+  }
+
+  private async createTokenEntity(
+    unit: string,
+    cardanoToken: TokenCardanoInfoSubject,
+    blockfrostToken: BlockfrostTokenDetail,
+  ): Promise<TokenMetadataEntity> {
+    let logo: string | undefined;
+
+    // Handle logo from Cardano token
+    if (cardanoToken?.metadata?.logo?.value) {
+      logo = await this.uploadTokenLogo(cardanoToken.subject, cardanoToken.metadata.logo.value);
+    }
+    // Handle logo from Blockfrost
+    else if (blockfrostToken?.metadata?.logo) {
+      logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
+    }
+    // Handle image from Blockfrost onchain metadata
+    else if (blockfrostToken?.onchain_metadata?.image) {
+      logo = blockfrostToken.onchain_metadata.image;
+    }
+
+    // Determine the correct unit to use
+    const entityUnit = cardanoToken?.subject || blockfrostToken?.asset || unit;
+    const name =
+      cardanoToken?.metadata?.name?.value || blockfrostToken?.metadata?.name || blockfrostToken?.onchain_metadata?.name;
+
+    return this.tokenMetadataRepository.create({
+      unit: entityUnit,
+      name,
+      logo,
+      ticker:
+        cardanoToken?.metadata?.ticker?.value ||
+        blockfrostToken?.metadata?.ticker ||
+        blockfrostToken?.onchain_metadata?.ticker,
+      policy: blockfrostToken?.policy_id,
+      description:
+        cardanoToken?.metadata?.description?.value ||
+        blockfrostToken?.metadata?.description ||
+        blockfrostToken?.onchain_metadata?.description,
+      url: cardanoToken?.metadata?.url?.value || blockfrostToken?.metadata?.url,
+      decimals:
+        Number(cardanoToken?.metadata?.decimals?.value) ||
+        blockfrostToken?.metadata?.decimals ||
+        blockfrostToken?.onchain_metadata?.decimals ||
+        0,
+      nameHex: blockfrostToken?.asset_name,
+    });
+  }
+
+  private async createAndSaveNewEntities(
+    missingUnits: string[],
+    cardanoBatchMap: Map<string, TokenCardanoInfoSubject>,
+    blockfrostMap: Map<string, BlockfrostTokenDetail>,
+  ): Promise<Map<string, TokenMetadataEntity>> {
+    const tokenMetadataMap = new Map<string, TokenMetadataEntity>();
+    const entitiesToSave: TokenMetadataEntity[] = [];
+
+    for (const unit of missingUnits) {
+      const cardanoToken = cardanoBatchMap.get(unit);
+      const blockfrostToken = blockfrostMap.get(unit);
+
+      if (cardanoToken || blockfrostToken) {
+        const entity = await this.createTokenEntity(unit, cardanoToken, blockfrostToken);
+        entitiesToSave.push(entity);
+        tokenMetadataMap.set(unit, entity);
+      } else {
+        tokenMetadataMap.set(unit, null);
+      }
+    }
+
+    if (entitiesToSave.length > 0) {
+      await this.tokenMetadataRepository.save(entitiesToSave);
+    }
+
+    return tokenMetadataMap;
+  }
+
+  private async updateMissingProperties(
+    tokenMetadata: TokenMetadataEntity,
+    unit: string,
+    properties: string[],
+    cardanoToken: TokenCardanoInfoSubject,
+    blockfrostToken: BlockfrostTokenDetail,
+  ): Promise<void> {
+    let needsUpdate = false;
+
+    for (const property of properties) {
+      if (isNil(tokenMetadata[property])) {
+        needsUpdate = true;
+
+        switch (property) {
+          case 'logo':
+            if (cardanoToken?.metadata?.logo?.value) {
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
+            } else if (blockfrostToken?.metadata?.logo) {
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
+            } else if (blockfrostToken?.onchain_metadata?.image) {
+              tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
+            } else {
+              tokenMetadata.logo = '';
+            }
+            break;
+          case 'name':
+            tokenMetadata.name =
+              cardanoToken?.metadata?.name?.value ||
+              blockfrostToken?.metadata?.name ||
+              blockfrostToken?.onchain_metadata?.name ||
+              '';
+            break;
+          case 'ticker':
+            tokenMetadata.ticker =
+              cardanoToken?.metadata?.ticker?.value ||
+              blockfrostToken?.metadata?.ticker ||
+              blockfrostToken?.onchain_metadata?.ticker ||
+              '';
+            break;
+          case 'description':
+            tokenMetadata.description =
+              cardanoToken?.metadata?.description?.value ||
+              blockfrostToken?.metadata?.description ||
+              blockfrostToken?.onchain_metadata?.description ||
+              '';
+            break;
+          case 'url':
+            tokenMetadata.url = cardanoToken?.metadata?.url?.value || blockfrostToken?.metadata?.url || '';
+            break;
+          case 'decimals':
+            tokenMetadata.decimals =
+              Number(cardanoToken?.metadata?.decimals?.value) ||
+              blockfrostToken?.metadata?.decimals ||
+              blockfrostToken?.onchain_metadata?.decimals ||
+              0;
+            break;
+          case 'nameHex':
+            tokenMetadata.nameHex = blockfrostToken?.asset_name;
+            break;
+          case 'policy':
+            tokenMetadata.policy = blockfrostToken?.policy_id;
+            break;
+        }
+      }
+    }
+
+    if (needsUpdate) {
+      await this.tokenMetadataRepository.save(tokenMetadata);
+    }
+  }
+
+  async getTokensMetadata(units: Set<string>, properties: Set<TokenMetadataProperties>): Promise<any[]> {
+    console.time('getTokensMetadata');
+
+    try {
+      // 1. Validate and preprocess inputs
+      const { filteredUnits, adaMetadata, unitsArray, pickProperties } = this.validateAndPreprocessInputs(
+        units,
+        properties,
+      );
+
+      if (filteredUnits.size === 0) {
+        return adaMetadata ? [adaMetadata] : [];
+      }
+
+      // 2. Get existing metadata from database
+      const existingMetadataMap = await this.getExistingMetadata(unitsArray);
+
+      // 3. Identify missing units that need external fetching
+      const missingUnits = unitsArray.filter(unit => !existingMetadataMap.has(unit));
+
+      // 4. Fetch missing tokens from external sources
+      const cardanoBatchMap = await this.fetchCardanoTokens(missingUnits);
+      const stillMissingUnits = missingUnits.filter(unit => !cardanoBatchMap.has(unit));
+      const blockfrostMap = await this.fetchBlockfrostTokens(stillMissingUnits);
+
+      // 5. Create and save new entities for missing tokens
+      const newEntitiesMap = await this.createAndSaveNewEntities(missingUnits, cardanoBatchMap, blockfrostMap);
+
+      // 6. Combine existing and new metadata
+      const combinedMetadataMap = new Map([...existingMetadataMap, ...newEntitiesMap]);
+
+      // 7. Build results and ensure all requested properties are present
       const results = [];
+
       if (adaMetadata) {
         results.push(adaMetadata);
       }
+
       for (const unit of filteredUnits) {
-        const tokenMetadata = tokenMetadataMap.get(unit);
+        const tokenMetadata = combinedMetadataMap.get(unit);
+
         if (!tokenMetadata) {
           results.push(null);
           continue;
         }
 
-        let blockfrostToken;
-        let cardanoToken;
-        for (const property of pickProperties) {
-          if (isNil(tokenMetadata[property])) {
-            console.debug(`Property ${property} is missing for token ${unit}`);
-            if (!blockfrostToken) {
-              blockfrostToken = blockfrostMap.get(unit) || (await this.blockfrostService.getTokenDetail(unit));
-            }
-            if (!cardanoToken) {
-              cardanoToken = cardanoBatchMap.get(unit) || (await this.tokenCardanoService.tokenInfo(unit));
-            }
-            switch (property) {
-              case 'logo':
-                if (cardanoToken?.logo?.value) {
-                  tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken?.logo?.value);
-                } else if (blockfrostToken?.metadata?.logo) {
-                  tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
-                } else if (blockfrostToken?.onchain_metadata?.image) {
-                  tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
-                } else {
-                  tokenMetadata.logo = '';
-                }
-                break;
-              case 'name':
-                tokenMetadata.name =
-                  cardanoToken?.name?.value ||
-                  blockfrostToken?.metadata?.name ||
-                  blockfrostToken?.onchain_metadata?.name ||
-                  '';
-                break;
-              case 'ticker':
-                tokenMetadata.ticker =
-                  cardanoToken?.ticker?.value ||
-                  blockfrostToken?.metadata?.ticker ||
-                  blockfrostToken?.onchain_metadata?.ticker ||
-                  '';
-                break;
-              case 'description':
-                tokenMetadata.description =
-                  cardanoToken?.description?.value ||
-                  blockfrostToken?.metadata?.description ||
-                  blockfrostToken?.onchain_metadata?.description ||
-                  '';
-                break;
-              case 'url':
-                tokenMetadata.url = cardanoToken?.url?.value || blockfrostToken?.metadata?.url || '';
-                break;
-              case 'decimals':
-                tokenMetadata.decimals =
-                  cardanoToken?.decimals?.value ||
-                  blockfrostToken?.metadata?.decimals ||
-                  blockfrostToken?.onchain_metadata?.decimals ||
-                  0;
-                break;
-              default:
-                break;
-            }
-            await this.tokenMetadataRepository.save(tokenMetadata);
-          }
+        // Check if any properties are missing and update if needed
+        const cardanoToken = cardanoBatchMap?.get(unit);
+        const blockfrostToken = blockfrostMap?.get(unit);
+
+        if (cardanoToken || blockfrostToken) {
+          await this.updateMissingProperties(tokenMetadata, unit, pickProperties, cardanoToken, blockfrostToken);
         }
+
         results.push(pick(tokenMetadata, pickProperties));
       }
+
       return results;
     } catch (error) {
-      console.log({ error });
+      console.error('Error in getTokensMetadata:', error);
       return [];
     } finally {
       console.timeEnd('getTokensMetadata');

@@ -1,6 +1,8 @@
 import { QuestRepository } from '@database/repositories/quest.repository';
 import { UserPointLogRepository } from '@database/repositories/user-point-log.repository';
 import { UserQuestRepository } from '@database/repositories/user-quest.repository';
+import { ZealyQuestRepository } from '@database/repositories/zealy-quest.repository';
+import { ZealyUserQuestRepository } from '@database/repositories/zealy-user-quest.repository';
 import { SwapModule } from '@modules/swap/swap.module';
 import { UserPointModule } from '@modules/user-point/user-point.module';
 import { UserQuestController } from '@modules/user-quest/controllers/user-quest.controller';
@@ -16,7 +18,13 @@ import { CustomRepositoryModule } from 'nestjs-typeorm-custom-repository';
 
 @Module({
   imports: [
-    CustomRepositoryModule.forFeature([UserQuestRepository, QuestRepository, UserPointLogRepository]),
+    CustomRepositoryModule.forFeature([
+      UserQuestRepository,
+      QuestRepository,
+      UserPointLogRepository,
+      ZealyQuestRepository,
+      ZealyUserQuestRepository,
+    ]),
     forwardRef(() => UserPointModule),
     forwardRef(() => UserReferralModule),
     forwardRef(() => SwapModule),
