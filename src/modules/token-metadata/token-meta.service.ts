@@ -77,8 +77,7 @@ export class TokenMetaService {
         decimals:
           Number(token?.metadata?.decimals?.value) ||
           blockfrostToken?.metadata?.decimals ||
-          blockfrostToken?.onchain_metadata?.decimals ||
-          0,
+          blockfrostToken?.onchain_metadata?.decimals,
         nameHex: blockfrostToken?.asset_name,
       });
 
@@ -134,8 +133,7 @@ export class TokenMetaService {
             tokenMetadata.decimals =
               Number(cardanoToken?.metadata?.decimals?.value) ||
               blockfrostToken?.metadata?.decimals ||
-              blockfrostToken?.onchain_metadata?.decimals ||
-              0;
+              blockfrostToken?.onchain_metadata?.decimals;
           case 'nameHex':
             tokenMetadata.nameHex = blockfrostToken?.asset_name;
             break;
@@ -260,8 +258,7 @@ export class TokenMetaService {
       decimals:
         Number(cardanoToken?.metadata?.decimals?.value) ||
         blockfrostToken?.metadata?.decimals ||
-        blockfrostToken?.onchain_metadata?.decimals ||
-        0,
+        blockfrostToken?.onchain_metadata?.decimals,
       nameHex: blockfrostToken?.asset_name,
     });
   }
@@ -343,8 +340,7 @@ export class TokenMetaService {
             tokenMetadata.decimals =
               Number(cardanoToken?.metadata?.decimals?.value) ||
               blockfrostToken?.metadata?.decimals ||
-              blockfrostToken?.onchain_metadata?.decimals ||
-              0;
+              blockfrostToken?.onchain_metadata?.decimals;
             break;
           case 'nameHex':
             tokenMetadata.nameHex = blockfrostToken?.asset_name;
@@ -440,7 +436,7 @@ export class TokenMetaService {
     console.debug('Uploading logo to S3 for unit:', unit, logo.slice(0, 30) + '...');
     const logoUrl = await this.s3Service.uploadS3(
       fromHex ? this.convertHexToImage(logo) : Buffer.from(logo, 'base64'),
-      `logo/${unit}.png`,
+      `logo/${unit}-${Date.now()}.png`,
       'image/png',
       'token-metadata',
     );
@@ -487,7 +483,7 @@ export class TokenMetaService {
   convertHexToImage(hexString: string): Buffer {
     // Clean the hex string - remove any non-hex characters
     const cleanHex = hexString.replace(/[^A-Fa-f0-9]/g, '');
-    
+
     if (cleanHex.length % 2) {
       console.warn('Cleaned hex string length is odd:', cleanHex.length);
       throw new Error('Invalid hex string: odd length');
@@ -503,7 +499,7 @@ export class TokenMetaService {
     // Create and return Buffer from binary data
     const buffer = Buffer.from(binary);
     console.debug(`Converted hex to image buffer: ${buffer.length} bytes`);
-    
+
     return buffer;
   }
 }

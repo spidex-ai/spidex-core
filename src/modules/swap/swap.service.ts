@@ -50,11 +50,13 @@ import { DHAPIService } from 'external/dhapi/dhapi.service';
 import { MinswapService } from 'external/minswap/minswap.service';
 import { MinswapEsitmateSwapResponse } from 'external/minswap/types';
 import { TaptoolsService } from 'external/taptools/taptools.service';
+import { reduce } from 'lodash';
 import { Transactional } from 'typeorm-transactional';
 @Injectable()
 export class SwapService implements OnModuleInit {
   private readonly logger = new Logger(SwapService.name);
   private lucid: LucidEvolution;
+  private readonly ADA_DECIMALS = new Decimal(6);
   constructor(
     private readonly dexhunterService: DexhunterService,
     private readonly minswapService: MinswapService,
@@ -427,6 +429,7 @@ export class SwapService implements OnModuleInit {
       let tokenInDexHunter: any, tokenOutDexHunter: any;
       let tokenInMinswap: any, tokenOutMinswap: any;
       let tokenInCardexscan: CardexscanTokenInfo, tokenOutCardexscan: CardexscanTokenInfo;
+      let tokenInDecimal: Decimal, tokenOutDecimal: Decimal;
       if (payload.tokenIn === 'ADA') {
         tokenInDexHunter = {
           unit: '',
@@ -435,6 +438,7 @@ export class SwapService implements OnModuleInit {
           unit: 'lovelace',
         };
         tokenInCardexscan = 'lovelace';
+        tokenInDecimal = new Decimal(6);
       } else {
         tokenInDexHunter = {
           unit: payload.tokenIn,
@@ -447,12 +451,14 @@ export class SwapService implements OnModuleInit {
           'ticker',
           'policy',
           'nameHex',
+          'decimals',
         ]);
         tokenInCardexscan = {
           policyId: tokenInMetadata.policy,
           nameHex: tokenInMetadata.nameHex || toHexString(tokenInMetadata.name.toLowerCase()),
           ticker: tokenInMetadata.ticker,
         };
+        tokenInDecimal = new Decimal(tokenInMetadata.decimals || 0);
       }
 
       if (payload.tokenOut === 'ADA') {
@@ -463,6 +469,7 @@ export class SwapService implements OnModuleInit {
           unit: 'lovelace',
         };
         tokenOutCardexscan = 'lovelace';
+        tokenOutDecimal = new Decimal(6);
       } else {
         tokenOutDexHunter = {
           unit: payload.tokenOut,
@@ -482,6 +489,7 @@ export class SwapService implements OnModuleInit {
           nameHex: tokenOutMetadata.nameHex || toHexString(tokenOutMetadata.name.toLowerCase()),
           ticker: tokenOutMetadata.ticker,
         };
+        tokenOutDecimal = new Decimal(tokenOutMetadata.decimals || 0);
       }
 
       const [dexHunterResp, minswapResp, cardexscanResp, estimatedPoint] = await Promise.allSettled([
@@ -519,7 +527,14 @@ export class SwapService implements OnModuleInit {
           dexHunterResp.status === 'fulfilled' ? this.mapDexhunterEsimatedSwapResponse(dexHunterResp.value) : null,
         minswap:
           minswapResp.status === 'fulfilled'
-            ? this.mapMinswapEsimatedSwapResponse(new Decimal(payload.amountIn).toString(), minswapResp.value)
+            ? this.mapMinswapEsimatedSwapResponse(
+                payload.tokenIn,
+                payload.tokenOut,
+                new Decimal(payload.amountIn).toString(),
+                tokenInDecimal.toString(),
+                tokenOutDecimal.toString(),
+                minswapResp.value,
+              )
             : null,
         cardexscan:
           cardexscanResp.status === 'fulfilled'
@@ -527,6 +542,8 @@ export class SwapService implements OnModuleInit {
                 payload.tokenIn,
                 payload.tokenOut,
                 new Decimal(payload.amountIn).toString(),
+                tokenInDecimal.toString(),
+                tokenOutDecimal.toString(),
                 cardexscanResp.value,
               )
             : null,
@@ -564,155 +581,153 @@ export class SwapService implements OnModuleInit {
     };
   }
 
+  fromUnit(amount: string | number | Decimal, decimals: Decimal): Decimal {
+    return new Decimal(amount || 0).div(new Decimal(10).pow(decimals));
+  }
+
   mapMinswapEsimatedSwapResponse(
+    tokenIn: string,
+    tokenOut: string,
     amountIn: string,
+    tokenInDecimal: string,
+    tokenOutDecimal: string,
     response: MinswapEsitmateSwapResponse,
   ): AggregatorEstimateSwapResponse {
     try {
-      if (response.token_in === CARDANO_LOVELACE_UNIT) {
-        console.log({ amountIn, response });
-        const minReceive = new Decimal(response.min_amount_out || 0).toString();
-        return {
-          netPrice: new Decimal(amountIn || 0).div(minReceive).toString(),
-          minReceive,
-          dexFee: new Decimal(response.total_dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-          dexDeposits: new Decimal(response.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-          totalDeposits: new Decimal(
-            new Decimal(response.deposits || 0).add(response.total_dex_fee || 0).add(response.aggregator_fee || 0),
-          )
-            .div(LOVELACE_TO_ADA_RATIO)
-            .toString(),
-          paths: response.paths
-            .map(path => {
-              return path.map(p => {
-                console.log({ p });
-                const amountOut = new Decimal(p.amount_out || 0);
-                const minReceive = new Decimal(p.min_amount_out || 0);
-                return {
-                  protocol: minswapProtocolMap[p.protocol],
-                  poolId: p.pool_id,
-                  amountIn: new Decimal(p.amount_in || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                  amountOut: amountOut.toString(),
-                  minReceive: minReceive.toString(),
-                  priceImpact: new Decimal(p.price_impact || 0).toNumber(),
-                  batcherFee: new Decimal(p.dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                  refundableDeposits: new Decimal(p.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                };
-              });
-            })
-            .flat(),
-        };
-      } else if (response.token_out === CARDANO_LOVELACE_UNIT) {
-        console.log({ amountIn, response });
-        const minReceive = new Decimal(response.min_amount_out || 0)
-          .div(LOVELACE_TO_ADA_RATIO)
-          .div(LOVELACE_TO_ADA_RATIO)
-          .toString();
-        return {
-          netPrice: new Decimal(amountIn || 0).div(minReceive).div(LOVELACE_TO_ADA_RATIO).toString(),
-          minReceive,
-          dexFee: new Decimal(response.total_dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-          dexDeposits: new Decimal(response.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-          totalDeposits: new Decimal(
-            new Decimal(response.deposits || 0).add(response.total_dex_fee || 0).add(response.aggregator_fee || 0),
-          )
-            .div(LOVELACE_TO_ADA_RATIO)
-            .toString(),
-          paths: response.paths
-            .map(path => {
-              return path.map(p => {
-                console.log({ p });
-                const amountOut = new Decimal(p.amount_out || 0).div(LOVELACE_TO_ADA_RATIO).div(LOVELACE_TO_ADA_RATIO);
-                const minReceive = new Decimal(p.min_amount_out || 0)
-                  .div(LOVELACE_TO_ADA_RATIO)
-                  .div(LOVELACE_TO_ADA_RATIO);
-                return {
-                  protocol: minswapProtocolMap[p.protocol],
-                  poolId: p.pool_id,
-                  amountIn: new Decimal(p.amount_in || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                  amountOut: amountOut.toString(),
-                  minReceive: minReceive.toString(),
-                  priceImpact: new Decimal(p.price_impact || 0).div(LOVELACE_TO_ADA_RATIO).toNumber(),
-                  batcherFee: new Decimal(p.dex_fee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                  refundableDeposits: new Decimal(p.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-                };
-              });
-            })
-            .flat(),
-        };
+      const inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
+      const outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
+
+      // convert min receive
+      const minReceiveDecimal = this.fromUnit(response.min_amount_out || 0, outDecimals);
+
+      const amountOutDecimal = this.fromUnit(response.amount_out || 0, outDecimals);
+
+      let netPrice: Decimal;
+
+      if (tokenOut === CARDANO_UNIT) {
+        netPrice = new Decimal(amountOutDecimal).div(amountIn); // ADA
+      } else if (tokenIn === CARDANO_UNIT) {
+        netPrice = new Decimal(amountIn).div(amountOutDecimal); // ADA
+      } else {
+        netPrice = new Decimal(amountIn).div(amountOutDecimal);
       }
+      return {
+        netPrice: netPrice.toString(),
+        minReceive: minReceiveDecimal.toString(),
+        dexFee: this.fromUnit(response.total_dex_fee || 0, this.ADA_DECIMALS).toString(),
+        dexDeposits: this.fromUnit(response.deposits || 0, this.ADA_DECIMALS).toString(),
+        totalDeposits: this.fromUnit(
+          new Decimal(response.deposits || 0).add(response.total_dex_fee || 0).add(response.aggregator_fee || 0),
+          this.ADA_DECIMALS,
+        ).toString(),
+        paths: response.paths
+          .map(path =>
+            path.map(p => {
+              const amountIn = this.fromUnit(p.amount_in || 0, inDecimals);
+              const amountOut = this.fromUnit(p.amount_out || 0, outDecimals);
+              const minReceive = this.fromUnit(p.min_amount_out || 0, outDecimals);
+
+              return {
+                protocol: minswapProtocolMap[p.protocol],
+                poolId: p.pool_id,
+                amountIn: amountIn.toString(),
+                amountOut: amountOut.toString(),
+                minReceive: minReceive.toString(),
+                priceImpact: new Decimal(p.price_impact || 0).toNumber(),
+                batcherFee: this.fromUnit(p.dex_fee || 0, this.ADA_DECIMALS).toString(),
+                refundableDeposits: this.fromUnit(p.deposits || 0, this.ADA_DECIMALS).toString(),
+              };
+            }),
+          )
+          .flat(),
+      };
     } catch (error) {
       this.logger.error(`Failed to map minswap response: ${error}`);
       throw new BadRequestException({
         message: 'Failed to map minswap response',
-        data: error.response.data,
+        data: error.response?.data,
         validatorErrors: EError.SWAP_ESTIMATION_FAILED,
       });
     }
+  }
+
+  private normalizeCardexAmount(value: any, decimals: Decimal): Decimal {
+    if (!value) return new Decimal(0);
+    const num = new Decimal(value);
+
+    if (decimals.eq(this.ADA_DECIMALS)) {
+      if (num.lt(1e6)) {
+        return num;
+      } else {
+        return this.fromUnit(num, decimals); // convert từ Lovelace
+      }
+    }
+
+    return this.fromUnit(num, decimals);
   }
 
   mapCardexscanEstimatedSwapResponse(
     tokenIn: string,
     tokenOut: string,
     amountIn: string,
+    tokenInDecimal: string,
+    tokenOutDecimal: string,
     response: CardexscanEstimateSwapResponse,
   ): AggregatorEstimateSwapResponse {
     try {
-      if (tokenIn === CARDANO_UNIT) {
-        const totalDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits + split.batcherFee, 0);
-        const totalRefundableDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits, 0);
-        console.log(response);
-        return {
-          netPrice: new Decimal(amountIn).div(response.data.estimatedTotalRecieve).toString(),
-          minReceive: response.data.estimatedTotalRecieve.toString(),
-          dexFee: '0',
-          dexDeposits: new Decimal(totalRefundableDeposits).div(LOVELACE_TO_ADA_RATIO).toString(),
-          totalDeposits: new Decimal(totalDeposits).div(LOVELACE_TO_ADA_RATIO).toString(),
-          paths: response.data.splits.map(split => {
-            console.log({ split });
-            return {
-              protocol: cardexscanProtocolMap[split.dex],
-              poolId: '', // Not provided by Cardexscan
-              amountIn: split.amountIn?.toString(),
-              amountOut: split.estimatedAmount,
-              minReceive: split.minimumAmount?.toString(),
-              priceImpact: split.priceImpact,
-              batcherFee: new Decimal(split.batcherFee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-              refundableDeposits: new Decimal(split.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-            };
-          }),
-        };
-      } else if (tokenOut === CARDANO_UNIT) {
-        const totalDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits + split.batcherFee, 0);
-        const totalRefundableDeposits = response.data.splits.reduce((sum, split) => sum + split.deposits, 0);
-        console.log(response);
-        const minReceive = new Decimal(response.data.estimatedTotalRecieve).div(LOVELACE_TO_ADA_RATIO).toString();
-        return {
-          netPrice: new Decimal(amountIn).div(minReceive).div(LOVELACE_TO_ADA_RATIO).toString(),
-          minReceive: minReceive,
-          dexFee: '0',
-          dexDeposits: new Decimal(totalRefundableDeposits).div(LOVELACE_TO_ADA_RATIO).toString(),
-          totalDeposits: new Decimal(totalDeposits).div(LOVELACE_TO_ADA_RATIO).toString(),
-          paths: response.data.splits.map(split => {
-            console.log({ split });
-            const minReceive = new Decimal(split.minimumAmount || 0).div(LOVELACE_TO_ADA_RATIO).toString();
+      const inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
+      const outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
 
-            const amountOut = new Decimal(split.estimatedAmount || 0).div(LOVELACE_TO_ADA_RATIO).toString();
-            return {
-              protocol: cardexscanProtocolMap[split.dex],
-              poolId: '', // Not provided by Cardexscan
-              amountIn: split.amountIn?.toString(),
-              amountOut: amountOut,
-              minReceive: minReceive,
-              priceImpact: split.priceImpact,
-              batcherFee: new Decimal(split.batcherFee || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-              refundableDeposits: new Decimal(split.deposits || 0).div(LOVELACE_TO_ADA_RATIO).toString(),
-            };
-          }),
-        };
+      const minReceiveDecimal = reduce(
+        response.data.splits,
+        (sum, split) =>
+          sum.add(
+            this.normalizeCardexAmount(split.minimumAmount || 0, outDecimals), // convert min receive
+          ),
+        new Decimal(0),
+      );
+
+      const totalDeposits = response.data.splits.reduce(
+        (sum, split) => sum + (split.deposits || 0) + (split.batcherFee || 0),
+        0,
+      );
+      const totalRefundableDeposits = response.data.splits.reduce((sum, split) => sum + (split.deposits || 0), 0);
+
+      const amountOutDecimal = this.normalizeCardexAmount(response.data.estimatedTotalRecieve, outDecimals);
+
+      let netPrice: Decimal;
+
+      if (tokenOut === CARDANO_UNIT) {
+        netPrice = new Decimal(amountOutDecimal).div(amountIn); // ADA
+      } else if (tokenIn === CARDANO_UNIT) {
+        netPrice = new Decimal(amountIn).div(amountOutDecimal); // ADA
+      } else {
+        netPrice = new Decimal(amountIn).div(amountOutDecimal);
       }
+      return {
+        netPrice: netPrice.toString(),
+        minReceive: minReceiveDecimal.toString(),
+        dexFee: '0',
+        dexDeposits: this.fromUnit(totalRefundableDeposits, this.ADA_DECIMALS).toString(),
+        totalDeposits: this.fromUnit(totalDeposits, this.ADA_DECIMALS).toString(),
+        paths: response.data.splits.map(split => {
+          const amountInPath = this.normalizeCardexAmount(split.amountIn || 0, inDecimals);
+          const amountOutPath = this.normalizeCardexAmount(split.estimatedAmount || 0, outDecimals);
+          const minReceivePath = this.normalizeCardexAmount(split.minimumAmount || 0, outDecimals);
+
+          return {
+            protocol: cardexscanProtocolMap[split.dex],
+            poolId: '',
+            amountIn: amountInPath.toString(),
+            amountOut: amountOutPath.toString(),
+            minReceive: minReceivePath.toString(),
+            priceImpact: split.priceImpact,
+            batcherFee: this.fromUnit(split.batcherFee || 0, this.ADA_DECIMALS).toString(),
+            refundableDeposits: this.fromUnit(split.deposits || 0, this.ADA_DECIMALS).toString(),
+          };
+        }),
+      };
     } catch (error) {
-      console.error(error);
       this.logger.error(`Failed to map Cardexscan response: ${error}`);
       throw new BadRequestException({
         message: 'Failed to map Cardexscan response',
