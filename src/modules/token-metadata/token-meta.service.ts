@@ -48,9 +48,13 @@ export class TokenMetaService {
       }
       let logo: string;
       if (token?.metadata?.logo?.value && this.isValidLogo(token.metadata.logo.value)) {
-        logo = await this.uploadTokenLogo(token.subject, token.metadata.logo.value);
+        logo = await this.uploadTokenLogo(token.subject, token.metadata.logo.value, true);
       } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
-        logo = await this.uploadTokenLogo(token?.subject || blockfrostToken?.asset, blockfrostToken?.metadata?.logo);
+        logo = await this.uploadTokenLogo(
+          token?.subject || blockfrostToken?.asset,
+          blockfrostToken?.metadata?.logo,
+          false,
+        );
       } else if (blockfrostToken?.onchain_metadata?.image) {
         logo = blockfrostToken?.onchain_metadata?.image;
       }
@@ -98,9 +102,9 @@ export class TokenMetaService {
         switch (property) {
           case 'logo':
             if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value, true);
             } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo, false);
             } else if (blockfrostToken?.onchain_metadata?.image) {
               tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
             }
@@ -223,11 +227,11 @@ export class TokenMetaService {
 
     // Handle logo from Cardano token
     if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
-      logo = await this.uploadTokenLogo(cardanoToken.subject, cardanoToken.metadata.logo.value);
+      logo = await this.uploadTokenLogo(cardanoToken.subject, cardanoToken.metadata.logo.value, true);
     }
     // Handle logo from Blockfrost
     else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
-      logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
+      logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo, false);
     }
     // Handle image from Blockfrost onchain metadata
     else if (blockfrostToken?.onchain_metadata?.image) {
@@ -306,9 +310,9 @@ export class TokenMetaService {
         switch (property) {
           case 'logo':
             if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value, true);
             } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo, false);
             } else if (blockfrostToken?.onchain_metadata?.image) {
               tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
             }
@@ -423,7 +427,7 @@ export class TokenMetaService {
     }
   }
 
-  async uploadTokenLogo(unit: string, logo: string) {
+  async uploadTokenLogo(unit: string, logo: string, fromHex: boolean): Promise<string> {
     if (logo.startsWith('http')) {
       console.warn('Logo is a URL, skipping upload to S3:', logo);
       return logo;
@@ -432,13 +436,10 @@ export class TokenMetaService {
       console.warn('Logo is an IPFS link, skipping upload to S3:', logo);
       return logo;
     }
-    if (logo.length % 4 !== 0) {
-      console.error('Logo base64 string is not valid, skipping upload to S3:', logo);
-      return null;
-    }
+
     console.debug('Uploading logo to S3 for unit:', unit, logo.slice(0, 30) + '...');
     const logoUrl = await this.s3Service.uploadS3(
-      Buffer.from(logo, 'base64'),
+      fromHex ? this.convertHexToImage(logo) : Buffer.from(logo, 'base64'),
       `logo/${unit}.png`,
       'image/png',
       'token-metadata',
@@ -479,12 +480,30 @@ export class TokenMetaService {
     if (logo.startsWith('http') || logo.startsWith('ipfs://')) {
       return true;
     }
-    // Basic check for base64 string
-    if (/^[A-Za-z0-9+/=]+\s*$/.test(logo) && logo.length % 4 === 0) {
-      return true;
+
+    return true;
+  }
+
+  convertHexToImage(hexString: string): Buffer {
+    // Clean the hex string - remove any non-hex characters
+    const cleanHex = hexString.replace(/[^A-Fa-f0-9]/g, '');
+    
+    if (cleanHex.length % 2) {
+      console.warn('Cleaned hex string length is odd:', cleanHex.length);
+      throw new Error('Invalid hex string: odd length');
     }
 
-    console.warn('Logo is neither a valid URL nor a valid base64 string:', logo.length);
-    return false;
+    // Convert hex string to binary array
+    const binary: number[] = [];
+    for (let i = 0; i < cleanHex.length / 2; i++) {
+      const hexPair = cleanHex.substring(i * 2, i * 2 + 2);
+      binary[i] = parseInt(hexPair, 16);
+    }
+
+    // Create and return Buffer from binary data
+    const buffer = Buffer.from(binary);
+    console.debug(`Converted hex to image buffer: ${buffer.length} bytes`);
+    
+    return buffer;
   }
 }
