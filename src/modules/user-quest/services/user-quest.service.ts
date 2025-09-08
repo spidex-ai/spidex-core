@@ -756,7 +756,7 @@ export class UserQuestService {
     // Validate API key
     const expectedApiKey = this.configService.get<string>(EEnvKey.ZEALY_API_KEY);
     if (!expectedApiKey || apiKey !== expectedApiKey) {
-      throw new UnauthorizedException('Invalid API Key');
+      throw new BadRequestException('Invalid API Key');
     }
 
     this.logger.log(`Zealy webhook received for user ${payload.userId}, quest ${payload.questId}`, { payload });
@@ -798,6 +798,8 @@ export class UserQuestService {
       }
 
       const userId = spidexUser.id;
+
+      console.log({ userId });
 
       // Verify quest completion based on category first
       let verificationResult: { success: boolean; message?: string } = { success: false };
@@ -880,7 +882,9 @@ export class UserQuestService {
       const tokenId = requirements.token;
 
       // Get user's total traded amount for the specific token
+
       const totalTraded = await this.swapService.getTotalTokenTraded(userId, tokenId);
+      console.log({ userId, tokenId, totalTraded });
 
       const hasMetTradeRequirement = totalTraded >= requiredAmount;
 

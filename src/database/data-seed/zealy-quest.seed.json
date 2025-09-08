@@ -1,0 +1,29 @@
+[
+  {
+    "zealyQuestId": "zealy_referral_friends_2",
+    "name": "Refer 2 Friends to Spidex",
+    "category": 0,
+    "type": 0,
+    "requirements": {
+      "referralCount": 2
+    },
+    "status": 1,
+    "hasDuration": false,
+    "startDate": null,
+    "endDate": null
+  },
+  {
+    "zealyQuestId": "zealy_trade_sundae_50",
+    "name": "Trade 50 SUNDAE Tokens",
+    "category": 0,
+    "type": 1,
+    "requirements": {
+      "amount": 50,
+      "token": "c48cbb3d5e57ed56e276bc45f99ab39abe94e6cd7ac39fb402da47ad0014df105553444d"
+    },
+    "status": 1,
+    "hasDuration": false,
+    "startDate": null,
+    "endDate": null
+  }
+]

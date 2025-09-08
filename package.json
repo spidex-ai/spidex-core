@@ -32,6 +32,7 @@
     "db:drop": "yarn typeorm schema:drop -d src/ormconfig.ts",
     "db:seed:config": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-seeding/dist/cli.js config",
     "db:seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ormconfig.ts",
+    "db:seed:zealy": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ormconfig.ts -n ZealyQuestSeeder",
     "console:dev": "ts-node -r tsconfig-paths/register src/console.ts",
     "console": "node dist/console.js",
     "core:consumer": "ts-node -r tsconfig-paths/register src/core-consumer.ts",

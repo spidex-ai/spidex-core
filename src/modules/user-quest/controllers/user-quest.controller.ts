@@ -6,12 +6,13 @@ import {
 } from '@modules/user-quest/dtos/user-quest.dto';
 import { ZealyWebhookPayload, ZealyWebhookResponse } from '@modules/user-quest/interfaces/zealy-webhook.interface';
 import { UserQuestService } from '@modules/user-quest/services/user-quest.service';
-import { Body, Controller, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@shared/decorators/auth-user.decorator';
-import { AuthUserGuard } from '@shared/decorators/auth.decorator';
+import { AuthUserGuard, GuardPublic } from '@shared/decorators/auth.decorator';
 import { PageDto } from '@shared/dtos/page.dto';
 import { IJwtPayload } from '@shared/interfaces/auth.interface';
+import { Response } from 'express';
 
 @ApiTags('User Quest')
 @ApiBearerAuth()
@@ -66,10 +67,24 @@ export class UserQuestController {
   }
 
   @Post('zealy/webhook')
+  @GuardPublic()
   async zealyWebhook(
     @Body() payload: ZealyWebhookPayload,
     @Headers('x-api-key') apiKey: string,
+    @Res() res: Response,
   ): Promise<ZealyWebhookResponse> {
-    return this.userQuestService.handleZealyWebhook(payload, apiKey);
+    try {
+      const result = await this.userQuestService.handleZealyWebhook(payload, apiKey);
+      if (result.success) {
+        res.status(200).send({
+          message: 'Quest completed',
+        });
+      } else {
+        res.status(400).send({ message: result.message });
+      }
+    } catch (error) {
+      res.status(400).send({ message: error.message });
+      return;
+    }
   }
 }
