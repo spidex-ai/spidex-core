@@ -98,6 +98,6 @@ export enum EEnvKey {
 export enum EEnvironment {
   DEVELOPMENT = 'development',
   PRODUCTION = 'production',
-  TESTING = 'testing',
+  TESTING = 'test',
   STAGING = 'staging',
 }
