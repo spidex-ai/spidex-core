@@ -47,9 +47,9 @@ export class TokenMetaService {
         return null;
       }
       let logo: string;
-      if (token?.metadata?.logo?.value) {
+      if (token?.metadata?.logo?.value && this.isValidLogo(token.metadata.logo.value)) {
         logo = await this.uploadTokenLogo(token.subject, token.metadata.logo.value);
-      } else if (blockfrostToken?.metadata?.logo) {
+      } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
         logo = await this.uploadTokenLogo(token?.subject || blockfrostToken?.asset, blockfrostToken?.metadata?.logo);
       } else if (blockfrostToken?.onchain_metadata?.image) {
         logo = blockfrostToken?.onchain_metadata?.image;
@@ -97,9 +97,9 @@ export class TokenMetaService {
         }
         switch (property) {
           case 'logo':
-            if (cardanoToken?.metadata?.logo?.value) {
+            if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
-            } else if (blockfrostToken?.metadata?.logo) {
+            } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
             } else if (blockfrostToken?.onchain_metadata?.image) {
               tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
@@ -222,11 +222,11 @@ export class TokenMetaService {
     let logo: string | undefined;
 
     // Handle logo from Cardano token
-    if (cardanoToken?.metadata?.logo?.value) {
+    if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
       logo = await this.uploadTokenLogo(cardanoToken.subject, cardanoToken.metadata.logo.value);
     }
     // Handle logo from Blockfrost
-    else if (blockfrostToken?.metadata?.logo) {
+    else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
       logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
     }
     // Handle image from Blockfrost onchain metadata
@@ -305,36 +305,32 @@ export class TokenMetaService {
 
         switch (property) {
           case 'logo':
-            if (cardanoToken?.metadata?.logo?.value) {
+            if (cardanoToken?.metadata?.logo?.value && this.isValidLogo(cardanoToken.metadata.logo.value)) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
-            } else if (blockfrostToken?.metadata?.logo) {
+            } else if (blockfrostToken?.metadata?.logo && this.isValidLogo(blockfrostToken.metadata.logo)) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
             } else if (blockfrostToken?.onchain_metadata?.image) {
               tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
-            } else {
-              tokenMetadata.logo = '';
             }
             break;
           case 'name':
             tokenMetadata.name =
               cardanoToken?.metadata?.name?.value ||
               blockfrostToken?.metadata?.name ||
-              blockfrostToken?.onchain_metadata?.name ||
-              '';
+              blockfrostToken?.onchain_metadata?.name;
             break;
           case 'ticker':
             tokenMetadata.ticker =
               cardanoToken?.metadata?.ticker?.value ||
               blockfrostToken?.metadata?.ticker ||
-              blockfrostToken?.onchain_metadata?.ticker ||
-              '';
+              blockfrostToken?.onchain_metadata?.ticker;
+
             break;
           case 'description':
             tokenMetadata.description =
               cardanoToken?.metadata?.description?.value ||
               blockfrostToken?.metadata?.description ||
-              blockfrostToken?.onchain_metadata?.description ||
-              '';
+              blockfrostToken?.onchain_metadata?.description;
             break;
           case 'url':
             tokenMetadata.url = cardanoToken?.metadata?.url?.value || blockfrostToken?.metadata?.url || '';
@@ -436,7 +432,10 @@ export class TokenMetaService {
       console.warn('Logo is an IPFS link, skipping upload to S3:', logo);
       return logo;
     }
-
+    if (logo.length % 4 !== 0) {
+      console.error('Logo base64 string is not valid, skipping upload to S3:', logo);
+      return null;
+    }
     console.debug('Uploading logo to S3 for unit:', unit, logo.slice(0, 30) + '...');
     const logoUrl = await this.s3Service.uploadS3(
       Buffer.from(logo, 'base64'),
@@ -470,5 +469,22 @@ export class TokenMetaService {
       unit: CARDANO_UNIT,
       ...pick(adaMetadata, properties),
     };
+  }
+
+  isValidLogo(logo: string): boolean {
+    if (!logo || typeof logo !== 'string') {
+      console.warn('Invalid logo format:', logo);
+      return false;
+    }
+    if (logo.startsWith('http') || logo.startsWith('ipfs://')) {
+      return true;
+    }
+    // Basic check for base64 string
+    if (/^[A-Za-z0-9+/=]+\s*$/.test(logo) && logo.length % 4 === 0) {
+      return true;
+    }
+
+    console.warn('Logo is neither a valid URL nor a valid base64 string:', logo.length);
+    return false;
   }
 }
