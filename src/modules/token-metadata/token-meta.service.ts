@@ -16,7 +16,7 @@ import { BlockfrostService } from 'external/blockfrost/blockfrost.service';
 import { BlockfrostTokenDetail } from 'external/blockfrost/types';
 import { TokenCardanoService } from 'external/token-cardano/cardano-token.service';
 import { TokenCardanoInfoSubject } from 'external/token-cardano/types';
-import { isNil, pick } from 'lodash';
+import { isNil, keys, pick } from 'lodash';
 import { In } from 'typeorm';
 @Injectable()
 export class TokenMetaService {
@@ -183,7 +183,9 @@ export class TokenMetaService {
       const cardanoBatch = await this.tokenCardanoService.batchTokenInfo(missingUnits);
       if (cardanoBatch?.subjects?.length) {
         for (const subject of cardanoBatch.subjects) {
-          cardanoBatchMap.set(subject.subject, subject);
+          if (keys(subject.metadata || {}).length > 0) {
+            cardanoBatchMap.set(subject.subject, subject);
+          }
         }
       }
     }
@@ -306,7 +308,7 @@ export class TokenMetaService {
             if (cardanoToken?.metadata?.logo?.value) {
               tokenMetadata.logo = await this.uploadTokenLogo(unit, cardanoToken.metadata.logo.value);
             } else if (blockfrostToken?.metadata?.logo) {
-              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken?.metadata?.logo);
+              tokenMetadata.logo = await this.uploadTokenLogo(unit, blockfrostToken.metadata.logo);
             } else if (blockfrostToken?.onchain_metadata?.image) {
               tokenMetadata.logo = blockfrostToken?.onchain_metadata?.image;
             } else {
@@ -426,6 +428,16 @@ export class TokenMetaService {
   }
 
   async uploadTokenLogo(unit: string, logo: string) {
+    if (logo.startsWith('http')) {
+      console.warn('Logo is a URL, skipping upload to S3:', logo);
+      return logo;
+    }
+    if (logo.startsWith('ipfs://')) {
+      console.warn('Logo is an IPFS link, skipping upload to S3:', logo);
+      return logo;
+    }
+
+    console.debug('Uploading logo to S3 for unit:', unit, logo.slice(0, 30) + '...');
     const logoUrl = await this.s3Service.uploadS3(
       Buffer.from(logo, 'base64'),
       `logo/${unit}.png`,
