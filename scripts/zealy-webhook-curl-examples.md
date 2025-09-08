@@ -19,7 +19,8 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -H "x-api-key: $ZEALY_API_KEY" \
   -d '{
     "userId": "zealy_user_123",
-    "questId": "zealy_referral_friends_2", 
+    "questId": "zealy_referral_friends_2",
+    "communityId": "zealy_community_1", 
     "requestId": "req_ref_123",
     "accounts": {
       "wallet": "addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da"
@@ -37,6 +38,7 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -d '{
     "userId": "zealy_user_456",
     "questId": "zealy_trade_sundae_50",
+    "communityId": "zealy_community_1",
     "requestId": "req_trade_456", 
     "accounts": {
       "wallet": "addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da"
@@ -54,6 +56,7 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -d '{
     "userId": "zealy_user_789",
     "questId": "zealy_referral_friends_2",
+    "communityId": "zealy_community_1",
     "requestId": "req_invalid_789",
     "accounts": {
       "wallet": "addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da"
@@ -71,6 +74,7 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -d '{
     "userId": "zealy_user_999", 
     "questId": "non_existent_quest",
+    "communityId": "zealy_community_1",
     "requestId": "req_not_found_999",
     "accounts": {
       "wallet": "addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da"
@@ -86,7 +90,8 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "zealy_user_888",
-    "questId": "zealy_referral_friends_2", 
+    "questId": "zealy_referral_friends_2",
+    "communityId": "zealy_community_1", 
     "requestId": "req_no_key_888",
     "accounts": {
       "wallet": "addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da"
@@ -104,6 +109,7 @@ curl -X POST "$API_BASE_URL/api/user-quest/zealy/webhook" \
   -d '{
     "userId": "zealy_user_unknown",
     "questId": "zealy_referral_friends_2",
+    "communityId": "zealy_community_1",
     "requestId": "req_unknown_user",
     "accounts": {
       "wallet": "addr_unknown_wallet_address"

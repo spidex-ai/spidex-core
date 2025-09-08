@@ -46,6 +46,9 @@ export class UserService {
   }
 
   async getUserByWalletAddress(walletAddress: string) {
+    if (!walletAddress) {
+      return null;
+    }
     const user = await this.userRepository.findOne({
       where: {
         walletAddress,

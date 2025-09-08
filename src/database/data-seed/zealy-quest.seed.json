@@ -1,6 +1,7 @@
 [
   {
     "zealyQuestId": "zealy_referral_friends_2",
+    "zealyCommunityId": "zealy_community_1",
     "name": "Refer 2 Friends to Spidex",
     "category": 0,
     "type": 0,
@@ -14,6 +15,7 @@
   },
   {
     "zealyQuestId": "zealy_trade_sundae_50",
+    "zealyCommunityId": "zealy_community_1",
     "name": "Trade 50 SUNDAE Tokens",
     "category": 0,
     "type": 1,

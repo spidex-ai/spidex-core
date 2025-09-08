@@ -25,6 +25,7 @@ async function testZealyWebhookHTTP() {
         userId: 'zealy_user_123',
         questId: 'zealy_referral_friends_2',
         requestId: 'req_123',
+        communityId: 'zealy_community_1',
         accounts: {
           wallet:
             'addr1q9gykktajrgrmj5am8vwlhp65a72emlwn2s3e5cadkhe3vrfkfxs6yajls3ft0yn42uqlcnrq6qcn3l0lunkxy6aplgspxm6da',
@@ -41,6 +42,7 @@ async function testZealyWebhookHTTP() {
       payload: {
         userId: 'zealy_user_456',
         questId: 'zealy_trade_sundae_50',
+        communityId: 'zealy_community_1',
         requestId: 'req_456',
         accounts: {
           wallet:
@@ -58,6 +60,7 @@ async function testZealyWebhookHTTP() {
       payload: {
         userId: 'zealy_user_789',
         questId: 'zealy_referral_friends_2',
+        communityId: 'zealy_community_1',
         requestId: 'req_789',
         accounts: {
           wallet:
@@ -75,6 +78,7 @@ async function testZealyWebhookHTTP() {
       payload: {
         userId: 'zealy_user_999',
         questId: 'zealy_referral_friends_2',
+        communityId: 'zealy_community_1',
         requestId: 'req_999',
         accounts: {
           wallet:
@@ -92,6 +96,7 @@ async function testZealyWebhookHTTP() {
       payload: {
         userId: 'zealy_user_888',
         questId: 'non_existent_quest',
+        communityId: 'zealy_community_1',
         requestId: 'req_888',
         accounts: {
           wallet:

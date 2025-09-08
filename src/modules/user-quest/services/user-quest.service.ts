@@ -766,9 +766,11 @@ export class UserQuestService {
       const zealyQuest = await this.zealyQuestRepository.findOne({
         where: {
           zealyQuestId: payload.questId,
+          zealyCommunityId: payload.communityId,
           status: EZealyQuestStatus.ACTIVE,
         },
       });
+      console.log({ payload, zealyQuest });
 
       if (!zealyQuest) {
         this.logger.warn(`Zealy quest not found: ${payload.questId}`);
@@ -833,11 +835,7 @@ export class UserQuestService {
         message: verificationResult.success ? 'Quest completed' : 'Quest verification failed',
       };
     } catch (error) {
-      this.logger.error(`Zealy webhook validation failed: ${error.message}`, { payload, error });
-      throw new BadRequestException({
-        message: error.message || 'Validation failed',
-        validatorErrors: EError.QUEST_NOT_FOUND,
-      });
+      return { success: false, message: `Error processing webhook: ${error.message}` };
     }
   }
 
