@@ -306,7 +306,7 @@ export class SwapService implements OnModuleInit {
 
       let cardexscanTokenIn: CardexscanTokenInfo, cardexscanTokenOut: CardexscanTokenInfo;
       let tokenIn: TokenDBInfo, tokenOut: TokenDBInfo;
-
+      let tokenInDecimal: Decimal, tokenOutDecimal: Decimal;
       if (payload.tokenIn === CARDANO_UNIT) {
         cardexscanTokenIn = CARDANO_LOVELACE_UNIT;
         tokenIn = {
@@ -314,16 +314,19 @@ export class SwapService implements OnModuleInit {
           name: 'Ada',
           price: adaPrice,
         };
+        tokenInDecimal = new Decimal(this.ADA_DECIMALS);
       } else {
         const tokenInPrice = await this.tapToolsService.getTokenPrices([payload.tokenIn], false);
         const tokenInMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenIn, [
           'name',
           'ticker',
           'policy',
+          'decimals',
+          'nameHex',
         ]);
         cardexscanTokenIn = {
           policyId: tokenInMetadata.policy,
-          nameHex: toHexString(tokenInMetadata.name.toUpperCase()),
+          nameHex: tokenInMetadata.nameHex || toHexString(tokenInMetadata.name.toLowerCase()),
           ticker: tokenInMetadata.ticker,
         } as CardexscanToken;
 
@@ -332,20 +335,30 @@ export class SwapService implements OnModuleInit {
           name: tokenInMetadata.name,
           price: tokenInPrice[payload.tokenIn] * adaPrice,
         };
+
+        tokenInDecimal = new Decimal(tokenInMetadata.decimals || 0);
       }
 
       if (payload.tokenOut === CARDANO_UNIT) {
         cardexscanTokenOut = CARDANO_LOVELACE_UNIT;
+        tokenOut = {
+          unit: CARDANO_LOVELACE_UNIT,
+          name: 'Ada',
+          price: adaPrice,
+        };
+        tokenOutDecimal = new Decimal(this.ADA_DECIMALS);
       } else {
         const tokenOutMetadata = await this.tokenMetaService.getTokenMetadata(payload.tokenOut, [
           'name',
           'ticker',
           'policy',
+          'decimals',
+          'nameHex',
         ]);
         const tokenOutPrice = await this.tapToolsService.getTokenPrices([payload.tokenOut], false);
         cardexscanTokenOut = {
           policyId: tokenOutMetadata.policy,
-          nameHex: toHexString(tokenOutMetadata.name.toUpperCase()),
+          nameHex: tokenOutMetadata.nameHex || toHexString(tokenOutMetadata.name.toLowerCase()),
           ticker: tokenOutMetadata.ticker,
         } as CardexscanToken;
 
@@ -354,15 +367,25 @@ export class SwapService implements OnModuleInit {
           name: tokenOutMetadata.name,
           price: tokenOutPrice[payload.tokenOut] * adaPrice,
         };
+        tokenOutDecimal = new Decimal(tokenOutMetadata.decimals || 0);
       }
 
       const estimatedSwap = await this.cardexscanService.estimateSwap({
         tokenInAmount: payload.tokenInAmount,
-        slippage: payload.slippage || 1,
+        slippage: payload.slippage || 0.01,
         tokenIn: cardexscanTokenIn,
         tokenOut: cardexscanTokenOut,
         blacklisted_dexes: [],
       });
+
+      const estimateOutput = this.mapCardexscanEstimatedSwapResponse(
+        payload.tokenIn,
+        payload.tokenOut,
+        new Decimal(payload.tokenInAmount).toString(),
+        tokenInDecimal.toString(),
+        tokenOutDecimal.toString(),
+        estimatedSwap,
+      );
 
       const response = await this.cardexscanService.buildSwap({
         tokenInAmount: payload.tokenInAmount,
@@ -375,6 +398,16 @@ export class SwapService implements OnModuleInit {
 
       const txHash = getTxHashFromCbor(response.data.txCbor);
 
+      const existingTx = await this.swapTransactionRepository.findOne({
+        where: { txHash: txHash, status: SwapStatus.BUILDING },
+      });
+
+      if (existingTx) {
+        return { cbor: response.data.txCbor, txHash: existingTx.txHash };
+      }
+
+      // create fake swap tx if txHash not found after submit
+
       const swapSellTx = this.swapTransactionRepository.create({
         userId: userId,
         address: payload.sender,
@@ -383,7 +416,7 @@ export class SwapService implements OnModuleInit {
         tokenB: payload.tokenOut,
         tokenBName: tokenOut.name,
         tokenAAmount: new Decimal(payload.tokenInAmount).toString(),
-        tokenBAmount: new Decimal(estimatedSwap.data.estimatedTotalRecieve).toString(),
+        tokenBAmount: new Decimal(estimateOutput.minReceive).toString(),
         action: SwapAction.SELL,
         timestamp: new Date(),
         exchange: SwapExchange.CARDEXSCAN,
@@ -400,14 +433,14 @@ export class SwapService implements OnModuleInit {
         tokenAName: tokenOut.name,
         tokenB: payload.tokenIn,
         tokenBName: tokenIn.name,
-        tokenAAmount: new Decimal(estimatedSwap.data.estimatedTotalRecieve).toString(),
+        tokenAAmount: new Decimal(estimateOutput.minReceive).toString(),
         tokenBAmount: new Decimal(payload.tokenInAmount).toString(),
         action: SwapAction.BUY,
         timestamp: new Date(),
         exchange: SwapExchange.CARDEXSCAN,
         cborHex: response.data.txCbor,
         totalFee: 0,
-        totalUsd: new Decimal(estimatedSwap.data.estimatedTotalRecieve).times(tokenOut.price).toString(),
+        totalUsd: new Decimal(estimateOutput.minReceive).times(tokenOut.price).toString(),
         txHash: txHash,
       });
 
