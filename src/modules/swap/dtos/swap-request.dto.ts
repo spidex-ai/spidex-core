@@ -131,13 +131,13 @@ export class SubmitSwapRequest {
   })
   txCbor: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     description: 'Transaction hash',
     example: 'tx_hash_example',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   signatures: string;
 
   @IsString()
