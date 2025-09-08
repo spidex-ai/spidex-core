@@ -483,6 +483,7 @@ export class SwapService implements OnModuleInit {
           'ticker',
           'policy',
           'nameHex',
+          'decimals',
         ]);
         tokenOutCardexscan = {
           policyId: tokenOutMetadata.policy,
@@ -594,6 +595,13 @@ export class SwapService implements OnModuleInit {
     response: MinswapEsitmateSwapResponse,
   ): AggregatorEstimateSwapResponse {
     try {
+      console.debug('Minswap response:', response, {
+        tokenIn,
+        tokenOut,
+        amountIn,
+        tokenInDecimal,
+        tokenOutDecimal,
+      });
       const inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
       const outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
 
@@ -675,6 +683,13 @@ export class SwapService implements OnModuleInit {
     response: CardexscanEstimateSwapResponse,
   ): AggregatorEstimateSwapResponse {
     try {
+      console.debug('Cardexscan response:', response, {
+        tokenIn,
+        tokenOut,
+        amountIn,
+        tokenInDecimal,
+        tokenOutDecimal,
+      });
       const inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
       const outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
 
