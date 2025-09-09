@@ -526,7 +526,18 @@ export class SwapService implements OnModuleInit {
         tokenOutDecimal = new Decimal(tokenOutMetadata.decimals || 0);
       }
 
-      const [dexHunterResp, minswapResp, cardexscanResp, estimatedPoint] = await Promise.allSettled([
+      console.debug('Estimating swap with:', {
+        tokenInDexHunter,
+        tokenOutDexHunter,
+        tokenInMinswap,
+        tokenOutMinswap,
+        tokenInCardexscan,
+        tokenOutCardexscan,
+        tokenInDecimal: tokenInDecimal.toString(),
+        tokenOutDecimal: tokenOutDecimal.toString(),
+      });
+
+      const [dexHunterResp, minswapResp, estimatedPoint] = await Promise.allSettled([
         this.dexhunterService.estimateSwap({
           token_in: tokenInDexHunter.unit,
           token_out: tokenOutDexHunter.unit,
@@ -543,13 +554,13 @@ export class SwapService implements OnModuleInit {
           allow_multi_hops: true,
           partner: this.configService.get<string>(EEnvKey.MINSWAP_PARTNER_ID),
         }),
-        this.cardexscanService.estimateSwap({
-          tokenInAmount: payload.amountIn,
-          slippage: payload.slippage || 0.01,
-          tokenIn: tokenInCardexscan,
-          tokenOut: tokenOutCardexscan,
-          blacklisted_dexes: [],
-        }),
+        // this.cardexscanService.estimateSwap({
+        //   tokenInAmount: payload.amountIn,
+        //   slippage: payload.slippage || 0.01,
+        //   tokenIn: tokenInCardexscan,
+        //   tokenOut: tokenOutCardexscan,
+        //   blacklisted_dexes: [],
+        // }),
         this.getEstimatedPoint({
           tokenIn: payload.tokenIn,
           amountIn: payload.amountIn,
@@ -570,17 +581,17 @@ export class SwapService implements OnModuleInit {
                 minswapResp.value,
               )
             : null,
-        cardexscan:
-          cardexscanResp.status === 'fulfilled'
-            ? this.mapCardexscanEstimatedSwapResponse(
-                payload.tokenIn,
-                payload.tokenOut,
-                new Decimal(payload.amountIn).toString(),
-                tokenInDecimal.toString(),
-                tokenOutDecimal.toString(),
-                cardexscanResp.value,
-              )
-            : null,
+        cardexscan: null,
+        // cardexscanResp.status === 'fulfilled'
+        //   ? this.mapCardexscanEstimatedSwapResponse(
+        //       payload.tokenIn,
+        //       payload.tokenOut,
+        //       new Decimal(payload.amountIn).toString(),
+        //       tokenInDecimal.toString(),
+        //       tokenOutDecimal.toString(),
+        //       cardexscanResp.value,
+        //     )
+        //   : null,
         estimatedPoint: estimatedPoint.status === 'fulfilled' ? estimatedPoint.value : '0',
       };
     } catch (error) {
