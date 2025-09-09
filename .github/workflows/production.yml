@@ -164,7 +164,11 @@ jobs:
           echo "AUTH_NONCE_EXPIRATION_MINUTES=${{ secrets.AUTH_NONCE_EXPIRATION_MINUTES || '15' }}" >> .env
           echo "GOOGLE_RECAPCHA_SECRET_KEY=${{ secrets.GOOGLE_RECAPCHA_SECRET_KEY }}" >> .env
           echo "VERIFICATION_URL=${{ secrets.VERIFICATION_URL }}" >> .env
-
+          echo "MINSWAP_API_URL=${{ secrets.MINSWAP_API_URL }}" >> .env
+          echo "MINSWAP_PARTNER_ID=${{ secrets.MINSWAP_PARTNER_ID }}" >> .env
+          echo "CARDEXSCAN_API_KEY=${{ secrets.CARDEXSCAN_API_KEY }}" >> .env
+          echo "CARDEXSCAN_API_URL=${{ secrets.CARDEXSCAN_API_URL }}" >> .env
+          echo "ZEALY_API_KEY=${{ secrets.ZEALY_API_KEY }}" >> .env
           # Set secure permissions
           chmod 600 .env
 
