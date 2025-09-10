@@ -24,6 +24,12 @@ export enum EEventType {
 export const ALL_TOKEN = 'ALL_TOKEN';
 export const ALL_DEX = 'ALL_DEX';
 
+export interface EventCustomData {
+  key: string;
+  type: 'text' | 'number' | 'boolean' | 'object';
+  value: string | number | boolean | object;
+}
+
 @Entity('events')
 @Index(['status'])
 @Index(['startDate'])
@@ -32,6 +38,9 @@ export const ALL_DEX = 'ALL_DEX';
 export class EventEntity extends BaseEntity {
   @Column({ name: 'name', length: 255 })
   name: string;
+
+  @Column({ name: 'event_hash', type: 'uuid', unique: true })
+  eventHash: string;
 
   @Column({ name: 'description', type: 'text' })
   description: string;
@@ -70,6 +79,9 @@ export class EventEntity extends BaseEntity {
   @Column({ name: 'trade_token', type: 'varchar', default: ALL_TOKEN })
   tradeToken: string;
 
+  @Column({ name: 'prize_token', type: 'varchar', nullable: true })
+  prizeToken: string;
+
   @Column({ name: 'trade_dex', type: 'varchar', default: ALL_DEX })
   tradeDex: SwapExchange;
 
@@ -98,6 +110,9 @@ export class EventEntity extends BaseEntity {
     cascade: true,
   })
   participants: EventParticipantEntity[];
+
+  @Column({ name: 'custom_data', type: 'jsonb', nullable: true, default: {} })
+  customData: EventCustomData[];
 
   constructor(partial: Partial<EventEntity>) {
     super();
