@@ -328,6 +328,7 @@ export class SwapService implements OnModuleInit {
           policyId: tokenInMetadata.policy,
           nameHex: tokenInMetadata.nameHex || toHexString(tokenInMetadata.name.toLowerCase()),
           ticker: tokenInMetadata.ticker,
+          decimals: tokenInMetadata.decimals || 0,
         } as CardexscanToken;
 
         tokenIn = {
@@ -360,6 +361,7 @@ export class SwapService implements OnModuleInit {
           policyId: tokenOutMetadata.policy,
           nameHex: tokenOutMetadata.nameHex || toHexString(tokenOutMetadata.name.toLowerCase()),
           ticker: tokenOutMetadata.ticker,
+          decimals: tokenOutMetadata.decimals || 0,
         } as CardexscanToken;
 
         tokenOut = {
@@ -490,6 +492,7 @@ export class SwapService implements OnModuleInit {
           policyId: tokenInMetadata.policy,
           nameHex: tokenInMetadata.nameHex || toHexString(tokenInMetadata.name.toLowerCase()),
           ticker: tokenInMetadata.ticker,
+          decimals: tokenInMetadata.decimals || 0,
         };
         tokenInDecimal = new Decimal(tokenInMetadata.decimals || 0);
       }
@@ -522,6 +525,7 @@ export class SwapService implements OnModuleInit {
           policyId: tokenOutMetadata.policy,
           nameHex: tokenOutMetadata.nameHex || toHexString(tokenOutMetadata.name.toLowerCase()),
           ticker: tokenOutMetadata.ticker,
+          decimals: tokenOutMetadata.decimals || 0,
         };
         tokenOutDecimal = new Decimal(tokenOutMetadata.decimals || 0);
       }
