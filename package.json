@@ -41,7 +41,8 @@
     "upload-secrets:dry-run": "node scripts/upload-env-to-github-secrets.js --dry-run",
     "upload-secrets:docker": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker",
     "upload-secrets:docker:dry-run": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker --dry-run",
-    "script:create-users": "ts-node -r tsconfig-paths/register scripts/create-users.ts"
+    "script:create-users": "ts-node -r tsconfig-paths/register scripts/create-users.ts",
+    "script:upload-files": "ts-node -r tsconfig-paths/register scripts/upload-files.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
