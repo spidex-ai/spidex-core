@@ -79,5 +79,50 @@
     "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
     "prizeTokenAmount": "5.0",
     "description": "🎖️ Top 11-15: 5 $STRIKE/person (25 $STRIKE total)"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 1,
+    "rankTo": 1,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "250.0",
+    "description": "🥇 Top 1: 250 $ADA"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 2,
+    "rankTo": 2,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "150.0",
+    "description": "🥈 Top 2: 150 $ADA"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 3,
+    "rankTo": 3,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "100.0",
+    "description": "🥉 Top 3: 100 $ADA"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 4,
+    "rankTo": 10,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "50.0",
+    "description": "🏅 Top 4-10: 50 $ADA/person (350 $ADA total)"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 1001,
+    "rankTo": 1005,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "30.0",
+    "description": "🎲 Lucky Draw: 30 $ADA/person (5 winners, 150 $ADA total)"
   }
 ]
