@@ -277,7 +277,9 @@ export class EventQueryService {
   private async getTokenMetadataForEvents(activeEvents: any[]) {
     const tradingTokenIds: Set<string> = new Set();
     activeEvents.forEach(event => {
-      tradingTokenIds.add(event.tradeToken);
+      if (event.tradeToken && event.tradeToken != ALL_TOKEN) {
+        tradingTokenIds.add(event.tradeToken);
+      }
       if (event.prizeToken) {
         tradingTokenIds.add(event.prizeToken);
       }
