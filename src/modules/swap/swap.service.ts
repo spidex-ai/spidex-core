@@ -696,18 +696,13 @@ export class SwapService implements OnModuleInit {
     }
   }
 
-  private normalizeCardexAmount(value: any, decimals: Decimal): Decimal {
+  private normalizeCardexAmount(token: string, value: any, decimals: Decimal): Decimal {
     if (!value) return new Decimal(0);
     const num = new Decimal(value);
-
-    if (decimals.eq(this.ADA_DECIMALS)) {
-      if (num.lt(1e6)) {
-        return num;
-      } else {
-        return this.fromUnit(num, decimals); // convert từ Lovelace
-      }
+    if (token === CARDANO_UNIT) {
+      return num;
     }
-
+    // Convert from microunits to decimal format
     return this.fromUnit(num, decimals);
   }
 
@@ -734,7 +729,7 @@ export class SwapService implements OnModuleInit {
         response.data.splits,
         (sum, split) =>
           sum.add(
-            this.normalizeCardexAmount(split.minimumAmount || 0, outDecimals), // convert min receive
+            this.normalizeCardexAmount(tokenOut, split.minimumAmount || 0, outDecimals), // convert min receive
           ),
         new Decimal(0),
       );
@@ -745,7 +740,7 @@ export class SwapService implements OnModuleInit {
       );
       const totalRefundableDeposits = response.data.splits.reduce((sum, split) => sum + (split.deposits || 0), 0);
 
-      const amountOutDecimal = this.normalizeCardexAmount(response.data.estimatedTotalRecieve, outDecimals);
+      const amountOutDecimal = this.normalizeCardexAmount(tokenOut, response.data.estimatedTotalRecieve, outDecimals);
 
       let netPrice: Decimal;
 
@@ -763,9 +758,9 @@ export class SwapService implements OnModuleInit {
         dexDeposits: this.fromUnit(totalRefundableDeposits, this.ADA_DECIMALS).toString(),
         totalDeposits: this.fromUnit(totalDeposits, this.ADA_DECIMALS).toString(),
         paths: response.data.splits.map(split => {
-          const amountInPath = this.normalizeCardexAmount(split.amountIn || 0, inDecimals);
-          const amountOutPath = this.normalizeCardexAmount(split.estimatedAmount || 0, outDecimals);
-          const minReceivePath = this.normalizeCardexAmount(split.minimumAmount || 0, outDecimals);
+          const amountInPath = this.normalizeCardexAmount(tokenIn, split.amountIn || 0, inDecimals);
+          const amountOutPath = this.normalizeCardexAmount(tokenOut, split.estimatedAmount || 0, outDecimals);
+          const minReceivePath = this.normalizeCardexAmount(tokenOut, split.minimumAmount || 0, outDecimals);
 
           return {
             protocol: cardexscanProtocolMap[split.dex],
