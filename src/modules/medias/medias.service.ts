@@ -6,6 +6,7 @@ import { getFileBuffer } from '@shared/utils/upload';
 import { S3Service } from 'external/aws/s3/s3.service';
 import mime from 'mime-types';
 import imageType from 'image-type';
+import * as fs from 'fs';
 
 @Injectable()
 export class MediasService {
@@ -95,5 +96,91 @@ export class MediasService {
 
     this.logger.log(`File uploaded successfully: ${fileName} -> ${url}`);
     return url;
+  }
+
+  async uploadImageByCmd(filenames: string[]) {
+    const uploadedUrls: string[] = [];
+    for (const filepath of filenames) {
+      let fileBuffer: Buffer;
+      try {
+        const fileStats = await fs.promises.stat(filepath);
+        if (!fileStats.isFile()) {
+          throw new Error('Not a valid file');
+        }
+
+        fileBuffer = await fs.promises.readFile(filepath);
+      } catch (error) {
+        this.logger.error(`Failed to read file buffer: ${error}`);
+        throw new BadRequestException({
+          validatorErrors: EError.UPLOAD_IMAGE_FAILED,
+          message: 'Unable to read uploaded file',
+        });
+      }
+
+      const fileType = await imageType(fileBuffer);
+      if (!fileType) {
+        throw new BadRequestException({
+          validatorErrors: EError.UPLOAD_IMAGE_FAILED,
+          message: 'Uploaded file is not a valid image',
+        });
+      }
+
+      const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+
+      if (!SUPPORTED_IMAGE_TYPES.includes(fileType.mime)) {
+        throw new BadRequestException({
+          validatorErrors: EError.UPLOAD_IMAGE_FAILED,
+          message: 'Uploaded image only supports JPEG, PNG, GIF, and SVG formats',
+        });
+      }
+
+      let contentType = mime.lookup(filepath) as string;
+
+      // Generate filename with timestamp
+      const timestamp = Date.now();
+      const originalName = filepath.substring(filepath.lastIndexOf('/') + 1);
+      const fileExtension = originalName.substring(originalName.lastIndexOf('.'));
+      const baseFileName = originalName.substring(0, originalName.lastIndexOf('.'));
+
+      // Generate final filename: {baseFileName}_{timestamp}{extension}
+      let fileName = `${baseFileName}_${timestamp}${fileExtension}`;
+
+      // Special handling for SVG files
+      if (fileType.mime === 'image/svg+xml' || fileName.toLowerCase().endsWith('.svg')) {
+        this.logger.log(`Processing SVG file: ${fileName}`);
+
+        // Sanitize SVG content
+        const sanitizationResult = await this.svgSanitizerService.validateSvgFile(fileBuffer);
+
+        if (!sanitizationResult.isValid) {
+          this.logger.error(`SVG sanitization failed for ${fileName}: ${sanitizationResult.error}`);
+          throw new BadRequestException({
+            validatorErrors: EError.INVALID_AVATAR,
+            message: `SVG file is invalid or contains dangerous content: ${sanitizationResult.error}`,
+          });
+        }
+
+        // Use sanitized content
+        fileBuffer = Buffer.from(sanitizationResult.sanitizedContent!, 'utf8');
+
+        // Force content type to be safe for SVG
+        contentType = 'image/svg+xml';
+
+        // Add security suffix to filename to indicate it's been sanitized
+        const nameWithoutExt = fileName.replace(/\.svg$/i, '');
+        fileName = `${nameWithoutExt}_sanitized.svg`;
+
+        this.logger.log(
+          `SVG sanitized successfully. Original: ${sanitizationResult.originalSize} bytes, Sanitized: ${sanitizationResult.sanitizedSize} bytes`,
+        );
+      }
+
+      // Upload to S3 without user folder
+      const s3Folder = `images/cli`;
+      const url = await this.awsService.uploadS3(fileBuffer, fileName, contentType, s3Folder);
+      uploadedUrls.push(url);
+      this.logger.log(`File uploaded successfully: ${fileName} -> ${url}`);
+    }
+    return uploadedUrls;
   }
 }

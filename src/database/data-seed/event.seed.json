@@ -1,156 +1,88 @@
 [
   {
-    "name": "DJED Trading Championship",
-    "description": "Trade DJED stablecoin and compete for the top prizes! Show your trading skills in this exciting competition.",
-    "totalPrize": "50000",
-    "startDate": "2025-01-25T00:00:00.000Z",
+    "name": "Spidex AI x Farmroll Trading Showdown!",
+    "description": "Trade $ROLL & grab your share of 500,000 $ROLL on Spidex AI! Users must trade $ROLL on Spidex AI. Minimum 10 trades & $200 volume to qualify. Ranking includes: Top Volume and Lucky Trader.",
+    "totalPrize": "500000",
+    "startDate": "2025-01-15T00:00:00.000Z",
     "endDate": "2025-02-15T23:59:59.000Z",
     "status": "ACTIVE",
     "type": "TRADING_COMPETITION",
-    "tradeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "icon": "/public/icons/events/djed-championship.png"
+    "tradeToken": "9d05077f2e6dcb17915f9b99bc443726939dd2047aafd6cb4a6fe017524f4c4c",
+    "tradeDex": "ALL_DEX",
+    "icon": "/public/icons/events/farmroll-showdown.png",
+    "banner": "/public/banners/events/farmroll-showdown-1180x400.png",
+    "url": "https://app.spidex.ag/events/farmroll-trading-showdown",
+    "eventHash": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "customData": [
+      {
+        "key": "luckyDraw",
+        "type": "text",
+        "value": "5 Lucky Draw: 5,000 $ROLL/person (25,000 $ROLL)"
+      }
+    ]
   },
   {
-    "name": "ADA Volume Challenge",
-    "description": "Trade ADA and reach the highest volume! Massive rewards await the top traders in this volume-based competition.",
-    "totalPrize": "75000",
-    "startDate": "2025-01-20T00:00:00.000Z",
-    "endDate": "2025-02-28T23:59:59.000Z",
-    "status": "ACTIVE",
-    "type": "VOLUME_CHALLENGE",
-    "tradeToken": "ada",
-    "icon": "/public/icons/events/ada-volume.png"
-  },
-  {
-    "name": "SNEK Token Mania",
-    "description": "Join the SNEK token trading frenzy! Battle it out with other traders for exclusive SNEK rewards and bragging rights.",
-    "totalPrize": "25000",
+    "name": "Strike Finance x Spidex AI Trading Contest",
+    "description": "Trade on Spidex AI with Strike Finance for a chance to win 500 $STRIKE! Users must trade $STRIKE on Spidex AI. Minimum 10 trades & $200 volume to qualify. Ranking includes: Top Volume and Lucky Trader.",
+    "totalPrize": "500",
     "startDate": "2025-02-01T00:00:00.000Z",
-    "endDate": "2025-02-14T23:59:59.000Z",
-    "status": "ACTIVE",
-    "type": "TOKEN_SPECIFIC",
-    "tradeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "icon": "/public/icons/events/snek-mania.png"
-  },
-  {
-    "name": "MIN Token Traders Cup",
-    "description": "Compete in the Minswap ecosystem by trading MIN tokens. Special rewards for the most active MIN traders!",
-    "totalPrize": "40000",
-    "startDate": "2025-01-28T00:00:00.000Z",
-    "endDate": "2025-02-20T23:59:59.000Z",
-    "status": "ACTIVE",
-    "type": "TOKEN_SPECIFIC",
-    "tradeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "icon": "/public/icons/events/min-traders-cup.png"
-  },
-  {
-    "name": "Multi-Token Championship - DJED",
-    "description": "Trade DJED token in this comprehensive trading competition. Test your skills with the DJED stablecoin!",
-    "totalPrize": "30000",
-    "startDate": "2025-02-05T00:00:00.000Z",
-    "endDate": "2025-03-05T23:59:59.000Z",
+    "endDate": "2025-03-01T23:59:59.000Z",
     "status": "ACTIVE",
     "type": "TRADING_COMPETITION",
-    "tradeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "icon": "/public/icons/events/multi-token.png"
+    "tradeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "tradeDex": "ALL_DEX",
+    "icon": "/public/icons/events/strike-finance-contest.png",
+    "banner": "/public/banners/events/strike-finance-contest-1180x400.png",
+    "url": "https://app.spidex.ag/events/strike-finance-trading-contest",
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
+    "customData": [
+      {
+        "key": "luckyDraw",
+        "type": "text",
+        "value": "5 Lucky Draw: 2 $STRIKE/person (10 $STRIKE total)"
+      },
+      {
+        "key": "minTrades",
+        "type": "number",
+        "value": 10
+      },
+      {
+        "key": "minVolume",
+        "type": "number",
+        "value": 200
+      }
+    ]
   },
   {
-    "name": "Multi-Token Championship - SNEK",
-    "description": "Trade SNEK token in this comprehensive trading competition. Show your SNEK trading prowess!",
-    "totalPrize": "25000",
-    "startDate": "2025-02-05T00:00:00.000Z",
-    "endDate": "2025-03-05T23:59:59.000Z",
+    "name": "Spidex AI × Cardexscan: Trade, Win, & Earn",
+    "description": "Join the ultimate trading contest with Cardexscan!",
+    "totalPrize": "1000",
+    "startDate": "2025-09-15T00:00:00.000Z",
+    "endDate": "2025-10-15T23:59:59.000Z",
     "status": "ACTIVE",
     "type": "TRADING_COMPETITION",
-    "tradeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "icon": "/public/icons/events/multi-token.png"
-  },
-  {
-    "name": "Multi-Token Championship - MIN",
-    "description": "Trade MIN token in this comprehensive trading competition. Dominate the Minswap ecosystem!",
-    "totalPrize": "35000",
-    "startDate": "2025-02-05T00:00:00.000Z",
-    "endDate": "2025-03-05T23:59:59.000Z",
-    "status": "ACTIVE",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "icon": "/public/icons/events/multi-token.png"
-  },
-  {
-    "name": "Weekend Warriors - DJED",
-    "description": "A quick weekend DJED trading competition for active traders. Show your skills in this intense 3-day battle!",
-    "totalPrize": "8000",
-    "startDate": "2025-02-14T18:00:00.000Z",
-    "endDate": "2025-02-16T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "icon": "/public/icons/events/weekend-warriors.png"
-  },
-  {
-    "name": "Weekend Warriors - SNEK",
-    "description": "A quick weekend SNEK trading competition for active traders. Battle it out with SNEK tokens!",
-    "totalPrize": "7000",
-    "startDate": "2025-02-14T18:00:00.000Z",
-    "endDate": "2025-02-16T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "icon": "/public/icons/events/weekend-warriors.png"
-  },
-  {
-    "name": "Spring Trading Festival - ADA",
-    "description": "Welcome spring with ADA trading! Month-long festival focused on Cardano's native token.",
-    "totalPrize": "50000",
-    "startDate": "2025-03-01T00:00:00.000Z",
-    "endDate": "2025-03-31T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "ada",
-    "icon": "/public/icons/events/spring-festival.png"
-  },
-  {
-    "name": "Spring Trading Festival - DJED",
-    "description": "Welcome spring with DJED stablecoin trading! Massive rewards await in this month-long competition.",
-    "totalPrize": "40000",
-    "startDate": "2025-03-01T00:00:00.000Z",
-    "endDate": "2025-03-31T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "icon": "/public/icons/events/spring-festival.png"
-  },
-  {
-    "name": "Spring Trading Festival - SNEK",
-    "description": "Welcome spring with SNEK token trading! Join the festival of endless SNEK excitement.",
-    "totalPrize": "35000",
-    "startDate": "2025-03-01T00:00:00.000Z",
-    "endDate": "2025-03-31T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "icon": "/public/icons/events/spring-festival.png"
-  },
-  {
-    "name": "Spring Trading Festival - MIN",
-    "description": "Welcome spring with MIN token trading! Celebrate spring in the Minswap ecosystem.",
-    "totalPrize": "45000",
-    "startDate": "2025-03-01T00:00:00.000Z",
-    "endDate": "2025-03-31T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "icon": "/public/icons/events/spring-festival.png"
-  },
-  {
-    "name": "Spring Trading Festival - SUNDAE",
-    "description": "Welcome spring with SUNDAE token trading! Sweet rewards await in this delicious competition.",
-    "totalPrize": "30000",
-    "startDate": "2025-03-01T00:00:00.000Z",
-    "endDate": "2025-03-31T23:59:59.000Z",
-    "status": "DRAFT",
-    "type": "TRADING_COMPETITION",
-    "tradeToken": "25f0fc240e91bd95dcdaebd2ba7713fc5168ac77234a3d79449fc20c534f494e44594e",
-    "icon": "/public/icons/events/spring-festival.png"
+    "tradeToken": "ADA",
+    "tradeDex": "cardexscan",
+    "icon": "/public/icons/events/cardexscan-contest.png",
+    "banner": "/public/banners/events/cardexscan-contest-1180x400.png",
+    "url": "https://app.spidex.ag/events/cardexscan-trading-contest",
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "customData": [
+      {
+        "key": "luckyDraw",
+        "type": "text",
+        "value": "5 Lucky Draw: 30 $ADA/person (150 $ADA total)"
+      },
+      {
+        "key": "minTrades",
+        "type": "number",
+        "value": 10
+      },
+      {
+        "key": "minVolume",
+        "type": "number",
+        "value": 200
+      }
+    ]
   }
 ]

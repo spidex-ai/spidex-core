@@ -1,333 +1,128 @@
 [
   {
-    "eventId": 1,
+    "eventHash": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "rankFrom": 1,
     "rankTo": 1,
-    "prizePoints": "10000.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "5000.0",
-    "description": "1st Place: 10,000 points + 5,000 DJED tokens"
+    "prizePoints": "0.0",
+    "prizeToken": "9d05077f2e6dcb17915f9b99bc443726939dd2047aafd6cb4a6fe017524f4c4c",
+    "prizeTokenAmount": "150000.0",
+    "description": "🥇 Top 1: 150,000 $ROLL"
   },
   {
-    "eventId": 1,
+    "eventHash": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "rankFrom": 2,
     "rankTo": 2,
-    "prizePoints": "7500.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "3000.0",
-    "description": "2nd Place: 7,500 points + 3,000 DJED tokens"
-  },
-  {
-    "eventId": 1,
-    "rankFrom": 3,
-    "rankTo": 3,
-    "prizePoints": "5000.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "2000.0",
-    "description": "3rd Place: 5,000 points + 2,000 DJED tokens"
-  },
-  {
-    "eventId": 1,
-    "rankFrom": 4,
-    "rankTo": 10,
-    "prizePoints": "2500.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "500.0",
-    "description": "4th-10th Place: 2,500 points + 500 DJED tokens each"
-  },
-  {
-    "eventId": 1,
-    "rankFrom": 11,
-    "rankTo": 50,
-    "prizePoints": "1000.0",
-    "description": "11th-50th Place: 1,000 points each"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "15000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "10000.0",
-    "description": "1st Place: 15,000 points + 10,000 ADA"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 2,
-    "rankTo": 2,
-    "prizePoints": "10000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "7000.0",
-    "description": "2nd Place: 10,000 points + 7,000 ADA"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 3,
-    "rankTo": 3,
-    "prizePoints": "7500.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "5000.0",
-    "description": "3rd Place: 7,500 points + 5,000 ADA"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 4,
-    "rankTo": 10,
-    "prizePoints": "3000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "1000.0",
-    "description": "4th-10th Place: 3,000 points + 1,000 ADA each"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 11,
-    "rankTo": 25,
-    "prizePoints": "1500.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "500.0",
-    "description": "11th-25th Place: 1,500 points + 500 ADA each"
-  },
-  {
-    "eventId": 2,
-    "rankFrom": 26,
-    "rankTo": 100,
-    "prizePoints": "500.0",
-    "description": "26th-100th Place: 500 points each"
-  },
-  {
-    "eventId": 3,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "8000.0",
-    "prizeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "prizeTokenAmount": "1000000.0",
-    "description": "1st Place: 8,000 points + 1M SNEK tokens"
-  },
-  {
-    "eventId": 3,
-    "rankFrom": 2,
-    "rankTo": 3,
-    "prizePoints": "5000.0",
-    "prizeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "prizeTokenAmount": "500000.0",
-    "description": "2nd-3rd Place: 5,000 points + 500K SNEK tokens each"
-  },
-  {
-    "eventId": 3,
-    "rankFrom": 4,
-    "rankTo": 10,
-    "prizePoints": "2000.0",
-    "prizeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
+    "prizePoints": "0.0",
+    "prizeToken": "9d05077f2e6dcb17915f9b99bc443726939dd2047aafd6cb4a6fe017524f4c4c",
     "prizeTokenAmount": "100000.0",
-    "description": "4th-10th Place: 2,000 points + 100K SNEK tokens each"
+    "description": "🥈 Top 2: 100,000 $ROLL"
   },
   {
-    "eventId": 3,
-    "rankFrom": 11,
-    "rankTo": 30,
-    "prizePoints": "750.0",
-    "description": "11th-30th Place: 750 points each"
-  },
-  {
-    "eventId": 4,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "12000.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "10000.0",
-    "description": "1st Place: 12,000 points + 10,000 MIN tokens"
-  },
-  {
-    "eventId": 4,
-    "rankFrom": 2,
-    "rankTo": 2,
-    "prizePoints": "8000.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "6000.0",
-    "description": "2nd Place: 8,000 points + 6,000 MIN tokens"
-  },
-  {
-    "eventId": 4,
-    "rankFrom": 3,
-    "rankTo": 5,
-    "prizePoints": "4000.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "2000.0",
-    "description": "3rd-5th Place: 4,000 points + 2,000 MIN tokens each"
-  },
-  {
-    "eventId": 4,
-    "rankFrom": 6,
-    "rankTo": 20,
-    "prizePoints": "1500.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "500.0",
-    "description": "6th-20th Place: 1,500 points + 500 MIN tokens each"
-  },
-  {
-    "eventId": 4,
-    "rankFrom": 21,
-    "rankTo": 50,
-    "prizePoints": "600.0",
-    "description": "21st-50th Place: 600 points each"
-  },
-  {
-    "eventId": 5,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "25000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "15000.0",
-    "description": "1st Place: 25,000 points + 15,000 ADA"
-  },
-  {
-    "eventId": 5,
-    "rankFrom": 2,
-    "rankTo": 2,
-    "prizePoints": "18000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "10000.0",
-    "description": "2nd Place: 18,000 points + 10,000 ADA"
-  },
-  {
-    "eventId": 5,
+    "eventHash": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "rankFrom": 3,
     "rankTo": 3,
-    "prizePoints": "12000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "7000.0",
-    "description": "3rd Place: 12,000 points + 7,000 ADA"
+    "prizePoints": "0.0",
+    "prizeToken": "9d05077f2e6dcb17915f9b99bc443726939dd2047aafd6cb4a6fe017524f4c4c",
+    "prizeTokenAmount": "50000.0",
+    "description": "🥉 Top 3: 50,000 $ROLL"
   },
   {
-    "eventId": 5,
+    "eventHash": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "rankFrom": 4,
     "rankTo": 10,
-    "prizePoints": "6000.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "2000.0",
-    "description": "4th-10th Place: 6,000 points + 2,000 MIN tokens each"
-  },
-  {
-    "eventId": 5,
-    "rankFrom": 11,
-    "rankTo": 25,
-    "prizePoints": "3000.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "1000.0",
-    "description": "11th-25th Place: 3,000 points + 1,000 DJED each"
-  },
-  {
-    "eventId": 5,
-    "rankFrom": 26,
-    "rankTo": 50,
-    "prizePoints": "1200.0",
-    "description": "26th-50th Place: 1,200 points each"
-  },
-  {
-    "eventId": 5,
-    "rankFrom": 51,
-    "rankTo": 100,
-    "prizePoints": "500.0",
-    "description": "51st-100th Place: 500 points each"
-  },
-  {
-    "eventId": 6,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "5000.0",
-    "prizeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "prizeTokenAmount": "500000.0",
-    "description": "1st Place: 5,000 points + 500K SNEK tokens"
-  },
-  {
-    "eventId": 6,
-    "rankFrom": 2,
-    "rankTo": 3,
-    "prizePoints": "3000.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "1500.0",
-    "description": "2nd-3rd Place: 3,000 points + 1,500 DJED each"
-  },
-  {
-    "eventId": 6,
-    "rankFrom": 4,
-    "rankTo": 10,
-    "prizePoints": "1500.0",
-    "description": "4th-10th Place: 1,500 points each"
-  },
-  {
-    "eventId": 6,
-    "rankFrom": 11,
-    "rankTo": 25,
-    "prizePoints": "600.0",
-    "description": "11th-25th Place: 600 points each"
-  },
-  {
-    "eventId": 7,
-    "rankFrom": 1,
-    "rankTo": 1,
-    "prizePoints": "50000.0",
-    "prizeToken": "ada",
+    "prizePoints": "0.0",
+    "prizeToken": "9d05077f2e6dcb17915f9b99bc443726939dd2047aafd6cb4a6fe017524f4c4c",
     "prizeTokenAmount": "25000.0",
-    "description": "1st Place: 50,000 points + 25,000 ADA"
+    "description": "🏅 Top 4–10: 25,000 $ROLL/person (175,000 $ROLL total)"
   },
   {
-    "eventId": 7,
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
+    "rankFrom": 1,
+    "rankTo": 1,
+    "prizePoints": "0.0",
+    "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "prizeTokenAmount": "150.0",
+    "description": "🥇 Top 1: 150 $STRIKE"
+  },
+  {
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
     "rankFrom": 2,
     "rankTo": 2,
-    "prizePoints": "30000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "15000.0",
-    "description": "2nd Place: 30,000 points + 15,000 ADA"
+    "prizePoints": "0.0",
+    "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "prizeTokenAmount": "100.0",
+    "description": "🥈 Top 2: 100 $STRIKE"
   },
   {
-    "eventId": 7,
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
     "rankFrom": 3,
     "rankTo": 3,
-    "prizePoints": "20000.0",
-    "prizeToken": "ada",
-    "prizeTokenAmount": "10000.0",
-    "description": "3rd Place: 20,000 points + 10,000 ADA"
+    "prizePoints": "0.0",
+    "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "prizeTokenAmount": "75.0",
+    "description": "🥉 Top 3: 75 $STRIKE"
   },
   {
-    "eventId": 7,
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
     "rankFrom": 4,
     "rankTo": 10,
-    "prizePoints": "8000.0",
-    "prizeToken": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e",
-    "prizeTokenAmount": "3000.0",
-    "description": "4th-10th Place: 8,000 points + 3,000 MIN tokens each"
+    "prizePoints": "0.0",
+    "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "prizeTokenAmount": "20.0",
+    "description": "🏅 Top 4-10: 20 $STRIKE/person (140 $STRIKE total)"
   },
   {
-    "eventId": 7,
+    "eventHash": "b2c3d4e5-f6a7-4901-bcde-f23456789012",
     "rankFrom": 11,
-    "rankTo": 25,
-    "prizePoints": "4000.0",
-    "prizeToken": "8db269c3ec630e06ae29f74bc39edd1f87c819f1056206e879a1cd61446a65644a45444",
-    "prizeTokenAmount": "2000.0",
-    "description": "11th-25th Place: 4,000 points + 2,000 DJED each"
+    "rankTo": 15,
+    "prizePoints": "0.0",
+    "prizeToken": "f13ac4d66b3ee19a6aa0f2a22298737bd907cc95121662fc971b5275535452494b45",
+    "prizeTokenAmount": "5.0",
+    "description": "🎖️ Top 11-15: 5 $STRIKE/person (25 $STRIKE total)"
   },
   {
-    "eventId": 7,
-    "rankFrom": 26,
-    "rankTo": 50,
-    "prizePoints": "2000.0",
-    "prizeToken": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
-    "prizeTokenAmount": "200000.0",
-    "description": "26th-50th Place: 2,000 points + 200K SNEK tokens each"
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 1,
+    "rankTo": 1,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "250.0",
+    "description": "🥇 Top 1: 250 $ADA"
   },
   {
-    "eventId": 7,
-    "rankFrom": 51,
-    "rankTo": 100,
-    "prizePoints": "1000.0",
-    "description": "51st-100th Place: 1,000 points each"
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 2,
+    "rankTo": 2,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "150.0",
+    "description": "🥈 Top 2: 150 $ADA"
   },
   {
-    "eventId": 7,
-    "rankFrom": 101,
-    "rankTo": 500,
-    "prizePoints": "250.0",
-    "description": "101st-500th Place: 250 points each"
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 3,
+    "rankTo": 3,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "100.0",
+    "description": "🥉 Top 3: 100 $ADA"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 4,
+    "rankTo": 10,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "50.0",
+    "description": "🏅 Top 4-10: 50 $ADA/person (350 $ADA total)"
+  },
+  {
+    "eventHash": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+    "rankFrom": 1001,
+    "rankTo": 1005,
+    "prizePoints": "0.0",
+    "prizeToken": "ADA",
+    "prizeTokenAmount": "30.0",
+    "description": "🎲 Lucky Draw: 30 $ADA/person (5 winners, 150 $ADA total)"
   }
 ]

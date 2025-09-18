@@ -62,9 +62,18 @@ export class EventQueryService {
             }
           : { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 };
 
+      const prizeToken =
+        event.prizeToken && event.prizeToken != ALL_TOKEN
+          ? {
+              ...tokenMetaMap[event.prizeToken],
+              unit: event.prizeToken,
+            }
+          : null;
+
       return {
         ...event,
         tradeToken: tradeToken,
+        prizeToken: prizeToken,
         participantCount,
         totalVolumeTraded: volumeStats.totalVolume,
         totalTrades: volumeStats.totalTrades,
@@ -90,6 +99,10 @@ export class EventQueryService {
     if (event.tradeToken && event.tradeToken != ALL_TOKEN) {
       tokenIds.add(event.tradeToken);
     }
+    if (event.prizeToken) {
+      tokenIds.add(event.prizeToken);
+    }
+
     const tokenMetas = await this.tokenMetadataService.getTokensMetadata(
       tokenIds,
       new Set(['logo', 'name', 'ticker', 'decimals']),
@@ -108,9 +121,17 @@ export class EventQueryService {
           }
         : { unit: ALL_TOKEN, name: 'All Tokens', logo: null, ticker: null, decimals: 0 };
 
+    const prizeToken = event.prizeToken
+      ? {
+          ...tokenMetaMap[event.prizeToken],
+          unit: event.prizeToken,
+        }
+      : null;
+
     const eventWithStats = {
       ...event,
       tradeToken: tradeToken,
+      prizeToken: prizeToken,
       participantCount: stats.participantCount,
       totalVolumeTraded: stats.totalVolumeTraded,
       totalTrades: stats.totalTrades,
@@ -133,6 +154,7 @@ export class EventQueryService {
     }
 
     const leaderboard = await this.eventRepository.getEventLeaderboard(eventId, filter.limit || 50, filter.offset || 0);
+    const mapLeadboardByRank = keyBy(leaderboard, 'rank');
     const totalParticipants = await this.eventParticipantRepository.count({
       where: { eventId, deletedAt: IsNull() },
     });
@@ -140,36 +162,59 @@ export class EventQueryService {
     const prizeTokenMetas = await this.getPrizeTokenMetadata(event.rankPrizes);
     const prizeTokenMetaMap = keyBy(prizeTokenMetas, 'unit');
 
-    const leaderboardWithPrizes = leaderboard.map(entry => {
-      const prize = event.rankPrizes.find(p => entry.rank >= p.rankFrom && entry.rank <= p.rankTo);
+    const leaderboardWithPrizes: EventLeaderboardEntryDto[] = [];
 
-      const entryRes: EventLeaderboardEntryDto = {
-        rank: entry.rank,
-        totalVolume: entry.total_volume,
-        tradeCount: entry.trade_count,
-        userId: entry.user_id,
-        username: entry.username,
-        walletAddress: entry.wallet_address,
-        avatarUrl: entry.avatar,
-        prizeInfo: {
-          points: prize.prizePoints.toString(),
-          token: {
-            ...prizeTokenMetaMap[prize.prizeToken],
-            unit: prize.prizeToken,
-          },
-          tokenAmount: prize.prizeTokenAmount.toString(),
-        },
-      };
-      return entryRes;
-    });
+    for (const rank of event.rankPrizes) {
+      for (let r = rank.rankFrom; r <= rank.rankTo; r++) {
+        if (!mapLeadboardByRank[r]) {
+          leaderboardWithPrizes.push({
+            rank: r,
+            totalVolume: '0',
+            tradeCount: 0,
+            userId: null,
+            username: null,
+            walletAddress: null,
+            avatarUrl: null,
+            prizeInfo: {
+              points: rank.prizePoints.toString(),
+              token: {
+                ...prizeTokenMetaMap[rank.prizeToken],
+                unit: rank.prizeToken,
+              },
+              tokenAmount: rank.prizeTokenAmount.toString(),
+            },
+          });
+        } else {
+          const entry = mapLeadboardByRank[r];
+          const entryRes: EventLeaderboardEntryDto = {
+            rank: entry.rank,
+            totalVolume: entry.total_volume,
+            tradeCount: entry.trade_count,
+            userId: entry.user_id,
+            username: entry.username,
+            walletAddress: entry.wallet_address,
+            avatarUrl: entry.avatar,
+            prizeInfo: {
+              points: rank.prizePoints.toString(),
+              token: {
+                ...prizeTokenMetaMap[rank.prizeToken],
+                unit: rank.prizeToken,
+              },
+              tokenAmount: rank.prizeTokenAmount.toString(),
+            },
+          };
+          leaderboardWithPrizes.push(entryRes);
+        }
+      }
+    }
 
     return {
       eventId,
       totalParticipants,
       lastUpdated: new Date().toISOString(),
-      leaderboard: leaderboardWithPrizes.map(entry =>
-        plainToClass(EventLeaderboardEntryDto, entry, { excludeExtraneousValues: true }),
-      ),
+      leaderboard: leaderboardWithPrizes
+        .sort((a, b) => a.rank - b.rank)
+        .map(entry => plainToClass(EventLeaderboardEntryDto, entry, { excludeExtraneousValues: true })),
     };
   }
 
@@ -232,7 +277,12 @@ export class EventQueryService {
   private async getTokenMetadataForEvents(activeEvents: any[]) {
     const tradingTokenIds: Set<string> = new Set();
     activeEvents.forEach(event => {
-      tradingTokenIds.add(event.tradeToken);
+      if (event.tradeToken && event.tradeToken != ALL_TOKEN) {
+        tradingTokenIds.add(event.tradeToken);
+      }
+      if (event.prizeToken) {
+        tradingTokenIds.add(event.prizeToken);
+      }
     });
 
     return await this.tokenMetadataService.getTokensMetadata(

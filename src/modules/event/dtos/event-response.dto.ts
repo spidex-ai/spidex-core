@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { EEventStatus, EEventType } from '@modules/event/event.constant';
+import { EventCustomData } from '@database/entities/event.entity';
 
 export class EventRankPrizeResponseDto {
   @ApiProperty()
@@ -132,6 +133,10 @@ export class EventInfoResponseDto {
   @Expose()
   tradeToken: EventToken | string;
 
+  @ApiProperty({ type: EventToken })
+  @Expose()
+  prizeToken: EventToken | string;
+
   @ApiProperty()
   @Expose()
   tradeDex: string;
@@ -155,6 +160,10 @@ export class EventInfoResponseDto {
   @ApiProperty()
   @Expose()
   totalTrades: number;
+
+  @ApiProperty()
+  @Expose()
+  customData: EventCustomData[];
 
   @ApiPropertyOptional()
   @Expose()

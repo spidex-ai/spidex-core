@@ -2,6 +2,7 @@ export interface CardexscanToken {
   policyId: string;
   nameHex: string;
   ticker: string;
+  decimals: number;
 }
 
 export interface CardexscanEstimateSwapPayload {
