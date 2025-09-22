@@ -17,7 +17,7 @@ import { BlockfrostTokenDetail } from 'external/blockfrost/types';
 import { TokenCardanoService } from 'external/token-cardano/cardano-token.service';
 import { TokenCardanoInfoSubject } from 'external/token-cardano/types';
 import { isNil, keys, pick } from 'lodash';
-import { In } from 'typeorm';
+import { In, Like } from 'typeorm';
 @Injectable()
 export class TokenMetaService {
   constructor(
@@ -517,5 +517,34 @@ export class TokenMetaService {
     console.debug(`Converted hex to image buffer: ${buffer.length} bytes`);
 
     return buffer;
+  }
+
+  async searchTokens(query: string, page: number, limit: number) {
+    if (limit > 50) {
+      limit = 50; // Max limit
+    } else if (limit <= 0) {
+      limit = 10; // Default limit
+    }
+    let pageNumber = page;
+    if (pageNumber <= 0) {
+      pageNumber = 1; // Default page number
+    }
+
+    const [tokens, count] = await this.tokenMetadataRepository.findAndCount({
+      where: [
+        { name: Like(`%${query}%`) },
+        { ticker: Like(`%${query}%`) },
+        { unit: Like(`%${query}%`), policy: Like(`%${query}%`) },
+      ],
+      order: { name: 'ASC' },
+      skip: (pageNumber - 1) * limit,
+      take: limit,
+    });
+    return {
+      tokens,
+      total: count,
+      page: pageNumber,
+      limit,
+    };
   }
 }
