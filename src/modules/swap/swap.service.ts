@@ -639,8 +639,13 @@ export class SwapService implements OnModuleInit {
         tokenInDecimal,
         tokenOutDecimal,
       });
-      const inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
-      const outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
+      let inDecimals = new Decimal(tokenInDecimal || this.ADA_DECIMALS);
+      let outDecimals = new Decimal(tokenOutDecimal || this.ADA_DECIMALS);
+
+      if (inDecimals.eq(0)) {
+        inDecimals = new Decimal(this.ADA_DECIMALS);
+        outDecimals = new Decimal(this.ADA_DECIMALS).mul(2);
+      }
 
       // convert min receive
       const minReceiveDecimal = this.fromUnit(response.min_amount_out || 0, outDecimals);
