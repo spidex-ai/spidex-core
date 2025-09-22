@@ -423,7 +423,33 @@ export class TokenService {
       pageLimit = 20;
     }
 
-    const { tokens } = await this.minswapService.searchTokens(query, verified);
+    const [minswapTokens, internalTokens] = await Promise.allSettled([
+      this.minswapService.searchTokens(query, verified),
+      this.tokenMetaService.searchTokens(query, pageNumber, pageLimit),
+    ]);
+
+    let tokens: { token_id: string; is_verified: boolean; project_name?: string }[] = [];
+    if (minswapTokens.status === 'fulfilled') {
+      tokens = tokens.concat(
+        minswapTokens.value.tokens.map(token => ({
+          token_id: token.token_id,
+          is_verified: token.is_verified,
+          project_name: token.project_name,
+        })),
+      );
+    }
+
+    if (internalTokens.status === 'fulfilled') {
+      tokens = tokens.concat(
+        internalTokens.value.tokens.map(token => ({
+          token_id: token.unit,
+          is_verified: true,
+          project_name: token.name,
+        })),
+      );
+    }
+
+    tokens = tokens.filter((token, index, self) => index === self.findIndex(t => t.token_id === token.token_id));
     const tokenIds = tokens.map(token => token.token_id).filter(unit => unit !== '');
     const [tokenDetails, adaPrice, tokenPrices] = await Promise.all([
       this.tokenMetaService.getTokensMetadata(new Set(tokenIds), new Set(['logo', 'ticker', 'name'])),
