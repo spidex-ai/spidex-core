@@ -39,10 +39,16 @@ export class TokenMetaService {
     const pickProperties = ['unit'].concat(properties);
     let tokenMetadata = await this.tokenMetadataRepository.findOne({ where: { unit } });
     if (!tokenMetadata) {
-      const [token, blockfrostToken] = await Promise.all([
+      const [tokenCardanoResult, blockfrostResult] = await Promise.allSettled([
         this.tokenCardanoService.tokenInfo(unit),
         this.blockfrostService.getTokenDetail(unit),
       ]);
+
+      const token: TokenCardanoInfoSubject =
+        tokenCardanoResult.status === 'fulfilled' ? tokenCardanoResult.value : null;
+      const blockfrostToken: BlockfrostTokenDetail =
+        blockfrostResult.status === 'fulfilled' ? blockfrostResult.value : null;
+
       if (!token && !blockfrostToken) {
         return null;
       }
@@ -84,19 +90,29 @@ export class TokenMetaService {
       await this.tokenMetadataRepository.save(tokenMetadata);
     }
 
-    let blockfrostToken: BlockfrostTokenDetail;
-    let cardanoToken: TokenCardanoInfoSubject;
+    let blockfrostToken: BlockfrostTokenDetail | Record<string, any>;
+    let cardanoToken: TokenCardanoInfoSubject | Record<string, any>;
     console.log('tokenMetadata', tokenMetadata);
     for (const property of pickProperties) {
       if (!tokenMetadata[property]) {
         console.log('Fetch missing property', property);
         if (!blockfrostToken) {
-          blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
+          try {
+            blockfrostToken = await this.blockfrostService.getTokenDetail(unit);
+          } catch (error) {
+            blockfrostToken = {};
+            console.error(error);
+          }
         }
         console.log({ blockfrostToken });
 
         if (!cardanoToken) {
-          cardanoToken = await this.tokenCardanoService.tokenInfo(unit);
+          try {
+            cardanoToken = await this.tokenCardanoService.tokenInfo(unit);
+          } catch (error) {
+            cardanoToken = {};
+            console.error(error);
+          }
         }
         switch (property) {
           case 'logo':
