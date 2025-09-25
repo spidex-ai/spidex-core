@@ -371,4 +371,96 @@ export class AdminAnalyticsService {
       throw error;
     }
   }
+
+  /**
+   * Get user analytics data including login counts and wallet statistics
+   * @returns Promise with user analytics data
+   */
+  /**
+   * Get user analytics data including login counts and wallet statistics
+   * @returns Promise with user analytics data
+   */
+  /**
+   * Get user analytics data including total users and wallet statistics
+   * @returns Promise with user analytics data
+   */
+  /**
+   * Get user analytics data including total users and wallet statistics
+   * @returns Promise with user analytics data
+   */
+  async getUserAnalytics(): Promise<{
+    totalLoggedInUsers: number;
+    totalConnectedWallets: number;
+    walletTypeStats: Record<string, number>;
+  }> {
+    try {
+      const cacheKey = 'admin_analytics_user_stats';
+
+      // Try to get from cache first
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        this.logger.info('Cache hit for user analytics data');
+        return JSON.parse(cachedData);
+      }
+
+      this.logger.info('Cache miss for user analytics data');
+
+      // Get total users in the system
+      const totalUsersQuery = `
+        SELECT COUNT(*) as count
+        FROM users
+      `;
+      const [{ count: totalLoggedInUsers }] = await this.dataSource.query(totalUsersQuery);
+
+      // Get total unique wallet addresses connected
+      const totalConnectedWalletsQuery = `
+        SELECT COUNT(*) as count
+        FROM users 
+        WHERE wallet_address IS NOT NULL
+      `;
+      const [{ count: totalConnectedWallets }] = await this.dataSource.query(totalConnectedWalletsQuery);
+
+      // Get wallet type statistics based on last_used_wallet
+      const walletTypeQuery = `
+        SELECT 
+          last_used_wallet,
+          COUNT(*) as count
+        FROM users 
+        WHERE wallet_address IS NOT NULL 
+          AND last_used_wallet IS NOT NULL
+        GROUP BY last_used_wallet
+      `;
+      const walletTypeResults = await this.dataSource.query(walletTypeQuery);
+
+      // Initialize wallet stats
+      const walletTypeStats: Record<string, number> = {};
+
+      // Map results to wallet types
+      walletTypeResults.forEach((result: any) => {
+        const walletType = result.last_used_wallet?.toLowerCase();
+        const count = parseInt(result.count);
+
+        if (walletType) {
+          walletTypeStats[walletType] = count;
+        }
+      });
+
+      const analyticsData = {
+        totalLoggedInUsers: parseInt(totalLoggedInUsers),
+        totalConnectedWallets: parseInt(totalConnectedWallets),
+        walletTypeStats,
+      };
+
+      // Cache the result for 15 minutes
+      await this.redis.setex(cacheKey, 900, JSON.stringify(analyticsData));
+
+      this.logger.info(
+        `User analytics calculated: ${totalLoggedInUsers} total users, ${totalConnectedWallets} wallets connected`,
+      );
+      return analyticsData;
+    } catch (error) {
+      this.logger.error('Error getting user analytics:', error);
+      throw error;
+    }
+  }
 }
