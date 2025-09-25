@@ -132,8 +132,8 @@ export class AdminController {
   @Get('analytics/users')
   @ApiOperation({ summary: 'Get user analytics including login and wallet statistics' })
   @ApiResponse({ type: UserAnalyticsDto, status: 200, description: 'User analytics data' })
-  // @ApiBearerAuth()
-  @GuardPublic()
+  @ApiBearerAuth()
+  @AuthAdminGuard()
   async getUsers(): Promise<UserAnalyticsDto> {
     return this.adminAnalyticsService.getUserAnalytics();
   }
