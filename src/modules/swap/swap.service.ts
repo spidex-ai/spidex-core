@@ -767,10 +767,11 @@ export class SwapService implements OnModuleInit {
       } else {
         netPrice = new Decimal(amountIn).div(amountOutDecimal);
       }
+      const dexFee = response.data.splits.reduce((sum, split) => sum + (split.batcherFee || 0), 0);
       return {
         netPrice: netPrice.toString(),
         minReceive: minReceiveDecimal.toString(),
-        dexFee: '0',
+        dexFee: this.fromUnit(dexFee, this.ADA_DECIMALS).toString(),
         dexDeposits: this.fromUnit(totalRefundableDeposits, this.ADA_DECIMALS).toString(),
         totalDeposits: this.fromUnit(totalDeposits, this.ADA_DECIMALS).toString(),
         paths: response.data.splits.map(split => {
