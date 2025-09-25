@@ -5,7 +5,13 @@ import { Timezone } from '@shared/decorators/timezone.decorator';
 import { PageDto } from '@shared/dtos/page.dto';
 import { Response } from 'express';
 import { AdminService } from './admin.service';
-import { GetTopUsersDto, TopReferralUserDto, TopSilkPointUserDto, TopVolumeUserDto } from './dtos/admin-analytics.dto';
+import {
+  GetTopUsersDto,
+  TopReferralUserDto,
+  TopSilkPointUserDto,
+  TopVolumeUserDto,
+  UserAnalyticsDto,
+} from './dtos/admin-analytics.dto';
 import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
 import { CreateQuestDto, QuestFilterDto, QuestResponseDto, UpdateQuestDto } from './dtos/quest-management.dto';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
@@ -121,6 +127,15 @@ export class AdminController {
   @AuthAdminGuard()
   async getTopReferralUsers(@Query() query: GetTopUsersDto): Promise<TopReferralUserDto[]> {
     return this.adminAnalyticsService.getTopReferralUsers(query.timeframe, query.limit);
+  }
+
+  @Get('analytics/users')
+  @ApiOperation({ summary: 'Get user analytics including login and wallet statistics' })
+  @ApiResponse({ type: UserAnalyticsDto, status: 200, description: 'User analytics data' })
+  // @ApiBearerAuth()
+  @GuardPublic()
+  async getUsers(): Promise<UserAnalyticsDto> {
+    return this.adminAnalyticsService.getUserAnalytics();
   }
 
   @Delete('analytics/cache')

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsDateString, IsEnum, Min, Max } from 'class-validator';
+import { IsOptional, IsNumber, IsDateString, IsEnum, Min, Max } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export enum AnalyticsTimeframe {
@@ -131,4 +131,18 @@ export class TopReferralUserDto {
 
   @ApiPropertyOptional()
   referralRewards?: number;
+}
+
+export class UserAnalyticsDto {
+  @ApiProperty({ description: 'Total number of users registered in the system' })
+  totalLoggedInUsers: number;
+
+  @ApiProperty({ description: 'Total number of unique wallet addresses connected to the system' })
+  totalConnectedWallets: number;
+
+  @ApiProperty({
+    description: 'Number of users connected per wallet type',
+    example: { lace: 150, nami: 200, metamask: 75, other: 25 }
+  })
+  walletTypeStats: Record<string, number>;
 }
