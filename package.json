@@ -42,7 +42,9 @@
     "upload-secrets:docker": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker",
     "upload-secrets:docker:dry-run": "node scripts/upload-env-to-github-secrets.js --env-file=.env.docker --dry-run",
     "script:create-users": "ts-node -r tsconfig-paths/register scripts/create-users.ts",
-    "script:upload-files": "ts-node -r tsconfig-paths/register scripts/upload-files.ts"
+    "script:upload-files": "ts-node -r tsconfig-paths/register scripts/upload-files.ts",
+    "script:create-event-wallets": "ts-node -r tsconfig-paths/register scripts/create-event-wallets.ts",
+    "script:create-event-users-with-trades": "ts-node -r tsconfig-paths/register scripts/create-event-users-with-trades.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
@@ -88,6 +90,7 @@
     "bullmq": "^5.52.2",
     "cache-manager": "^4.1.0",
     "cache-manager-redis-yet": "^5.1.5",
+    "cardano-wallet-js": "^1.4.0",
     "cbor": "^10.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
