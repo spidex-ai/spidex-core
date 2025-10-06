@@ -16,6 +16,7 @@ import {
   BuildDexhunterSwapRequest,
   BuildMinswapSwapRequest,
   CardexscanTokenInfo,
+  EstimateRequiredInputRequest,
   EstimateSwapRequest,
   GetPoolStatsRequest,
   MinswapTokenDBInfo,
@@ -606,6 +607,43 @@ export class SwapService implements OnModuleInit {
         validatorErrors: EError.SWAP_ESTIMATION_FAILED,
       });
     }
+  }
+
+  async estimateRequiredInput(payload: EstimateRequiredInputRequest) {
+    const { tokenIn, tokenOut, desiredOutputAmount, slippage = 0.5, allowMultiHops = true } = payload;
+
+    // Prepare token identifiers for Minswap
+    let tokenInMinswap: string, tokenOutMinswap: string;
+
+    if (tokenIn === 'ADA' || tokenIn === CARDANO_UNIT) {
+      tokenInMinswap = 'lovelace';
+    } else {
+      tokenInMinswap = tokenIn;
+    }
+
+    if (tokenOut === 'ADA' || tokenOut === CARDANO_UNIT) {
+      tokenOutMinswap = 'lovelace';
+    } else {
+      tokenOutMinswap = tokenOut;
+    }
+
+    const result = await this.minswapService.estimateRequiredInput(
+      desiredOutputAmount,
+      tokenInMinswap,
+      tokenOutMinswap,
+      slippage,
+      allowMultiHops,
+    );
+
+    return {
+      tokenIn,
+      tokenOut,
+      desiredOutputAmount,
+      estimatedInputAmount: result.estimatedInput,
+      actualOutputAmount: result.actualOutput,
+      slippage,
+      details: result.estimate,
+    };
   }
 
   mapDexhunterEsimatedSwapResponse(response: DexHunterEsitmateSwapResponse): AggregatorEstimateSwapResponse {

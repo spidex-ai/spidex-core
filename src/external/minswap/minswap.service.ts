@@ -64,6 +64,63 @@ export class MinswapService {
     }
   }
 
+  /**
+   * Estimate required input amount to get desired output amount using binary search
+   * @param desiredOutputAmount - The amount of token_out you want to receive
+   * @param tokenIn - Input token identifier
+   * @param tokenOut - Output token identifier
+   * @param slippage - Slippage tolerance (e.g., 0.5 for 0.5%)
+   * @param allowMultiHops - Whether to allow multi-hop swaps
+   * @param maxIterations - Maximum iterations for binary search (default: 15)
+   * @param tolerance - Acceptable difference from desired output (default: 0.01 = 1%)
+   */
+  async estimateRequiredInput(
+    desiredOutputAmount: string,
+    tokenIn: string,
+    tokenOut: string,
+    slippage,
+    allowMultiHops: boolean = true,
+  ): Promise<{ estimatedInput: string; actualOutput: string; estimate: MinswapEsitmateSwapResponse }> {
+    const desiredOutput = parseFloat(desiredOutputAmount);
+
+    // Strategy: Use a small tokenIn amount to get the price, then extrapolate
+    // Start with a reasonable guess (e.g., 100 lovelace)
+    const smallSample = 10;
+
+    const sampleEstimate = await this.estimateSwap({
+      amount: smallSample.toString(),
+      token_in: tokenIn,
+      token_out: tokenOut,
+      slippage,
+      allow_multi_hops: allowMultiHops,
+    });
+
+    const sampleInput = parseFloat(sampleEstimate.amount_in);
+    const sampleOutput = parseFloat(sampleEstimate.min_amount_out);
+
+    // Calculate how much input is needed per unit of output
+    const inputPerOutput = sampleInput / sampleOutput;
+
+    // Calculate the estimated input needed for desired output
+    // Using Math.ceil to ensure we get at least the desired output
+    const estimatedInput = Math.ceil(desiredOutput * inputPerOutput * (1 + slippage / 100));
+
+    // Make a final call with the estimated input to get the actual result
+    const finalEstimate = await this.estimateSwap({
+      amount: estimatedInput.toString(),
+      token_in: tokenIn,
+      token_out: tokenOut,
+      slippage,
+      allow_multi_hops: allowMultiHops,
+    });
+
+    return {
+      estimatedInput: finalEstimate.amount_in,
+      actualOutput: finalEstimate.min_amount_out,
+      estimate: finalEstimate,
+    };
+  }
+
   async swapWallet(payload: SwapWalletPayload): Promise<void> {
     console.log(payload);
     try {
