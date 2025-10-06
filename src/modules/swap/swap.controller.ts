@@ -2,6 +2,7 @@ import {
   BuildCardexscanSwapRequest,
   BuildDexhunterSwapRequest,
   BuildMinswapSwapRequest,
+  EstimateRequiredInputRequest,
   EstimateSwapRequest,
   SubmitSwapRequest,
 } from '@modules/swap/dtos/swap-request.dto';
@@ -52,6 +53,16 @@ export class SwapController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async estimateSwap(@Body() body: EstimateSwapRequest) {
     return this.swapService.estimateSwap(body);
+  }
+
+  @Post('estimate-required-input')
+  @GuardPublic()
+  @ApiOperation({ summary: 'Estimate required input amount for desired output' })
+  @ApiResponse({ status: 200, description: 'Required input estimated successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async estimateRequiredInput(@Body() body: EstimateRequiredInputRequest) {
+    return this.swapService.estimateRequiredInput(body);
   }
 
   @Post('submit')

@@ -121,6 +121,55 @@ export class EstimateSwapRequest {
   amountIn: number;
 }
 
+export class EstimateRequiredInputRequest {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Input token identifier',
+    example: 'lovelace',
+  })
+  tokenIn: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Output token identifier',
+    example: '29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e',
+  })
+  tokenOut: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: String,
+    description: 'Desired output amount',
+    example: '10000',
+  })
+  desiredOutputAmount: string;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: Number,
+    description: 'Slippage tolerance in percentage',
+    example: 0.5,
+    default: 0.5,
+  })
+  slippage?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Allow multi-hop swaps (only for Minswap)',
+    example: true,
+    default: true,
+  })
+  allowMultiHops?: boolean;
+}
+
 export class SubmitSwapRequest {
   @IsString()
   @IsNotEmpty()
