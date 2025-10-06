@@ -68,7 +68,7 @@ export class AdminAnalyticsService {
                COUNT(st.id) as "transactionCount"
         FROM users u
         LEFT JOIN swap_transactions st ON u.id = st.user_id 
-          AND st.status = 'success' ${dateFilter}
+          AND st.status = 'success' AND st.action='sell' ${dateFilter} 
         GROUP BY u.id, u.username
         HAVING COUNT(st.id) > 0
         ORDER BY "totalVolume" DESC, "transactionCount" DESC
