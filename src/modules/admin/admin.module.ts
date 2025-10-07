@@ -15,10 +15,17 @@ import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repositor
 import { AdminConsumer } from './admin.consumer';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
 import { UserRepository } from '@database/repositories/user.repository';
+import { UserQuestRepository } from '@database/repositories/user-quest.repository';
 
 @Module({
   imports: [
-    CustomRepositoryModule.forFeature([AdminRepository, CrawlDocsRepository, QuestRepository, UserRepository]),
+    CustomRepositoryModule.forFeature([
+      AdminRepository,
+      CrawlDocsRepository,
+      QuestRepository,
+      UserRepository,
+      UserQuestRepository,
+    ]),
     PasswordEncoderModule,
     BullModule.registerQueue({
       name: CRAWL_DOCS_QUEUE_NAME,
