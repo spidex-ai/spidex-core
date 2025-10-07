@@ -2,6 +2,7 @@ import { EEnvKey } from '@constants/env.constant';
 import { CRAWL_DOCS_QUEUE_NAME } from '@constants/queue.constant';
 import { AdminEntity, EAdminRole } from '@database/entities/admin.entity';
 import { QuestEntity } from '@database/entities/quest.entity';
+import { EUserQuestStatus } from '@database/entities/user-quest.entity';
 import { AdminRepository } from '@database/repositories/admin.repository';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
 import { QuestRepository } from '@database/repositories/quest.repository';
@@ -145,7 +146,7 @@ export class AdminService {
   }
 
   async getQuests(filterDto: QuestFilterDto): Promise<PageDto<QuestResponseDto>> {
-    const { page, limit, name, category, type, status } = filterDto;
+    const { page = 1, limit = 10, name, category, type, status } = filterDto;
     const queryBuilder = this.questRepository.createQueryBuilder('quest');
 
     if (name) {
@@ -165,8 +166,8 @@ export class AdminService {
     }
 
     queryBuilder.orderBy('quest.createdAt', 'DESC');
-    queryBuilder.skip((page - 1) * limit);
-    queryBuilder.take(limit);
+    queryBuilder.skip((+page - 1) * +limit);
+    queryBuilder.take(+limit);
 
     const [quests, total] = await queryBuilder.getManyAndCount();
 
@@ -177,7 +178,7 @@ export class AdminService {
       .select('uq.questId', 'questId')
       .addSelect('COUNT(DISTINCT uq.userId)', 'count')
       .where('uq.questId IN (:...questIds)', { questIds })
-      .andWhere('uq.status = :status', { status: 'completed' })
+      .andWhere('uq.status = :status', { status: EUserQuestStatus.COMPLETED })
       .groupBy('uq.questId')
       .getRawMany();
 
