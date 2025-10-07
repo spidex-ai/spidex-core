@@ -5,6 +5,7 @@ import { QuestEntity } from '@database/entities/quest.entity';
 import { AdminRepository } from '@database/repositories/admin.repository';
 import { CrawlDocsRepository } from '@database/repositories/crawl-docs.repository';
 import { QuestRepository } from '@database/repositories/quest.repository';
+import { UserQuestRepository } from '@database/repositories/user-quest.repository';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -28,6 +29,7 @@ export class AdminService {
     private readonly configService: ConfigService,
     private readonly crawlDocsRepository: CrawlDocsRepository,
     private readonly questRepository: QuestRepository,
+    private readonly userQuestRepository: UserQuestRepository,
   ) {}
 
   async create() {
@@ -167,7 +169,20 @@ export class AdminService {
     queryBuilder.take(limit);
 
     const [quests, total] = await queryBuilder.getManyAndCount();
-    const questDtos = quests.map(quest => this.mapQuestToResponseDto(quest));
+
+    // Get completed users count for each quest
+    const questIds = quests.map(q => q.id);
+    const completedCounts = await this.userQuestRepository
+      .createQueryBuilder('uq')
+      .select('uq.questId', 'questId')
+      .addSelect('COUNT(DISTINCT uq.userId)', 'count')
+      .where('uq.questId IN (:...questIds)', { questIds })
+      .andWhere('uq.status = :status', { status: 'completed' })
+      .groupBy('uq.questId')
+      .getRawMany();
+
+    const countMap = new Map(completedCounts.map(c => [c.questId, parseInt(c.count)]));
+    const questDtos = quests.map(quest => this.mapQuestToResponseDto(quest, countMap.get(quest.id) || 0));
 
     return new PageDto(questDtos, new PageMetaDto(total, new PageOptionsDto(page, limit)));
   }
@@ -180,7 +195,7 @@ export class AdminService {
     await this.questRepository.softDelete(id);
   }
 
-  private mapQuestToResponseDto(quest: QuestEntity): QuestResponseDto {
+  private mapQuestToResponseDto(quest: QuestEntity, completedUsersCount: number = 0): QuestResponseDto {
     return {
       id: quest.id,
       name: quest.name,
@@ -194,6 +209,7 @@ export class AdminService {
       status: quest.status,
       startDate: quest.startDate,
       endDate: quest.endDate,
+      completedUsersCount,
       createdAt: quest.createdAt,
       updatedAt: quest.updatedAt,
     };

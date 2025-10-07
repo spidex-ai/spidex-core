@@ -281,6 +281,10 @@ export class QuestResponseDto {
 
   @Expose()
   @ApiProperty()
+  completedUsersCount: number;
+
+  @Expose()
+  @ApiProperty()
   createdAt: Date;
 
   @Expose()
