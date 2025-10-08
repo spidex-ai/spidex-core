@@ -423,9 +423,10 @@ export class TokenService {
       pageLimit = 20;
     }
 
-    const [minswapTokens, internalTokens] = await Promise.allSettled([
+    const [minswapTokens, internalTokens, dexhunterTokens] = await Promise.allSettled([
       this.minswapService.searchTokens(query, verified),
       this.tokenMetaService.searchTokens(query, pageNumber, pageLimit),
+      this.dexHunterService.searchTokens(query, verified, pageNumber, pageLimit),
     ]);
 
     let tokens: { token_id: string; is_verified: boolean; project_name?: string }[] = [];
@@ -445,6 +446,16 @@ export class TokenService {
           token_id: token.unit,
           is_verified: true,
           project_name: token.name,
+        })),
+      );
+    }
+
+    if (dexhunterTokens.status === 'fulfilled') {
+      tokens = tokens.concat(
+        dexhunterTokens.value.map(token => ({
+          token_id: token.token_id,
+          is_verified: token.is_verified,
+          project_name: token.token_ascii,
         })),
       );
     }

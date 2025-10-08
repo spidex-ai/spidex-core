@@ -37,7 +37,7 @@ export class TokenPriceService {
         return cachedData;
       }
 
-      const response = await this.minswapService.getAdaPriceInUSD();
+      const response = await this.tapToolsService.getTokenQuote();
       const adaPrice = response;
       await this.cache.set(cacheKey, adaPrice, TOKEN_PRICE_IN_USD_CACHE_TTL);
       return adaPrice;

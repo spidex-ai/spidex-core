@@ -25,7 +25,7 @@ export class DexhunterService {
    * @param quote - Quote currency (default: ADA)
    * @returns Promise with market stats
    */
-  async searchToken(
+  async searchTokens(
     query: string,
     verified: boolean = true,
     page: number = 0,
@@ -87,7 +87,11 @@ export class DexhunterService {
 
   async estimateSwap(payload: EsitmateSwapPayload): Promise<DexHunterEsitmateSwapResponse> {
     try {
-      const response = await firstValueFrom(this.client.post<DexHunterEsitmateSwapResponse>('swap/estimate', payload));
+      const response = await firstValueFrom(
+        this.client.post<DexHunterEsitmateSwapResponse>('swap/estimate', payload, {
+          timeout: 10000,
+        }),
+      );
       return response.data;
     } catch (error) {
       throw new BadRequestException({
@@ -96,6 +100,69 @@ export class DexhunterService {
         data: error.response.data,
       });
     }
+  }
+
+  /**
+   * Estimate required input amount to get desired output amount using binary search
+   * @param desiredOutputAmount - The amount of token_out you want to receive
+   * @param tokenIn - Input token identifier
+   * @param tokenOut - Output token identifier
+   * @param slippage - Slippage tolerance (e.g., 0.5 for 0.5%)
+   * @param blacklistedDexes - List of DEXes to exclude from the swap
+   * @param maxIterations - Maximum iterations for binary search (default: 15)
+   * @param tolerance - Acceptable difference from desired output (default: 0.01 = 1%)
+   */
+  async estimateRequiredInput(
+    desiredOutputAmount: string,
+    tokenIn: string,
+    tokenOut: string,
+    slippage: number,
+    blacklistedDexes: string[] = [],
+  ): Promise<{ estimatedInput: string; actualOutput: string; estimate: DexHunterEsitmateSwapResponse }> {
+    const desiredOutput = parseFloat(desiredOutputAmount);
+
+    // Strategy: Use a small tokenIn amount to get the price, then extrapolate
+    // Start with a reasonable guess (e.g., 100 lovelace)
+    const smallSample = 10;
+
+    const sampleEstimate = await this.estimateSwap({
+      amount_in: smallSample,
+      token_in: tokenIn,
+      token_out: tokenOut,
+      slippage,
+      blacklisted_dexes: blacklistedDexes,
+    });
+
+    // Calculate total input from splits
+    const sampleInput = sampleEstimate.splits.reduce((sum, split) => sum + split.amount_in, 0);
+    // Calculate total output from splits
+    const sampleOutput = sampleEstimate.total_output;
+
+    // Calculate how much input is needed per unit of output
+    const inputPerOutput = sampleInput / sampleOutput;
+
+    // Calculate the estimated input needed for desired output
+    // Using Math.ceil to ensure we get at least the desired output
+    const estimatedInput = Math.ceil(desiredOutput * inputPerOutput * (1 + slippage / 100));
+
+    // Make a final call with the estimated input to get the actual result
+    const finalEstimate = await this.estimateSwap({
+      amount_in: estimatedInput,
+      token_in: tokenIn,
+      token_out: tokenOut,
+      slippage,
+      blacklisted_dexes: blacklistedDexes,
+    });
+
+    // Calculate final totals from splits
+    const finalInput = finalEstimate.splits.reduce((sum, split) => sum + split.amount_in, 0);
+    const finalOutput = finalEstimate.total_output;
+
+    return {
+      estimatedInput: finalInput.toString(),
+      actualOutput: finalOutput.toString(),
+      estimate: finalEstimate,
+    };
   }
 
   async swapWallet(payload: SwapWalletPayload): Promise<void> {

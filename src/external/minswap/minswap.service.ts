@@ -51,7 +51,9 @@ export class MinswapService {
   async estimateSwap(payload: EsitmateSwapPayload): Promise<MinswapEsitmateSwapResponse> {
     try {
       const response = await firstValueFrom(
-        this.client.post<MinswapEsitmateSwapResponse>('aggregator/estimate', payload),
+        this.client.post<MinswapEsitmateSwapResponse>('aggregator/estimate', payload, {
+          timeout: 10000,
+        }),
       );
       return response.data;
     } catch (error) {

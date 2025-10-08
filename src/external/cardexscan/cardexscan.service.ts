@@ -25,7 +25,9 @@ export class CardexscanService {
       this.logger.log('Estimating swap with Cardexscan', { payload });
 
       const response = await firstValueFrom(
-        this.client.post<CardexscanEstimateSwapResponse>('/cds/swap/aggregate', payload),
+        this.client.post<CardexscanEstimateSwapResponse>('/cds/swap/aggregate', payload, {
+          timeout: 10000,
+        }),
       );
 
       if (response.data.error) {

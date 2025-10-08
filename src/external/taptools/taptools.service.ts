@@ -193,10 +193,10 @@ export class TaptoolsService {
    * @param quote - Quote currency (e.g., USD, EUR)
    * @returns Promise with token quote information
    */
-  async getTokenQuote(quote: string): Promise<TokenQuote> {
+  async getTokenQuote(quote: string = 'USD'): Promise<number> {
     try {
       const response = await firstValueFrom(this.client.get<TokenQuote>('token/quote', { params: { quote } }));
-      return response.data;
+      return response.data.price;
     } catch (error) {
       console.error('TaptoolsService::getTokenQuote error:', error);
       throw new BadRequestException({

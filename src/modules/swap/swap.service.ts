@@ -610,7 +610,7 @@ export class SwapService implements OnModuleInit {
   }
 
   async estimateRequiredInput(payload: EstimateRequiredInputRequest) {
-    const { tokenIn, tokenOut, desiredOutputAmount, slippage = 0.5, allowMultiHops = true } = payload;
+    const { tokenIn, tokenOut, desiredOutputAmount, slippage = 0.5 } = payload;
 
     // Prepare token identifiers for Minswap
     let tokenInMinswap: string, tokenOutMinswap: string;
@@ -627,12 +627,11 @@ export class SwapService implements OnModuleInit {
       tokenOutMinswap = tokenOut;
     }
 
-    const result = await this.minswapService.estimateRequiredInput(
+    const result = await this.dexhunterService.estimateRequiredInput(
       desiredOutputAmount,
       tokenInMinswap,
       tokenOutMinswap,
       slippage,
-      allowMultiHops,
     );
 
     return {
