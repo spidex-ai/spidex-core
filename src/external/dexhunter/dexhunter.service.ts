@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { filter } from 'lodash';
 import { BadRequestException } from '@shared/exception';
 import { EError } from '@constants/error.constant';
+import { CARDANO_LOVELACE_UNIT } from '@constants/cardano.constant';
 
 @Injectable()
 export class DexhunterService {
@@ -115,12 +116,19 @@ export class DexhunterService {
   async estimateRequiredInput(
     desiredOutputAmount: string,
     tokenIn: string,
+    tokenInDecimals: number,
     tokenOut: string,
     slippage: number,
     blacklistedDexes: string[] = [],
-  ): Promise<{ estimatedInput: string; actualOutput: string; estimate: DexHunterEsitmateSwapResponse }> {
+  ): Promise<{ estimatedInput: string; actualOutput: string }> {
     const desiredOutput = parseFloat(desiredOutputAmount);
+    if (tokenIn === CARDANO_LOVELACE_UNIT) {
+      tokenIn = '';
+    }
 
+    if (tokenOut === CARDANO_LOVELACE_UNIT) {
+      tokenOut = '';
+    }
     // Strategy: Use a small tokenIn amount to get the price, then extrapolate
     // Start with a reasonable guess (e.g., 100 lovelace)
     const smallSample = 10;
@@ -134,7 +142,7 @@ export class DexhunterService {
     });
 
     // Calculate total input from splits
-    const sampleInput = sampleEstimate.splits.reduce((sum, split) => sum + split.amount_in, 0);
+    const sampleInput = smallSample;
     // Calculate total output from splits
     const sampleOutput = sampleEstimate.total_output;
 
@@ -143,25 +151,11 @@ export class DexhunterService {
 
     // Calculate the estimated input needed for desired output
     // Using Math.ceil to ensure we get at least the desired output
-    const estimatedInput = Math.ceil(desiredOutput * inputPerOutput * (1 + slippage / 100));
-
-    // Make a final call with the estimated input to get the actual result
-    const finalEstimate = await this.estimateSwap({
-      amount_in: estimatedInput,
-      token_in: tokenIn,
-      token_out: tokenOut,
-      slippage,
-      blacklisted_dexes: blacklistedDexes,
-    });
-
-    // Calculate final totals from splits
-    const finalInput = finalEstimate.splits.reduce((sum, split) => sum + split.amount_in, 0);
-    const finalOutput = finalEstimate.total_output;
+    const estimatedInput = desiredOutput * inputPerOutput * (1 + slippage / 100);
 
     return {
-      estimatedInput: finalInput.toString(),
-      actualOutput: finalOutput.toString(),
-      estimate: finalEstimate,
+      estimatedInput: estimatedInput.toFixed(tokenInDecimals),
+      actualOutput: (estimatedInput / inputPerOutput).toFixed(0),
     };
   }
 

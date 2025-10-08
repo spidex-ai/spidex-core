@@ -79,10 +79,11 @@ export class MinswapService {
   async estimateRequiredInput(
     desiredOutputAmount: string,
     tokenIn: string,
+    tokenInDecimals: number,
     tokenOut: string,
     slippage,
     allowMultiHops: boolean = true,
-  ): Promise<{ estimatedInput: string; actualOutput: string; estimate: MinswapEsitmateSwapResponse }> {
+  ): Promise<{ estimatedInput: string }> {
     const desiredOutput = parseFloat(desiredOutputAmount);
 
     // Strategy: Use a small tokenIn amount to get the price, then extrapolate
@@ -107,19 +108,8 @@ export class MinswapService {
     // Using Math.ceil to ensure we get at least the desired output
     const estimatedInput = Math.ceil(desiredOutput * inputPerOutput * (1 + slippage / 100));
 
-    // Make a final call with the estimated input to get the actual result
-    const finalEstimate = await this.estimateSwap({
-      amount: estimatedInput.toString(),
-      token_in: tokenIn,
-      token_out: tokenOut,
-      slippage,
-      allow_multi_hops: allowMultiHops,
-    });
-
     return {
-      estimatedInput: finalEstimate.amount_in,
-      actualOutput: finalEstimate.min_amount_out,
-      estimate: finalEstimate,
+      estimatedInput: estimatedInput.toFixed(tokenInDecimals),
     };
   }
 

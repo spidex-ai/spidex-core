@@ -627,9 +627,12 @@ export class SwapService implements OnModuleInit {
       tokenOutMinswap = tokenOut;
     }
 
+    const tokenInDecimal = await this.tokenMetaService.getTokenMetadata(tokenIn, ['decimals']);
+
     const result = await this.dexhunterService.estimateRequiredInput(
       desiredOutputAmount,
       tokenInMinswap,
+      tokenInDecimal.decimals || 0,
       tokenOutMinswap,
       slippage,
     );
@@ -641,7 +644,6 @@ export class SwapService implements OnModuleInit {
       estimatedInputAmount: result.estimatedInput,
       actualOutputAmount: result.actualOutput,
       slippage,
-      details: result.estimate,
     };
   }
 
