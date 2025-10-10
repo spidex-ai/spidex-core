@@ -591,7 +591,7 @@ export class UserQuestService {
     });
 
     const total = userQuestOutputs.length;
-    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['type'], ['desc']).slice(
+    const paginatedUserQuestOutputs = orderBy(userQuestOutputs, ['order'], ['asc']).slice(
       (page - 1) * limit,
       page * limit,
     );

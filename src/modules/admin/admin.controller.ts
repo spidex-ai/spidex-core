@@ -75,6 +75,15 @@ export class AdminController {
     return this.adminService.getQuests(filterDto);
   }
 
+  @Put('quests/reorder')
+  @ApiOperation({ summary: 'Reorder quests' })
+  @ApiResponse({ type: [QuestResponseDto], status: 200, description: 'Quests reordered successfully' })
+  @ApiBearerAuth()
+  @AuthAdminGuard()
+  async reorderQuests(@Body() reorderDto: ReorderQuestsDto): Promise<QuestResponseDto[]> {
+    return this.adminService.reorderQuests(reorderDto);
+  }
+
   @Get('quests/:id')
   @ApiOperation({ summary: 'Get quest by ID' })
   @ApiResponse({ type: QuestResponseDto, status: 200, description: 'Quest retrieved successfully' })
@@ -100,15 +109,6 @@ export class AdminController {
   @AuthAdminGuard()
   async deleteQuest(@Param('id') id: number): Promise<void> {
     return this.adminService.deleteQuest(id);
-  }
-
-  @Put('quests/reorder')
-  @ApiOperation({ summary: 'Reorder quests' })
-  @ApiResponse({ type: [QuestResponseDto], status: 200, description: 'Quests reordered successfully' })
-  @ApiBearerAuth()
-  @AuthAdminGuard()
-  async reorderQuests(@Body() reorderDto: ReorderQuestsDto): Promise<QuestResponseDto[]> {
-    return this.adminService.reorderQuests(reorderDto);
   }
 
   @Get('analytics/top-volume-users')
