@@ -19,7 +19,7 @@ import { PasswordEncoder } from '@shared/modules/password-encoder/password-encod
 import { Queue } from 'bull';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
-import { CreateQuestDto, QuestFilterDto, QuestResponseDto, UpdateQuestDto } from './dtos/quest-management.dto';
+import { CreateQuestDto, QuestFilterDto, QuestResponseDto, ReorderQuestsDto, UpdateQuestDto } from './dtos/quest-management.dto';
 @Injectable()
 export class AdminService {
   constructor(
@@ -165,7 +165,8 @@ export class AdminService {
       queryBuilder.andWhere('quest.status = :status', { status });
     }
 
-    queryBuilder.orderBy('quest.createdAt', 'DESC');
+    queryBuilder.orderBy('quest.order', 'ASC');
+    queryBuilder.addOrderBy('quest.createdAt', 'DESC');
     queryBuilder.skip((+page - 1) * +limit);
     queryBuilder.take(+limit);
 
@@ -196,6 +197,39 @@ export class AdminService {
     await this.questRepository.softDelete(id);
   }
 
+  async reorderQuests(reorderDto: ReorderQuestsDto): Promise<QuestResponseDto[]> {
+    const questIds = reorderDto.quests.map(q => q.id);
+
+    // Verify all quests exist
+    const quests = await this.questRepository.find({
+      where: questIds.map(id => ({ id })),
+    });
+    if (quests.length !== questIds.length) {
+      throw new NotFoundException('One or more quests not found');
+    }
+
+    // Update the order for each quest
+    const updatePromises = reorderDto.quests.map(({ id, order }) =>
+      this.questRepository.update(id, { order })
+    );
+    await Promise.all(updatePromises);
+
+    // Fetch updated quests with their completion counts
+    const updatedQuests = await this.questRepository.find({
+      where: questIds.map(id => ({ id })),
+    });
+    const result: QuestResponseDto[] = [];
+
+    for (const quest of updatedQuests) {
+      const completedUsersCount = await this.userQuestRepository.count({
+        where: { questId: quest.id, status: EUserQuestStatus.COMPLETED },
+      });
+      result.push(this.mapQuestToResponseDto(quest, completedUsersCount));
+    }
+
+    return result;
+  }
+
   private mapQuestToResponseDto(quest: QuestEntity, completedUsersCount: number = 0): QuestResponseDto {
     return {
       id: quest.id,
@@ -208,6 +242,7 @@ export class AdminService {
       limit: quest.limit,
       points: quest.points,
       status: quest.status,
+      order: quest.order,
       startDate: quest.startDate,
       endDate: quest.endDate,
       completedUsersCount,

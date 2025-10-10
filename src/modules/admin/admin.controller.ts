@@ -13,7 +13,7 @@ import {
   UserAnalyticsDto,
 } from './dtos/admin-analytics.dto';
 import { AdminLoginDto, CrawlDocsDto, GetCrawlDocsDto } from './dtos/admin-request.dto';
-import { CreateQuestDto, QuestFilterDto, QuestResponseDto, UpdateQuestDto } from './dtos/quest-management.dto';
+import { CreateQuestDto, QuestFilterDto, QuestResponseDto, ReorderQuestsDto, UpdateQuestDto } from './dtos/quest-management.dto';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
 import { AnalyticsExportUtil } from './utils/analytics-export.util';
 
@@ -100,6 +100,15 @@ export class AdminController {
   @AuthAdminGuard()
   async deleteQuest(@Param('id') id: number): Promise<void> {
     return this.adminService.deleteQuest(id);
+  }
+
+  @Put('quests/reorder')
+  @ApiOperation({ summary: 'Reorder quests' })
+  @ApiResponse({ type: [QuestResponseDto], status: 200, description: 'Quests reordered successfully' })
+  @ApiBearerAuth()
+  @AuthAdminGuard()
+  async reorderQuests(@Body() reorderDto: ReorderQuestsDto): Promise<QuestResponseDto[]> {
+    return this.adminService.reorderQuests(reorderDto);
   }
 
   @Get('analytics/top-volume-users')

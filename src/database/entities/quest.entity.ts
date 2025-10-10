@@ -84,6 +84,9 @@ export class QuestEntity extends BaseEntity {
   @Column({ type: 'enum', name: 'status', enum: EQuestStatus, nullable: false })
   status: EQuestStatus;
 
+  @Column({ type: 'integer', name: 'order', default: 0 })
+  order: number;
+
   @Column({ name: 'start_date', type: 'timestamp', nullable: true })
   startDate: Date;
 

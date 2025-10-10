@@ -3,10 +3,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '@shared/dtos/page-meta.dto';
 import { IsValidIcon } from '@shared/validators/icon.validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
 export class CreateQuestDto {
-  @IsString()
+  @IsString() 
   @IsNotEmpty()
   @ApiProperty({
     description: 'Quest name',
@@ -93,6 +93,15 @@ export class CreateQuestDto {
     example: '2024-12-31T23:59:59.999Z',
   })
   endDate?: Date;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: 'Quest display order',
+    example: 0,
+    default: 0,
+  })
+  order?: number;
 }
 
 export class UpdateQuestDto {
@@ -188,6 +197,14 @@ export class UpdateQuestDto {
     example: '2024-12-31T23:59:59.999Z',
   })
   endDate?: Date;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: 'Quest display order',
+    example: 0,
+  })
+  order?: number;
 }
 
 export class QuestFilterDto extends PaginationDto {
@@ -281,6 +298,10 @@ export class QuestResponseDto {
 
   @Expose()
   @ApiProperty()
+  order: number;
+
+  @Expose()
+  @ApiProperty()
   completedUsersCount: number;
 
   @Expose()
@@ -290,4 +311,37 @@ export class QuestResponseDto {
   @Expose()
   @ApiProperty()
   updatedAt: Date;
+}
+
+export class QuestOrderItemDto {
+  @IsNumber()
+  @ApiProperty({
+    description: 'Quest ID',
+    example: 1,
+  })
+  id: number;
+
+  @IsNumber()
+  @Min(0)
+  @ApiProperty({
+    description: 'New order position',
+    example: 0,
+  })
+  order: number;
+}
+
+export class ReorderQuestsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestOrderItemDto)
+  @ApiProperty({
+    description: 'Array of quest IDs with their new order positions',
+    type: [QuestOrderItemDto],
+    example: [
+      { id: 1, order: 0 },
+      { id: 2, order: 1 },
+      { id: 3, order: 2 },
+    ],
+  })
+  quests: QuestOrderItemDto[];
 }

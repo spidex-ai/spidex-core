@@ -32,6 +32,9 @@ export class QuestService {
           endDate: IsNull(),
         },
       ],
+      order: {
+        order: 'ASC',
+      },
     });
   }
 
