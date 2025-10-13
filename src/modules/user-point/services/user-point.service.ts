@@ -13,7 +13,7 @@ import {
   UserPointLeaderboardQueryDto,
 } from '@modules/user-point/dtos/user-point-leaderboard.dto';
 import { UserPointInfoOutput, UserPointOutput } from '@modules/user-point/dtos/user-point-output.dto';
-import { EUserPointRankOrderBy, UserPointRankQueryDto } from '@modules/user-point/dtos/user-point-rank.dto';
+import { UserPointRankQueryDto } from '@modules/user-point/dtos/user-point-rank.dto';
 import { IUserPointChangeEvent } from '@modules/user-point/interfaces/event-message';
 import { USER_POINT_EVENT_PATTERN } from '@modules/user-point/interfaces/event-pattern';
 import { EUserPointType } from '@modules/user-point/user-point.constant';
@@ -75,10 +75,11 @@ export class UserPointService {
       case EUserPointType.CORE:
       case EUserPointType.QUEST:
         const existsQuest = await this.userQuestService.getById(userId, userQuestId);
-        if (!existsQuest || existsQuest.status !== EUserQuestStatus.COMPLETED) {
+        if (!existsQuest) {
           this.logger.warn(`User quest with id ${userQuestId} does not exist`);
           return;
         }
+
         await this.increasePoint({
           type,
           userId,
