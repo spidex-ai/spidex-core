@@ -753,11 +753,11 @@ export class UserQuestService {
   }
 
   async handleZealyWebhook(payload: ZealyWebhookPayload, apiKey: string): Promise<ZealyWebhookResponse> {
-    // Validate API key
-    const expectedApiKey = this.configService.get<string>(EEnvKey.ZEALY_API_KEY);
-    if (!expectedApiKey || apiKey !== expectedApiKey) {
-      throw new BadRequestException('Invalid API Key');
-    }
+    // // Validate API key
+    // const expectedApiKey = this.configService.get<string>(EEnvKey.ZEALY_API_KEY);
+    // if (!expectedApiKey || apiKey !== expectedApiKey) {
+    //   throw new BadRequestException('Invalid API Key');
+    // }
 
     this.logger.log(`Zealy webhook received for user ${payload.userId}, quest ${payload.questId}`, { payload });
 
